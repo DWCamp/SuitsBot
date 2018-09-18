@@ -6,3 +6,6 @@
 (Wolfram Alpha API ID)
 (JDoodle API ID)
 (JDoodle Secret)
+(Reddit Client ID)
+(Reddit Client Secret)
+(Youtube Private Key)
