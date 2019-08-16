@@ -5,12 +5,65 @@ from discord import Embed
 from constants import *
 import parse
 import utils
+import credentials
 
 
 class WebQueries:
 
     def __init__(self, bot):
         self.bot = bot
+
+    # Searches urban dictionary for a term
+    @commands.command(pass_context=True, help=LONG_HELP['ud'], brief=BRIEF_HELP['ud'], aliases=ALIASES['ud'])
+    async def ud(self, ctx):
+
+        # Removes the brackets around words, which UD puts around words in definitions and examples that have their own definitions
+        def stripBrackets(text):
+            text = text.replace("[", " ").replace("]", "")
+            return text
+
+        """ Query the UrbanDictionary API """
+        try:
+            # removes the invocation portion of the message
+            message = parse.stripcommand(ctx.message.content)
+
+            maxdefinitions = 4
+
+            # Reject empty messages
+            if message == "":
+                await self.bot.say("You must pass in a term to get a definition")
+                return
+
+            # Query the API and post its response
+            (ud_json, response) = await utils.get_json_with_get("http://api.urbandictionary.com/v0/define?term=" + quote(message))
+            if response is not 200:
+                await bot.say("There was an error processing your request. I apologize for the inconvenience.")
+                return
+            if len(ud_json["list"]) > 0:
+                embed = Embed()
+                ud_embed = Embed()
+                ud_embed.set_footer(text="UrbanDictionary", icon_url="https://firebounty.com/image/635-urban-dictionary")
+                counter = 0
+                firstResult = ""
+                while counter < len(ud_json["list"]) and counter <= maxdefinitions:
+                    definition = ud_json["list"][counter]
+                    if counter == 0:
+                        firstResult = definition["word"]
+                        ud_embed.title = utils.trimtolength(firstResult, 256).capitalize()
+                    if definition["word"] == firstResult:
+                        defText = definition["definition"].replace("*", "\\*")
+                        exampleText = "**Example: " + definition["example"].replace("*", "\\*") + "**"
+                        ud_embed.add_field(name=str(counter + 1),
+                                             value=utils.trimtolength(stripBrackets(defText + "\n\n" + exampleText), 1024),
+                                             inline=False)
+                    counter += 1
+                ud_embed.colour = EMBED_COLORS['ud']  # Make the embed white
+
+                await self.bot.say(embed=ud_embed)
+            else:
+                await self.bot.say("I can't find any UrbanDictionary results for `" + message + "`")
+        except Exception as e:
+            await utils.report(self.bot, str(e), source="ud command", ctx=ctx)
 
     # Returns a description of an item from Wikipedia
     @commands.command(pass_context=True, help=LONG_HELP['wiki'], brief=BRIEF_HELP['wiki'], aliases=ALIASES['wiki'])
@@ -94,6 +147,9 @@ class WebQueries:
             [title, extract, summary] = await queryarticle(articletitle)
             wiki_embed = Embed()
             wiki_embed.title = title
+            wiki_embed.set_footer(text="Wikipedia",
+                                  icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/"
+                                           "Wikipedia-logo-v2.svg/800px-Wikipedia-logo-v2.svg.png")
             if "full" in arguments or "f" in arguments:
                 description = utils.trimtolength(extract, 2048)
             else:
@@ -124,8 +180,8 @@ class WebQueries:
 
             # Query the API and post its response
             async with aiohttp.ClientSession(headers=HEADERS) as session:
-                async with session.get("http://api.wolframalpha.com/v1/result?appid=" + self.bot.WOLFRAMALPHA_APPID +
-                                       "&i=" + quote(message)) as resp:
+                async with session.get("http://api.wolframalpha.com/v1/result?appid=" +
+                                       credentials.tokens["WOLFRAMALPHA_APPID"] + "&i=" + quote(message)) as resp:
                     if resp.status is 501:
                         await self.bot.say("WolframAlpha could not understand the question '{}' because {}"
                                            .format(message, resp.reason))
@@ -152,7 +208,7 @@ class WebQueries:
                       "type": "video",
                       "videoEmbeddable": "true",
                       "fields": "items(id/videoId,snippet/title)",
-                      "key": self.bot.YOUTUBE_KEY}
+                      "key": credentials.tokens["YOUTUBE_KEY"]}
 
             # Get the top 5 search results for a given query
             [json, resp_code] = await utils.get_json_with_get(api_url, params=params)

@@ -2,6 +2,7 @@ from discord.ext import commands
 from discord import Embed
 from urllib.parse import quote
 from constants import *
+import credentials
 import parse
 import utils
 
@@ -31,7 +32,7 @@ class Images:
         self.meow_attempts = int(meow_attempts)
         self.next_meow_url = utils.loadfromcache(bot.dbconn, "meowURL")
 
-    @commands.command(pass_context=True, help=LONG_HELP['meow'], brief=BRIEF_HELP['meow'], ALIASES=ALIASES['meow'])
+    @commands.command(pass_context=True, help=LONG_HELP['meow'], brief=BRIEF_HELP['meow'], aliases=ALIASES['meow'])
     async def meow(self, ctx):
         try:
             if self.next_meow_url is None:
@@ -81,7 +82,7 @@ class Images:
                              'xhc2hfaWNvbl8xNTMxMTA2MTg5XzA5OQ/icon.png?w=170&fakeurl=1&type=.png')
             headers = {
                 "User-Agent": "suitsBot Discord Bot - https://github.com/DWCamp",
-                "Authorization": "Client-ID " + self.bot.UNSPLASH_CLIENT_ID,
+                "Authorization": "Client-ID " + credentials.tokens["UNSPLASH_CLIENT_ID"],
                 "Accept-Version": "v1"
             }
 

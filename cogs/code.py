@@ -1,6 +1,7 @@
 from discord.ext import commands
 from discord import Embed
 from constants import *
+import credentials
 import parse
 import utils
 
@@ -98,8 +99,8 @@ class Code:
 
         self.credits_check_url = "https://api.jdoodle.com/v1/credit-spent"
         self.execute_url = "https://api.jdoodle.com/v1/execute"
-        self.JDOODLE_ID = bot.JDOODLE_ID
-        self.JDOODLE_SECRET = bot.JDOODLE_SECRET
+        self.JDOODLE_ID = credentials.tokens["JDOODLE_ID"]
+        self.JDOODLE_SECRET = credentials.tokens["JDOODLE_SECRET"]
 
     # Arbitrary code execution
     @commands.command(pass_context=True, help=LONG_HELP['code'], brief=BRIEF_HELP['code'], aliases=ALIASES['code'])

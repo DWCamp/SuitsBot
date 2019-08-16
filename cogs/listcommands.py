@@ -23,6 +23,7 @@ class ListCommands:
         try:
             list_table = self.loadlists()
             self.list_engine = ListEngine(bot, list_table)
+            bot.list_engine = self.list_engine
         except Exception as e:
             self.bot.loading_failure["lists"] = e
 
@@ -453,6 +454,18 @@ class ListEngine:
                                         color=embedcolor)
         self._defaultembed = helpembed
 
+    def add_user(self, user_id):
+        """
+        Adds a user to the list engine. Adds the user to the user_table and
+        creates an entry for their bestGirl list in the ListDetails table
+        Parameters
+        -------------
+        user_id : string
+            The Discord user id of the user being added
+        """
+        self.user_table[user_id] = {}
+        self.create_list(user_id, "BestGirl")
+
     async def parse(self, ctx, helpembed=None, command="list", list_id=None):
         """ Performs list manage functions
 
@@ -659,8 +672,7 @@ class ListEngine:
                                                  "You are not currently in any list. Type `!list use <id>` to " +
                                                  "begin editing a list or `!list help` for more information")
                     return
-                await self._bot.send_message(ctx.message.channel,
-                                             "Your list contains `` " + str(currlist.char_count()) + " `` characters")
+                await self._bot.send_message(ctx.message.channel, str(currlist.updating))
             except Exception as e:
                 await  utils.report(self._bot, str(e), source="List dev command", ctx=ctx)
             return
@@ -687,7 +699,7 @@ class ListEngine:
                     self.spaces[authorid] = None
                 del author_lists[list_id]  # Drop the list
                 self.drop_list(authorid, list_id)
-                if currlist is not None:
+                if currlist is not None and currlist.updating is not None:
                     for message in currlist.updating:
                         await self._bot.delete_message(message)
                 await self._bot.send_message(ctx.message.channel,
@@ -1228,6 +1240,7 @@ class ListEngine:
         self._dbconn.ensure_sql_connection()
         create_command = "INSERT INTO ListDetails VALUES (%s, %s, %s, %s)"
         create_data = (user_id, list_id, None, None)
+        self.user_table[user_id][list_id] = UserList(self._bot, list_id, username=self._bot.users[user_id])
         self._dbconn.execute(create_command, create_data)
         self._dbconn.commit()
 

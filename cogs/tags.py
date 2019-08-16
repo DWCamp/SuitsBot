@@ -180,7 +180,7 @@ class Tags:
                     error_messages = {"EMPTY KEY": "There was no key to store",
                                       "UNCLOSED KEY": "You didn't close your brackets",
                                       "NO VALUE": "There was no text to save for the key provided",
-                                      "WHITESPACE KEY": "Just because this self.bot is written in Python " +
+                                      "WHITESPACE KEY": "Just because this bot is written in Python " +
                                                         "does not mean whitespace is an acceptable tag",
                                       "KEY STARTS WITH -": "The `-` character denotes the start of " +
                                                            "an argument and cannot be used in tag keys"}
