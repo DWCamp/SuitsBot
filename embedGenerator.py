@@ -1,17 +1,30 @@
 from datetime import datetime
 from bs4 import BeautifulSoup
 from discord import Embed
-import utils
 from constants import EMBED_COLORS
+import credentials
+import utils
 
 
 async def embeds_from_regex(matchlist, embed_method):
+    """
+    Returns a list of embeds generated from a list of strings and
+    a method used to convert those strings into embeds
+    :param matchlist: The list of strings to convert
+    :param embed_method: A method which takes a string (normally a url or id)
+    and converts it into an embed or list of embeds
+    :return: A list of embeds
+    """
     embed_list = list()
     for match in matchlist:
         link = match.strip()
         embed = await embed_method(link)
         if embed is not None:
-            embed_list.append(embed)
+            if isinstance(embed, list):
+                for item in embed:
+                    embed_list.append(item)
+            else:
+                embed_list.append(embed)
     return embed_list
 
 
@@ -109,10 +122,12 @@ async def subreddit(subname: str, allow_nsfw=True):
     embedcolor = EMBED_COLORS["reddit"]
     nsfw_thumbnail = "https://cdn2.iconfinder.com/data/icons/freecns-cumulus/32/519791-101_Warning-512.png"
     default_thumbnail = "https://cdn.discordapp.com/attachments/341428321109671939/490654122941349888/unknown.png"
+    embed_icon = "https://s18955.pcdn.co/wp-content/uploads/2017/05/Reddit.png"
 
     subembed = Embed()
     subembed.colour = embedcolor
     subembed.title = data["display_name"]
+    subembed.set_footer(text="via Reddit.com", icon_url=embed_icon)
     subembed.url = "https://www.reddit.com" + data["url"]
 
     # Return special embed if community is NSFW
@@ -152,7 +167,7 @@ async def reddit_post(post_url: str):
     Will return 'None' if the comment cannot be located
     """
     if post_url[-1] == "/":  # Strip trailing forward slash
-        json_url = post_url[:-1] + ".json"
+        json_url = post_url[:-1] + ".json?raw_json=1"
     else:
         json_url = post_url + ".json"
     [json, response] = await utils.get_json_with_get(json_url)
@@ -160,18 +175,25 @@ async def reddit_post(post_url: str):
         return None
     post_data = json[0]['data']['children'][0]['data']
 
+    if not post_data["is_self"]:  # Don't expand link posts
+        return None
+
     embedcolor = EMBED_COLORS["reddit"]
     nsfw_thumbnail = "https://cdn2.iconfinder.com/data/icons/freecns-cumulus/32/519791-101_Warning-512.png"
     default_thumbnail = "https://cdn.discordapp.com/attachments/341428321109671939/490654122941349888/unknown.png"
+    embed_icon = "https://s18955.pcdn.co/wp-content/uploads/2017/05/Reddit.png"
 
     post_embed = Embed()
     post_embed.colour = embedcolor
     post_embed.url = post_url
     post_embed.title = utils.trimtolength(post_data['title'], 256)
+
+    post_embed.set_footer(text="via Reddit.com", icon_url=embed_icon)
     post_embed.add_field(name="Author", value=post_data['author'])
     post_embed.add_field(name="Subreddit", value=post_data['subreddit_name_prefixed'])
     if not post_data['hide_score']:
-        post_embed.add_field(name="Score", value=post_data['score'])
+        scoreText = f"{post_data['score']} ({post_data['upvote_ratio'] * 100}%)"
+        post_embed.add_field(name="Score", value=scoreText)
     post_embed.add_field(name="Comments", value=post_data['num_comments'])
 
     # Hide other details if NSFW
@@ -186,20 +208,21 @@ async def reddit_post(post_url: str):
 
     post_embed.add_field(name="Posted", value=utils.timefromunix(post_data['created_utc']))
 
-    if post_data["is_self"]:
-        post_embed.description = utils.trimtolength(post_data['body'], 2048)
-    if post_data["thumbnail"] not in ["default", "self", None]:
-        post_embed.set_thumbnail(url=post_data["thumbnail"])
+    text = post_data['selftext'].replace('&#x200B;', '')
+    post_embed.description = utils.trimtolength(text, 2048)
+
+    if "preview" in post_data and len(post_data["preview"]["images"]) > 0:
+        post_embed.set_thumbnail(url=post_data["preview"]["images"][0]["source"]["url"])
     else:
         post_embed.set_thumbnail(url=default_thumbnail)
 
     # Guildings
     gildings = list()
-    if post_data['gildings']['gid_3'] > 0:
+    if 'gid_3' in post_data['gildings'].keys():
         gildings.append("Platinum x" + str(post_data['gildings']['gid_3']))
-    if post_data['gildings']['gid_2'] > 0:
+    if 'gid_2' in post_data['gildings'].keys():
         gildings.append("Gold x" + str(post_data['gildings']['gid_2']))
-    if post_data['gildings']['gid_1'] > 0:
+    if 'gid_1' in post_data['gildings'].keys():
         gildings.append("Silver x" + str(post_data['gildings']['gid_1']))
 
     if gildings:
@@ -233,11 +256,13 @@ async def reddit_comment(comment_url: str):
 
     embedcolor = EMBED_COLORS["reddit"]
     default_thumbnail = "https://cdn.discordapp.com/attachments/341428321109671939/490654122941349888/unknown.png"
+    embed_icon = "https://s18955.pcdn.co/wp-content/uploads/2017/05/Reddit.png"
 
     comment_embed = Embed()
     comment_embed.colour = embedcolor
     comment_embed.url = comment_url
     comment_embed.title = utils.trimtolength(link_data['title'], 256)
+    comment_embed.set_footer(text="via Reddit.com", icon_url=embed_icon)
     comment_embed.description = utils.trimtolength(comment_data['body'], 2048)
 
     if link_data["thumbnail"] is not None and link_data["thumbnail"] != "self":
@@ -251,14 +276,99 @@ async def reddit_comment(comment_url: str):
 
     # Guildings
     gildings = list()
-    if comment_data['gildings']['gid_3'] > 0:
+    if 'gid_3' in comment_data['gildings'].keys():
         gildings.append("Platinum x" + str(comment_data['gildings']['gid_3']))
-    if comment_data['gildings']['gid_2'] > 0:
+    if 'gid_2' in comment_data['gildings'].keys():
         gildings.append("Gold x" + str(comment_data['gildings']['gid_2']))
-    if comment_data['gildings']['gid_1'] > 0:
+    if 'gid_1' in comment_data['gildings'].keys():
         gildings.append("Silver x" + str(comment_data['gildings']['gid_1']))
 
     if gildings:
         comment_embed.add_field(name="Gildings", value=", ".join(gildings))
 
     return comment_embed
+
+
+async def twitter_handle(handle: str):
+    """
+
+    Parameters
+    -------------
+    handle : str
+        The twitter handle, with no @-sign or whitespace
+
+    Returns
+    -------------
+    An embed containing the link to the twitter account and related information
+    Will return 'None' if the account does not exist
+    """
+    twitter_api_url = "https://api.twitter.com/1.1/users/show.json?screen_name=" + handle
+    headers = {"Authorization": "Bearer " + credentials.tokens["TWITTER_BEARER"]}
+    [json, response] = await utils.get_json_with_get(twitter_api_url, headers=headers)
+    if response is not 200:
+        return None
+
+    # Embed values
+    embed_icon = "https://abs.twimg.com/icons/apple-touch-icon-192x192.png"
+    embed_color = EMBED_COLORS["twitter"]
+
+    # Embed properties
+    twitter_embed = Embed()
+    twitter_embed.colour = embed_color
+    twitter_embed.title = json["name"]
+    twitter_embed.set_footer(icon_url=embed_icon, text="Twitter")
+    twitter_embed.url = "https://twitter.com/" + handle
+    twitter_embed.set_thumbnail(url=json["profile_image_url_https"])
+    if json["description"]:
+        twitter_embed.description = json["description"]
+
+    # Fields
+    twitter_embed.add_field(name="Followers", value=str(json["followers_count"]))
+    if json["url"]:
+        twitter_embed.add_field(name="Website", value=json["url"])
+
+    return twitter_embed
+
+
+async def twitter_images(image_id):
+    """
+    Provided the id of a tweet, returns a list of embeds,
+    each containing an image from that tweet
+
+    Parameters
+    -------------
+    image_id : str/int
+        The id of the tweet media is being grabbed from
+
+    Returns
+    -------------
+    A list of embeds containing every image attached to the tweet
+    None if no images or tweet does not exist
+    """
+    twitter_api_url = "https://api.twitter.com/1.1/statuses/show.json"
+    parameters = {"id": str(image_id),
+                  "tweet_mode": "extended",
+                  "include_entities": "true"}
+    headers = {"Authorization": "Bearer " + credentials.tokens["TWITTER_BEARER"]}
+    [json, response] = await utils.get_json_with_get(twitter_api_url, headers=headers, params=parameters)
+    if response is not 200 or "extended_entities" not in json.keys():
+        return None
+
+    embed_list = list()
+
+    # Embed values
+    embed_icon = "https://abs.twimg.com/icons/apple-touch-icon-192x192.png"
+    embed_color = EMBED_COLORS["twitter"]
+    count = 0
+
+    # generate embed list
+    for entity in json['extended_entities']['media']:
+        count += 1
+        image_embed = Embed().set_image(url=entity["media_url_https"])
+        image_embed.colour = embed_color
+        image_embed.title = "Image " + str(count)
+        image_embed.url = entity["url"]
+        image_embed.set_footer(icon_url=embed_icon, text="Twitter")
+        embed_list.append(image_embed)
+
+    return embed_list[1:] if count else None  # Drop the last since we only care about showing the hidden images

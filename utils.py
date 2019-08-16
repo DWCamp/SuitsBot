@@ -56,7 +56,7 @@ def timefromunix(timestamp):
         Printout
     """
     time = datetime.fromtimestamp(int(timestamp))
-    return time.strftime("%a %b %d, %I:%M:%S %p") + " EST"
+    return time.strftime("%a %b %d, %I:%M:%S %p") + " ET"
 
 
 # ------------------------------------------------------------------------ Web functions
@@ -271,7 +271,7 @@ def loadfromcache(dbconn, key):
 
 # ------------------------------------------------------------------------ Error messages
 
-async def flag(bot, alert, description="(No description provided)", ctx=None, message=None):
+async def flag(bot, alert, description=None, ctx=None, message=None):
     """
     Send a non-urgent message to the dev
 
@@ -292,7 +292,10 @@ async def flag(bot, alert, description="(No description provided)", ctx=None, me
     try:
         if message is None:
             if ctx is None:
-                await bot.send_message(bot.ALERT_CHANNEL, "Alert:\n" + alert + "\n---\n" + description)
+                if description is None:
+                    await bot.send_message(bot.ALERT_CHANNEL, "----\n**Alert:\n" + alert + "**")
+                else:
+                    await bot.send_message(bot.ALERT_CHANNEL, "Alert:\n" + alert + "\n---\n" + description)
                 return
             message = ctx.message
 

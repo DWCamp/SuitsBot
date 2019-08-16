@@ -11,6 +11,8 @@ class Regex:
         self.post = re.compile('https?://' + subdomains + 'reddit.com/r/\w{1,20}/comments/\w{5,6}/\w+/?\B')
         self.subreddit = re.compile('((^|\s)\/?r\/\w+(\s|$))')
         self.swear = re.compile('.*(fu+c(c|k)|sh+i+t+)')
+        self.twitter_handle = re.compile('(\s|^)(@{1})(\w{1,15})($|\s)')
+        self.twitter_id = re.compile('\\b(https://twitter\\.com/\\w{1,15}/status/)(\\d{19})\\b')
         self.url = re.compile("https?:\/\/" +  # Protocol
                               "(([\w\$\-+!*'\(\),])+\.){1,}" +  # Domain
                               "([\w\$\-+!*'\(\),])+" +  # Top level domain
@@ -61,20 +63,38 @@ class Regex:
         """
         return self.url.fullmatch(string) is not None
 
+    # Reddit
+
+    def find_comments(self, message):
+        return re.findall(self.comment, message)
+
+    def find_posts(self, message):
+        return re.findall(self.post, message)
+
+    def find_subreddits(self, message):
+        return re.findall(self.subreddit, message)
+
+    # Stores
+
     def find_amazon(self, message):
         return re.findall(self.amazon, message)
 
     def find_newegg(self, message):
         return re.findall(self.newegg, message)
 
-    def find_subreddits(self, message):
-        return re.findall(self.subreddit, message)
+    # Twitter
 
-    def find_posts(self, message):
-        return re.findall(self.post, message)
+    def find_twitter_handle(self, message):
+        matches = re.findall(self.twitter_handle, message)
+        if matches:
+            return [match[2] for match in matches]  # Grab only the user name
+        return []
 
-    def find_comments(self, message):
-        return re.findall(self.comment, message)
+    def find_twitter_id(self, message):
+        matches = re.findall(self.twitter_id, message)
+        if matches:
+            return [match[1] for match in matches]  # Grab only the status id
+        return []
 
 
 def args(message):

@@ -13,7 +13,7 @@ ALIASES = {
     "bestgirl": ["bestGirls", "bestGirl", "bestgirls", "bestGrils", "bestgril", "bestgrils", "bestGril", "bg", "BG"],
     "code": ["Code", "program", "exe", "swift", "python", "java", "cpp", "brainfuck", "golang", "ide", "IDE", "cobol",
              "pascal", "fortran", "vbn", "scala", "bash", "php", "perl", "cpp14", "c", "csharp", "lua", "rust"],
-    "colton": ["Colton", "foreverAlone", "damnitcolton", "damnItColton", "DamnItColton"],
+    "claire": ["Claire", "foreverAlone", "damnitclaire", "damnItClaire", "DamnItClaire"],
     "hello": ["hi", "hey"],
     "join": ["jion", "joni"],
     "leave": ["shut up", "fuckOff", "gtfo", "GTFO"],
@@ -24,6 +24,7 @@ ALIASES = {
     "rand": ["random", "ran", "randmo"],
     "say": ["voice", "speak"],
     "tag": ["tags", "Tag", "Tags"],
+    "ud": ["urbanDictionary", "urbandict", "urbanDict", "UD", "uD", "Ud"],
     "wiki": ["wikipedia", "Wikipedia", "Wiki", "WIKI"],
     "wolf": ["wolfram", "wA", "Wolfram", "WolframAlpha", "wolframAlpha", "woflram", "wofl"],
     "woof": ["dog", "doggo", "wof", "woofer", "wouef"],
@@ -51,7 +52,7 @@ BRIEF_HELP = {
     "anime": "Provides information about anime",
     "aes": "A command for making text 'A E S T H E T I C'",
     "code": "Arbitrary code execution",
-    "colton": "Colton said he was forever alone again",
+    "claire": "Claire said he was forever alone again",
     "bestgirl": "Best girl list manager",
     "hello": "The bot says hi to you",
     "join": "Join a user in voice",
@@ -63,6 +64,7 @@ BRIEF_HELP = {
     "rand": "Generate a random result",
     "say": "Have the bot say dumb things in voice",
     "tag": "Have the bot repeat a message when given a key phrase",
+    "ud": "Searches Urban Dictionary for a term",
     "wiki": "Ask Wikipedia about a subject",
     "wolf": "Ask WolframAlpha a question",
     "woof": "Woof.",
@@ -94,6 +96,8 @@ EMBED_COLORS = {"default": 0x4E2368,
                 "newegg": 0x012D6B,
                 "picture": 0x95AF4D,
                 "reddit": 0xFF5700,
+                "twitter": 0x1D9DED,
+                "ud": 0x1D2439,
                 "wiki": 0xFFFFFF,
                 "woof": 0x9E7132,
                 "yiff": 0xD4EFFF,
@@ -117,7 +121,7 @@ LONG_HELP = {
                  "look like `!bestGirl add [1] Ryuko Matoi`"),
     "code": ("Executes code typed in code formatted blocks (code enclosed in triple backticks ```like this```). " +
              "Supports 67 different languages. Type `!code -help` for more information"),
-    "colton": ("Records every time that Colton claims that he will be " +
+    "claire": ("Records every time that Claire claims that he will be " +
                "forever alone. Reports back the number of times that day as " +
                "well as the number of times overall"),
     "hello": "A simple greeting! Say hi to the bot and she will say hi back!",
@@ -146,6 +150,7 @@ LONG_HELP = {
             "meme texts, or images. Since each key can only have one value, users also have a personal group of " + 
             "key-value pairs that can be set or accessed with the command `!tag -u`. For the complete user guide, " + 
             "type `!tag -help`"),
+    "ud": ("Searches Urban Dictionary for a search term"),
     "wiki": ("Queries Wikipedia for information about the requested subject. Returns a simple description as well as " + 
              "a longer form excerpt from the article."),
     "wolf": ("Use this command to ask the bot simple WolframAlpha questions. Type `!wolf` and followed by your " + 
