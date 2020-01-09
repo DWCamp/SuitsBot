@@ -1,4 +1,5 @@
 import aiohttp
+import feedparser
 from datetime import datetime
 import random
 import traceback
@@ -59,6 +60,21 @@ def timefromunix(timestamp):
     return time.strftime("%a %b %d, %I:%M:%S %p") + " ET"
 
 
+def first_whitespace(haystack):
+    """
+    Returns the index of the first occurrence of whitespace in a string
+
+    :param haystack: The string to search in
+    :return: The index of the first whitespace character, returns -1 if no such character exists
+    """
+    count = 0
+    for char in haystack:
+        if char in [" ", "\n", "\t", "\r"]:
+            return count
+        count += 1
+    return -1
+
+
 # ------------------------------------------------------------------------ Web functions
 
 def checkurl(regex, url):
@@ -67,7 +83,7 @@ def checkurl(regex, url):
 
     Parameters
     -------------
-    regex : compiled regex patter
+    regex : compiled regex pattern
         The pattern to check the url against
     url : str
         The string to check
@@ -83,11 +99,21 @@ def embedfromdict(dictionary, title=None, description=None, thumbnail_url=None, 
     """
     Creates an embeded object from a dictionary
 
-    dictionary - A [str:str] dictionary where the keys are the field names and the values are the field values
-    title - The title of the embed
-    description - The description of the embed
-    thumbnail_url - A string which holds a url to the image which will become the embed thumbnail
-    color - The embed color
+    dictionary : {str: str} dictionary
+        A dictionary mapping field names to values
+    title : str
+        The title of the embed
+    description : str
+        The description of the embed
+    thumbnail_url : str
+        A url to the image which will become the embed thumbnail
+    color : int
+        The hexadecimal value for the color of the embed's highlight.
+        If not provided, uses the default (SuitsBot purple)
+
+    Returns
+    ---------
+    An embed built with the passed parameters
     """
     embed = Embed()
     if title is not None:
@@ -105,7 +131,8 @@ def embedfromdict(dictionary, title=None, description=None, thumbnail_url=None, 
 
 
 async def get_json_with_get(url, params=None, headers=HEADERS, content_type=None):
-    """ Requests JSON data using a GET request
+    """
+    Requests JSON data using a GET request
 
     Parameters
     -------------
@@ -143,7 +170,8 @@ async def get_json_with_get(url, params=None, headers=HEADERS, content_type=None
 
 
 async def get_json_with_post(url, params=None, json=None):
-    """ Requests JSON data using a POST request
+    """
+    Requests JSON data using a POST request
 
     Parameters
     -------------
@@ -154,7 +182,6 @@ async def get_json_with_post(url, params=None, json=None):
         If not provided, an empty dict is passed
     json : Optional - dict{str:str}
         The JSON dictionary to be posted with the API
-    }
 
     Returns
     -------------
@@ -179,11 +206,29 @@ async def get_json_with_post(url, params=None, json=None):
 
 
 async def get_website_text(url, params=None, json=None):
+    """
+    Gets the contents of a web page and returns it in raw HTML
+
+    :param url: The url to query
+    :param params: a dictionary of url parameters
+    :param json: A JSON payload to include
+    :return: The raw HTML of the web page
+    """
     async with aiohttp.ClientSession(headers=HEADERS) as session:
         async with session.post(url, params=params, json=json) as resp:
             if resp.status is not 200:
                 return None
             return await resp.text()
+
+
+def get_rss_feed(url):
+    """
+    Returns a feedparser object containing the information about the RSS feed
+
+    :param url: (str) the url of the rss feed
+    :return: A feedparser object
+    """
+    return feedparser.parse(url)
 
 
 # ------------------------------------------------------------------------ Database caching
@@ -309,7 +354,11 @@ async def flag(bot, alert, description=None, ctx=None, message=None):
         else:
             flag_embed.add_field(name="Channel", value=message.server.name + " / " + message.channel.name,
                                  inline=False)
-        flag_embed.add_field(name="Message", value=message.content, inline=False)
+
+        # Try to avoid issues where users joining servers causes an error because of blank messages
+        if message.content is not None and message.content != "":
+            flag_embed.add_field(name="Message", value=message.content, inline=False)
+
         if description is not None:
             flag_embed.description = trimtolength(description, 2048)
         await bot.send_message(bot.ALERT_CHANNEL, embed=flag_embed)

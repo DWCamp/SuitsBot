@@ -31,22 +31,22 @@ class Code:
             "cpp14": ["C++ 14 (GCC 8.1.0)", "cpp14", 2],
             "csharp": ["C# (mono 5.10.1)", "csharp", 2],
             "haskell": ["Haskell (ghc 8.2.2)", "haskell", 2],
-            "java": ["Java 10.0.1", "java", 2],
-            "kotlin": ["Kotlin 1.2.40 (JRE 10.0.1)", "kotlin", 1],
+            "java": ["Java 11.0.4", "java", 3],
+            "kotlin": ["Kotlin 1.3.50 (JRE 11.0.4)", "kotlin", 2],
             "lua": ["Lua 5.3.4", "lua", 1],
-            "nodejs": ["NodeJS 10.1.0", "nodejs", 2],
+            "nodejs": ["NodeJS 12.11.1", "nodejs", 3],
             "pascal": ["Pascal (fpc-3.0.4)", "pascal", 2],
             "perl": ["Perl 5.26.2", "perl", 2],
             "php": ["PHP 7.2.5", "php", 2],
             "python2": ["Python 2.7.15", "python2", 1],
-            "python": ["Python 3.6.5", "python3", 2],
+            "python": ["Python 3.7.4", "python3", 3],
             "go": ["GO Lang 1.10.2", "go", 2],
             "scala": ["Scala 2.12.5", "scala", 3],
             "scheme": ["Scheme (Gauche 0.9.4)", "scheme", 1],
             "sql": ["SQLite 3.23.1", "sql", 2],
-            "swift": ["Swift 4.1", "swift", 2],
+            "swift": ["Swift 5.1", "swift", 3],
             "r": ["R Language 3.5.0", "r", 0],
-            "ruby": ["Ruby 2.5.1p57", "ruby", 2],
+            "ruby": ["Ruby 2.6.5", "ruby", 3],
             "rust": ["RUST 1.25.0", "rust", 2]
         }
 
@@ -171,59 +171,60 @@ class Code:
 
             if "```" in message:
                 trimmedmessage = message[message.find("```") + 3:]
-                if "```" in trimmedmessage:
-                    trimmedmessage = trimmedmessage[:trimmedmessage.find("```")]
-                    splitmessage = trimmedmessage.split("\n", maxsplit=1)
-                    if len(trimmedmessage) == 0:
-                        await self.bot.say("You need to put code inside the backticks")
-                        return
-                    if trimmedmessage[0] not in [" ", "\n"] and len(splitmessage) > 1:
-                        [language, script] = splitmessage
-                        language = language.strip()
-                        for key in self.esolangs.keys():
-                            self.langs[key] = self.esolangs[key]
-                        if language.lower() in self.langs.keys():
-                            response = await utils.get_json_with_post(url=self.execute_url, json={
-                                "clientId": self.JDOODLE_ID,
-                                "clientSecret": self.JDOODLE_SECRET,
-                                "script": script,
-                                "language": self.langs[language.lower()][1],
-                                "versionIndex": self.langs[language.lower()][2]
-                            })
-                            [json, resp_code] = response
-                            if resp_code == 429:
-                                await utils.report(self.bot,
-                                                   json,
-                                                   "Bot has reached its JDOODLE execution limit",
-                                                   ctx=ctx)
-                                await self.bot.say("The bot has reached its code execution limit for the day.")
-                                return
-                            output_embed = Embed()
-                            if "error" in json.keys():
-                                output_embed.description = json['error']
-                                output_embed.title = "ERROR"
-                                output_embed.colour = EMBED_COLORS["error"]
-                                await self.bot.say(embed=output_embed)
-                                return
-                            output_embed.title = "Output"
-                            output_embed.colour = EMBED_COLORS["code"]
-                            output_embed.add_field(name="CPU Time", value=str(json['cpuTime']) + " seconds")
-                            output_embed.add_field(name="Memory Usage", value=json['memory'])
-                            if len(json['output']) > 2046:
-                                output_embed.description = "``` " + utils.trimtolength(json['output'], 2040) + "```"
-                            else:
-                                output_embed.description = "``` " + json['output'] + "```"
-                            await self.bot.say(embed=output_embed)
-                        else:
-                            await self.bot.say("I don't know the language '" + language + "'. Type `!code -full` " +
-                                               "to see the list of languages I support, or type `!code -ls` to see " +
-                                               "the most popular ones")
-                    else:
-                        await self.bot.say("There was no language tag. Remember to include the language tag " +
-                                           "immediately after the opening backticks. Type `!code -ls` or " +
-                                           "`!code -full` to find your language's tag")
-                else:
+                if "```" not in trimmedmessage:
                     await self.bot.say("You didn't close your triple backticks")
+                    return
+                trimmedmessage = trimmedmessage[:trimmedmessage.find("```")]
+                splitmessage = trimmedmessage.split("\n", maxsplit=1)
+                if len(trimmedmessage) == 0:
+                    await self.bot.say("You need to put code inside the backticks")
+                    return
+                if trimmedmessage[0] not in [" ", "\n"] and len(splitmessage) > 1:
+                    [language, script] = splitmessage
+                    language = language.strip()
+                    for key in self.esolangs.keys():
+                        self.langs[key] = self.esolangs[key]
+                    if language.lower() in self.langs.keys():
+                        response = await utils.get_json_with_post(url=self.execute_url, json={
+                            "clientId": self.JDOODLE_ID,
+                            "clientSecret": self.JDOODLE_SECRET,
+                            "script": script,
+                            "language": self.langs[language.lower()][1],
+                            "versionIndex": self.langs[language.lower()][2]
+                        })
+                        [json, resp_code] = response
+                        if resp_code == 429:
+                            await utils.report(self.bot,
+                                               json,
+                                               "Bot has reached its JDOODLE execution limit",
+                                               ctx=ctx)
+                            await self.bot.say("The bot has reached its code execution limit for the day.")
+                            return
+                        output_embed = Embed()
+                        if "error" in json.keys():
+                            output_embed.description = json['error']
+                            output_embed.title = "ERROR"
+                            output_embed.colour = EMBED_COLORS["error"]
+                            await self.bot.say(embed=output_embed)
+                            return
+                        output_embed.title = "Output"
+                        output_embed.colour = EMBED_COLORS["code"]
+                        output_embed.add_field(name="Language", value=self.langs[language.lower()][0])
+                        output_embed.add_field(name="CPU Time", value=str(json['cpuTime']) + " seconds")
+                        output_embed.add_field(name="Memory Usage", value=json['memory'])
+                        if len(json['output']) > 2046:
+                            output_embed.description = "``` " + utils.trimtolength(json['output'], 2040) + "```"
+                        else:
+                            output_embed.description = "``` " + json['output'] + "```"
+                        await self.bot.say(embed=output_embed)
+                    else:
+                        await self.bot.say("I don't know the language '" + language + "'. Type `!code -full` " +
+                                           "to see the list of languages I support, or type `!code -ls` to see " +
+                                           "the most popular ones")
+                else:
+                    await self.bot.say("There was no language tag. Remember to include the language tag " +
+                                       "immediately after the opening backticks. Type `!code -ls` or " +
+                                       "`!code -full` to find your language's tag")
             else:
                 await self.bot.say("I don't see any code")
         except Exception as e:

@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 from discord import Embed
 import sys
-import asyncio
+
 # ----------- For commands
 from datetime import datetime
 # ----------- Custom imports
@@ -51,12 +51,17 @@ scribble_bank = list()
 # -------------------- COMMAND WHITELIST -------------------------------
 
 command_whitelist = {"360523650912223253": ["help",
+                                            "code",
                                             "dev",
+                                            "gritty",
                                             "nasa",
+                                            "meco",
                                             "meow",
+                                            "on",
                                             "rand",
                                             "ud",
                                             "wiki",
+                                            "wm",
                                             "wolf",
                                             "woof",
                                             "youtube"]}
@@ -78,7 +83,7 @@ bot = commands.Bot(command_prefix=get_prefix, description=BOT_DESCRIPTION)
 # -------------------------- PERIODIC TASKS --------------------------------------
 
 
-async def post_apod(currTime):
+async def post_apod(curr_time):
     try:
         embed_icon = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA_logo.svg/" +\
                      "1200px-NASA_logo.svg.png"
@@ -103,6 +108,20 @@ async def post_apod(currTime):
         await utils.report(bot, str(e), source="Daily APOD command")
 
 # --------------------------- BOT EVENTS --------------------------------
+
+
+@bot.event
+async def on_member_join(member: discord.member):
+    # If member of Off-Nominal server
+    if member.server.id == "360523650912223253":
+        # Get Ben's user object
+        benjaminherrin = await bot.get_user_info("576950553289031687")
+        # Send Ben the embed
+        embed = Embed(title="A new user has joined Off Nominal!")
+        embed.description = "Say hi!"
+        embed.add_field(name="Username", value=member.name)
+        embed.add_field(name="Joined on", value=member.joined_at)
+        await bot.send_message(benjaminherrin, embed=embed)
 
 
 @bot.event
@@ -216,6 +235,12 @@ async def on_message(message):
             else:
                 await bot.send_message(message.channel, "You do not have authority to restart the bot")
 
+        # ------------------------------------------- BOT IGNORE COMMAND
+        # Any message starting with "-sb" will be ignored from the bot.
+        # This can be used to prevent embeds, pings, etc
+        if message.content[:3].lower() == "-sb":
+            return
+
         # ------------------------------------------- LIST ENGINE
         # Add author to user table and ListEngine if missing
         authorid = message.author.id
@@ -223,15 +248,12 @@ async def on_message(message):
         # If user missing from user table
         try:
             if authorid not in bot.users.keys() and "users" not in bot.loading_failure.keys():
-                if authorname.isprintable():
-                    sqlname = authorname
-                else:
-                    sqlname = ''
-                    for char in authorname:
-                        if char.isprintable():
-                            sqlname += char
-                        else:
-                            sqlname += '?'
+                sqlname = ''
+                for char in authorname:
+                    if char.lower() in "abcdefghijklmnopqrstuvwxyz1234567890 ?\\/\'\",.[]\{\}|!@#$%^&*()`~":
+                        sqlname += char
+                    else:
+                        sqlname += '?'
                 add_user(authorid, sqlname)
                 await utils.flag(bot,
                                  "Added new user on server",
@@ -240,7 +262,7 @@ async def on_message(message):
         except Exception as e:
             await utils.report(bot,
                                str(e),
-                               source=f"Failed to add user `{authorname}` to server {message.server.id}")
+                               source=f"Failed to add user `{authorname}` to server {message.server.id}, tried with {sqlname}")
 
         # If user missing from list engine
         if authorid not in bot.list_engine.user_table.keys():
@@ -292,7 +314,7 @@ async def on_message(message):
                 if command not in aliaslist:
                     return
 
-        # -------------------------------------------- Parsing reddit values
+        # -------------------------------------------- Embed response detection
         content = message.content
 
         # Subreddits
@@ -312,36 +334,41 @@ async def on_message(message):
                     details = {} if subembed is None else subembed.to_dict()
                     await utils.report(bot, str(e) + "\n" + str(details), source='subreddit detection')
 
-        generator_fodder = [(bot.regex.find_posts, embedGenerator.reddit_post),  # Reddit posts
-                            (bot.regex.find_comments, embedGenerator.reddit_comment),  # Reddit comments
-                            # (bot.regex.find_twitter_handle, embedGenerator.twitter_handle),  # Twitter handles
-                            (bot.regex.find_twitter_id, embedGenerator.twitter_images),  # Images from tweets
-                            (bot.regex.find_amazon, embedGenerator.amazon),  # Amazon links
-                            (bot.regex.find_newegg, embedGenerator.newegg)]  # Newegg links
+        try:
+            generator_fodder = [(bot.regex.find_posts, embedGenerator.reddit_post),  # Reddit posts
+                                (bot.regex.find_comments, embedGenerator.reddit_comment),  # Reddit comments
+                                # (bot.regex.find_twitter_handle, embedGenerator.twitter_handle),  # Twitter handles
+                                # (bot.regex.find_twitter_id, embedGenerator.twitter_images),  # Images from tweets
+                                (bot.regex.find_twitter_id, embedGenerator.twitter_response),  # Response to tweets
+                                (bot.regex.find_amazon, embedGenerator.amazon),  # Amazon links
+                                (bot.regex.find_newegg, embedGenerator.newegg)]  # Newegg links
 
-        for (regex, generator) in generator_fodder:
-            for embed in await embedGenerator.embeds_from_regex(regex(content), generator):
-                await bot.send_message(message.channel, embed=embed)
+            for (regex, generator) in generator_fodder:
+                for embed in await embedGenerator.embeds_from_regex(regex(content), generator):
+                    await bot.send_message(message.channel, embed=embed)
+
+        except Exception as e:
+            await utils.report(bot, str(e), source="embed generation in on_message")
 
         # -------------------------------------------- Counting Swears
-        try:
-            if message.channel.id != DEV_CHANNEL_ID:
-                words = message.content.split()
-                swears = 0
-                for word in words:
-                    if bot.regex.is_swear(word):
-                        swears += 1
-                if message.author.id not in swear_tally.keys():
-                    swear_tally[message.author.id] = [0, 0, 0.0]
-                    add_user_swears(message.author.id)
-                talleyarray = swear_tally[message.author.id]
-                talleyarray[0] += len(words)
-                talleyarray[1] += swears
-                talleyarray[2] = talleyarray[1] / float(talleyarray[0])
-                update_user_swears(message.author.id)
-        except Exception as e:
-            await utils.report(bot, str(e), source="swear detection")
-            return
+        # try:
+        #     if message.channel.id != DEV_CHANNEL_ID:
+        #         words = message.content.split()
+        #         swears = 0
+        #         for word in words:
+        #             if bot.regex.is_swear(word):
+        #                 swears += 1
+        #         if message.author.id not in swear_tally.keys():
+        #             swear_tally[message.author.id] = [0, 0, 0.0]
+        #             add_user_swears(message.author.id)
+        #         talleyarray = swear_tally[message.author.id]
+        #         talleyarray[0] += len(words)
+        #         talleyarray[1] += swears
+        #         talleyarray[2] = talleyarray[1] / float(talleyarray[0])
+        #         update_user_swears(message.author.id)
+        # except Exception as e:
+        #     await utils.report(bot, str(e), source="swear detection")
+        #     return
 
         # ------------------------------------------------------------
 
@@ -372,7 +399,7 @@ async def aes(ctx):
         if len(message) == 0:
             await bot.say("I'll need a message to meme-ify (e.g. `!aes Aesthetic`)?")
         elif len(message) > 100:
-            await bot.say("I'm not reading your novel, boy.\n(Message length: " + str(len(message)) + ")")
+            await bot.say("I'm not reading your novel, Tolstoy.\n(Message length: " + str(len(message)) + ")")
             return
         elif len(message) > 50:
             await bot.say(
@@ -744,6 +771,7 @@ startup_extensions = ['cogs.anilist',
                       'cogs.code',
                       'cogs.images',
                       'cogs.listcommands',
+                      'cogs.podcasts',
                       'cogs.rand',
                       'cogs.tags',
                       'cogs.voice',

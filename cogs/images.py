@@ -1,3 +1,4 @@
+import random
 from discord.ext import commands
 from discord import Embed
 from urllib.parse import quote
@@ -31,6 +32,48 @@ class Images:
         self.meow_successes = int(meow_successes)
         self.meow_attempts = int(meow_attempts)
         self.next_meow_url = utils.loadfromcache(bot.dbconn, "meowURL")
+        self.gritty_urls = ["https://media.newyorker.com/photos/5bbd10430cdf452cf93ca22f/master/w_1023,c_limit/Crouch-Gritty.jpg",
+                            "https://media.phillyvoice.com/media/images/Dn9LBKjU8AAaIYO.jpg-large.ad646704.fill-735x490.jpg",
+                            "https://i.imgflip.com/2imt3r.gif",
+                            "https://pbs.twimg.com/media/Dn591_aXsAE0rvt?format=jpg",
+                            "https://media.giphy.com/media/1AgZiwuFdlt8iPSAmt/giphy.gif",
+                            "https://video-images.vice.com/_uncategorized/1573284466885-Gritty_Vice_Mascots_Leaman_548_FINAL.jpeg",
+                            "https://video-images.vice.com/_uncategorized/1573284489524-Gritty_Vice_Mascots_Leaman_309_FINAL.jpeg",
+                            ("https://mondrian.mashable.com/uploads%252Fcard%252Fimage%252F887937%252F57b3613c-304a-" +
+                             "4078-bbb2-d7f8fa82dc75.jpg%252F950x534__filters%253Aquality%252880%2529.jpg?signature=" +
+                             "RGtrrSLtdBTz61_erR9HRmtWfAc=&source=https%3A%2F%2Fblueprint-api-production.s3.amazonaws.com"),
+                            "https://d.newsweek.com/en/full/1137055/dn3mx-bxuainf87.webp?w=737&f=c4214da3e318d1ce6f48f611bcdd346e",
+                            ("https://www.nbcsports.com/philadelphia/sites/csnphilly/files/styles/article_hero_image/" +
+                             "public/2019/02/23/022319gritty1550970956833_7000k_1920x1080_1447358019700.jpg?itok=iOjK3zeQ"),
+                            "https://www.phillymag.com/wp-content/uploads/sites/3/2018/11/gritty-time-magazine-person-of-the-year.jpg",
+                            ("https://www.si.com/.image/ar_16:9%2Cc_fill%2Ccs_srgb%2Cfl_progressive%2Cg_faces:" +
+                             "center%2Cq_auto:good%2Cw_768/MTY4MDMxMjg0NTEwNzk1MTM2/gritty-qajpg.jpg"),
+                            ("https://cdn.vox-cdn.com/thumbor/7cFKvPx44nNr7GhfSQBQlxvOATs=/0x0:2048x1536/1200x800/" +
+                             "filters:focal(788x383:1114x709)/cdn.vox-cdn.com/uploads/chorus_image/image/64007338/GrittyPride.0.jpg"),
+                            "https://usatftw.files.wordpress.com/2019/10/gritty.jpg?w=1000&h=600&crop=1",
+                            "https://i.redd.it/ae2e968kxfx11.jpg",
+                            "https://i.redd.it/g3cw8vlq0d121.jpg",
+                            "https://i.redd.it/e15pjejpfdo21.jpg",
+                            "https://i.redd.it/x5we704ijv521.png",
+                            "https://i.redd.it/0fwwueqlidz11.jpg",
+                            "https://i.redd.it/qgznzo117zt11.jpg",
+                            "https://giant.gfycat.com/SlightLeanCats.webm",
+                            "https://i.imgur.com/FMhCMbw.jpg",
+                            "https://i.redd.it/1cllnxyk7xr21.jpg",
+                            "https://i.redd.it/xdpr7uctd2a31.jpg",
+                            "https://i.redd.it/oq88wl9x33921.jpg",
+                            "https://i.redd.it/pve7gkrgmet11.jpg",
+                            "https://i.imgur.com/2BrTP5q.jpg"]
+
+    @commands.command(pass_context=True, help=LONG_HELP['gritty'], brief=BRIEF_HELP['gritty'], aliases=ALIASES['gritty'])
+    async def gritty(self, ctx):
+        try:
+            url = self.get_gritty_url()
+            embed = Embed().set_image(url=url)
+            embed.colour = EMBED_COLORS["gritty"]
+            await self.bot.say(embed=embed)
+        except Exception as e:
+            await utils.report(self.bot, str(e), source="Gritty command", ctx=ctx)
 
     @commands.command(pass_context=True, help=LONG_HELP['meow'], brief=BRIEF_HELP['meow'], aliases=ALIASES['meow'])
     async def meow(self, ctx):
@@ -127,6 +170,10 @@ class Images:
             await self.bot.say(embed=woof_embed)
         except Exception as e:
             await utils.report(self.bot, str(e), source="woof command", ctx=ctx)
+
+    def get_gritty_url(self):
+        """Gets a random Gritty url"""
+        return random.choice(self.gritty_urls)
 
     async def get_meow_url(self):
         """ Gets the url of a random image from aws.random.cat and caches the value """

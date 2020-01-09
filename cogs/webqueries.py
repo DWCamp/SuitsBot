@@ -16,10 +16,9 @@ class WebQueries:
     # Searches urban dictionary for a term
     @commands.command(pass_context=True, help=LONG_HELP['ud'], brief=BRIEF_HELP['ud'], aliases=ALIASES['ud'])
     async def ud(self, ctx):
-
         # Removes the brackets around words, which UD puts around words in definitions
         # and examples that have their own definitions
-        def strip_brackets(text):
+        def stripBrackets(text):
             text = text.replace("[", " ").replace("]", "")
             return text
 
@@ -55,8 +54,8 @@ class WebQueries:
                         defText = definition["definition"].replace("*", "\\*")
                         exampleText = "**Example: " + definition["example"].replace("*", "\\*") + "**"
                         ud_embed.add_field(name=str(counter + 1),
-                                           value=utils.trimtolength(strip_brackets(defText + "\n\n" + exampleText), 1024),
-                                           inline=False)
+                                             value=utils.trimtolength(stripBrackets(defText + "\n\n" + exampleText), 1024),
+                                             inline=False)
                     counter += 1
                 ud_embed.colour = EMBED_COLORS['ud']  # Make the embed white
 

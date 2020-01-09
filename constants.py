@@ -14,17 +14,21 @@ ALIASES = {
     "code": ["Code", "program", "exe", "swift", "python", "java", "cpp", "brainfuck", "golang", "ide", "IDE", "cobol",
              "pascal", "fortran", "vbn", "scala", "bash", "php", "perl", "cpp14", "c", "csharp", "lua", "rust"],
     "claire": ["Claire", "foreverAlone", "damnitclaire", "damnItClaire", "DamnItClaire"],
+    "gritty": ["grity", "grittmeister", "grittster", "god", "orange", "philly", "philadelphia", "eattherich", "Gritty"],
     "hello": ["hi", "hey"],
     "join": ["jion", "joni"],
     "leave": ["shut up", "fuckOff", "gtfo", "GTFO"],
     "ls": ["list", "lsit", "l", "lists"],
+    "meco": ["MECO", "Meco", "MainEngineCutOff", "podcast"],
     "meow": ["cat", "moew", "mewo", "nyaa", "nyan"],
     "nasa": ["NASA", "APOTD", "APOD", "apod", "apotd"],
+    "on": ["offnominal", "OffNominal", "Off-nominal", "Off-Nominal", "ON", "OFFNOMINAL", "OFF_NOMINAL", "OFF-NOMINAL"],
     "picture": ["snek", "Snek", "sneks", "Sneks", "snake", "snakes", "pic", "photo", "unsplash", "Unsplash"],
     "rand": ["random", "ran", "randmo"],
     "say": ["voice", "speak"],
     "tag": ["tags", "Tag", "Tags"],
     "ud": ["urbanDictionary", "urbandict", "urbanDict", "UD", "uD", "Ud"],
+    "wm": ["WM", "wemartians", "WeMartians", "We-martians", "Wemartians"],
     "wiki": ["wikipedia", "Wikipedia", "Wiki", "WIKI"],
     "wolf": ["wolfram", "wA", "Wolfram", "WolframAlpha", "wolframAlpha", "woflram", "wofl"],
     "woof": ["dog", "doggo", "wof", "woofer", "wouef"],
@@ -36,7 +40,7 @@ AUTHORIZED_IDS = [
 ]
 
 # Bot description
-BOT_DESCRIPTION = """SuitsBot v4.1.1
+BOT_DESCRIPTION = """SuitsBot v4.3.0
 Discord bot deployed to practice webAPI implementation and learn Python.
 Supports a variety of different functions including
 - Call-and-response user tags
@@ -51,21 +55,25 @@ More information at: https://github.com/DWCamp/SuitsBot/wiki
 BRIEF_HELP = {
     "anime": "Provides information about anime",
     "aes": "A command for making text 'A E S T H E T I C'",
+    "bestgirl": "Best girl list manager",
     "code": "Arbitrary code execution",
     "claire": "Claire said he was forever alone again",
-    "bestgirl": "Best girl list manager",
+    "gritty": "The bot graces your server with an image of His Royal Orangeness",
     "hello": "The bot says hi to you",
     "join": "Join a user in voice",
     "leave": "leave voice",
     "ls": "Arbitrary list creation",
+    "meco": "Posts the URL to the MECO podcast episode with the number provided",
     "meow": "Cat.",
     "nasa": "A stunning astonomy picture",
+    "on": "Posts the URL to the Off-Nominal podcast episode with the number provided",
     "picture": "Get a random picture of something",
     "rand": "Generate a random result",
     "say": "Have the bot say dumb things in voice",
     "tag": "Have the bot repeat a message when given a key phrase",
     "ud": "Searches Urban Dictionary for a term",
     "wiki": "Ask Wikipedia about a subject",
+    "wm": "Posts the URL to the We Martians podcast episode with the number provided",
     "wolf": "Ask WolframAlpha a question",
     "woof": "Woof.",
     "youtube": "Searches YouTube"}
@@ -90,6 +98,7 @@ EMBED_COLORS = {"default": 0x4E2368,
                 "code": 0x00EE36,
                 "error": 0xAA0000,
                 "flag": 0xFCEF15,
+                "gritty": 0xF74902,
                 "list": 0x00C8C8,
                 "meow": 0xFCBE41,
                 "nasa": 0xEE293D,
@@ -124,6 +133,11 @@ LONG_HELP = {
     "claire": ("Records every time that Claire claims that he will be " +
                "forever alone. Reports back the number of times that day as " +
                "well as the number of times overall"),
+    "gritty": "Prepare yourself for his mighty orangeness. The one Wikipedia describes as a 'Large, furry, orange " +
+              "creature in Flyers regalia', he who's own team marketing director said 'doesn't know his right from " +
+              "his left'. Eater of the rich. Wrecker of stadium back rooms. Menace to refs and rink staff. He " +
+              "takes no quarter. He shows no mercy. He will smile at your funeral. Gritizens, put your hands " +
+              "together for the one, the only...\n\n**GRITTY**",
     "hello": "A simple greeting! Say hi to the bot and she will say hi back!",
     "join": "Make the bot join a user in voice",
     "leave": "Makes the bot leave voice chat",
@@ -131,10 +145,12 @@ LONG_HELP = {
            "user possesses multiple tables of data which the user can edit by going into and performing edit " +
            "commands similar to those found in the `!bestGirl` command. Type `!list help` for a full list of the " +
            "commands you can use and how they work."),
+    "meco": "Give it a positive integer and it will give you the link to that MECO episode",
     "meow": "Cat.",
     "nasa": ("Provides an HD image of an astronomical nature. This image is provided by NASA's Astronomy Picture Of " + 
              "the Day API and changes every midnight EST. As it is provided by a third party API, this bot assumes " + 
              "no liability for the contents of the image or text. But it's NASA, so you're probably fine."),
+    "on": "Give it a positive integer and it will give you the link to that Off-Nominal episode",
     "picture": ("Returns a random image of the subject requested. If no subject is provided, the search defaults to " +
                 "a cute snek. Be aware that the search is *very* lose, so the image you receive may have seemingly " +
                 "nothing to do with your search term.\n\nWARNING\nThis command is rate limited, so try not to spam " +
@@ -150,9 +166,10 @@ LONG_HELP = {
             "meme texts, or images. Since each key can only have one value, users also have a personal group of " + 
             "key-value pairs that can be set or accessed with the command `!tag -u`. For the complete user guide, " + 
             "type `!tag -help`"),
-    "ud": ("Searches Urban Dictionary for a search term"),
+    "ud": "Searches Urban Dictionary for a search term",
     "wiki": ("Queries Wikipedia for information about the requested subject. Returns a simple description as well as " + 
              "a longer form excerpt from the article."),
+    "wm": "Give it a positive integer and it will give you the link to that We Martians episode",
     "wolf": ("Use this command to ask the bot simple WolframAlpha questions. Type `!wolf` and followed by your " + 
              "question and the bot will return the WolframAlpha response"),
     "woof": "Woof.",
@@ -160,7 +177,8 @@ LONG_HELP = {
 
 # Server Command Prefixes
 PREFIXES = {
-    "352255498697048082": "%"
+    "352255498697048082": "%",
+    "630095143088816147": "?"
 }
 
 # List of reserved list ids

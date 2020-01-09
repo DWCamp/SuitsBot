@@ -333,7 +333,7 @@ async def twitter_handle(handle: str):
 async def twitter_images(image_id):
     """
     Provided the id of a tweet, returns a list of embeds,
-    each containing an image from that tweet
+    each containing an image from that tweet, excluding the first
 
     Parameters
     -------------
@@ -372,3 +372,68 @@ async def twitter_images(image_id):
         embed_list.append(image_embed)
 
     return embed_list[1:] if count else None  # Drop the last since we only care about showing the hidden images
+
+
+async def twitter_response(tweet_id):
+    """
+    Provided the id for a tweet, returns an embed with the
+    information of the status that tweet was responding to
+
+    Parameters
+    -------------
+    tweet_id : str/int
+        The id of the tweet
+
+    Returns
+    -------------
+    A list of embeds containing every image attached to the tweet
+    None if tweet was not a response
+    """
+
+    # Fetch info on the tweet
+    twitter_api_url = "https://api.twitter.com/1.1/statuses/show.json"
+    parameters = {"id": str(tweet_id),
+                  "tweet_mode": "extended",
+                  "include_entities": "true"}
+    headers = {"Authorization": "Bearer " + credentials.tokens["TWITTER_BEARER"]}
+    [json, response] = await utils.get_json_with_get(twitter_api_url, headers=headers, params=parameters)
+    if response is not 200 or (json['in_reply_to_status_id_str'] is None and not json['is_quote_status']):
+        return None
+
+    # Fetch info on the tweet it was in response to
+    if json['is_quote_status']:
+        original_id = json['quoted_status_id']
+    else:
+        original_id = json["in_reply_to_status_id_str"]
+    parameters["id"] = str(original_id)
+    [original_json, response] = await utils.get_json_with_get(twitter_api_url, headers=headers, params=parameters)
+    if response is not 200:
+        return None
+
+    # ==== Generate Embed
+
+    # Header
+    original_embed = Embed()
+    original_embed.colour = EMBED_COLORS["twitter"]
+    original_embed.title = "This tweet was in response to..."
+    original_embed.set_thumbnail(url=original_json["user"]["profile_image_url_https"])
+    original_embed.url = ("https://twitter.com/" +
+                          original_json["user"]["screen_name"] +
+                          "/status/" +
+                          str(original_json["id"]))
+
+    # Text
+    user = "**" + original_json["user"]["name"] + "**  (@" + original_json["user"]["name"] + ")"
+    original_embed.description = user + "\n\n" + original_json["full_text"].replace("&amp;", "&")
+
+    # Fields
+    original_embed.add_field(name="Retweets", value=str(original_json["retweet_count"]))
+    original_embed.add_field(name="Likes", value=str(original_json["favorite_count"]))
+
+    # Image
+    # (Not implemented)
+
+    # Footer
+    original_embed.set_footer(icon_url="https://abs.twimg.com/icons/apple-touch-icon-192x192.png", text="Twitter")
+
+    return [original_embed]  # Embeds must be returned as a list
