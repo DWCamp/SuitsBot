@@ -13,7 +13,6 @@ ALIASES = {
     "bestgirl": ["bestGirls", "bestGirl", "bestgirls", "bestGrils", "bestgril", "bestgrils", "bestGril", "bg", "BG"],
     "code": ["Code", "program", "exe", "swift", "python", "java", "cpp", "brainfuck", "golang", "ide", "IDE", "cobol",
              "pascal", "fortran", "vbn", "scala", "bash", "php", "perl", "cpp14", "c", "csharp", "lua", "rust"],
-    "claire": ["Claire", "foreverAlone", "damnitclaire", "damnItClaire", "DamnItClaire"],
     "gritty": ["grity", "grittmeister", "grittster", "god", "orange", "philly", "philadelphia", "eattherich", "Gritty"],
     "hello": ["hi", "hey"],
     "join": ["jion", "joni"],
@@ -57,7 +56,6 @@ BRIEF_HELP = {
     "aes": "A command for making text 'A E S T H E T I C'",
     "bestgirl": "Best girl list manager",
     "code": "Arbitrary code execution",
-    "claire": "Claire said he was forever alone again",
     "gritty": "The bot graces your server with an image of His Royal Orangeness",
     "hello": "The bot says hi to you",
     "join": "Join a user in voice",
@@ -130,9 +128,6 @@ LONG_HELP = {
                  "look like `!bestGirl add [1] Ryuko Matoi`"),
     "code": ("Executes code typed in code formatted blocks (code enclosed in triple backticks ```like this```). " +
              "Supports 67 different languages. Type `!code -help` for more information"),
-    "claire": ("Records every time that Claire claims that he will be " +
-               "forever alone. Reports back the number of times that day as " +
-               "well as the number of times overall"),
     "gritty": "Prepare yourself for his mighty orangeness. The one Wikipedia describes as a 'Large, furry, orange " +
               "creature in Flyers regalia', he who's own team marketing director said 'doesn't know his right from " +
               "his left'. Eater of the rich. Wrecker of stadium back rooms. Menace to refs and rink staff. He " +

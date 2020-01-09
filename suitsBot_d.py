@@ -6,8 +6,6 @@ from discord.ext import commands
 from discord import Embed
 import sys
 
-# ----------- For commands
-from datetime import datetime
 # ----------- Custom imports
 import credentials
 import embedGenerator
@@ -21,7 +19,7 @@ from utils import embedfromdict
 # ------------------------ BOT CONSTANTS ---------------------------------
 
 # File paths
-AUTH_FILE_PATH = "/home/dwcamp/PythonScripts/suitsBotOAuth.txt"
+AUTH_FILE_PATH = "../suitsBotOAuth.txt"
 
 DEV_CHANNEL_ID = '341428321109671939'
 ALERT_CHANNEL_ID = '458462631397818369'
@@ -41,10 +39,6 @@ GLOBAL_TAG_OWNER = "----GLOBAL TAG----"
 currently_playing = "with bytes"
 
 swear_tally = {}
-
-last_colton = None
-daily_colton = None
-total_colton = None
 
 scribble_bank = list()
 
@@ -429,25 +423,10 @@ async def aes(ctx):
         return
 
 
-@bot.command(help=LONG_HELP['claire'], brief=BRIEF_HELP['claire'], aliases=ALIASES['claire'], hidden=True)
+@bot.command(hidden=True)
 async def claire():
-    global last_colton, daily_colton, total_colton
     try:
-        total_colton += 1
-        now = datetime.now()
-        if last_colton.day != now.day:
-            daily_colton = 1
-            timestoday = ", which makes this his first time today"
-        else:
-            daily_colton += 1
-            timestoday = ", which makes this " + str(daily_colton) + " times today alone!"
-        await bot.say("Wow! Claire has now mentioned being forever alone {} times!\n"
-                      "The last time he mentioned being forever alone was **{}**"
-                      .format(total_colton, last_colton.strftime("%c")) + timestoday)
-        last_colton = now
-        utils.update_cache(bot.dbconn, "lastColton", last_colton.strftime("%s"))
-        utils.update_cache(bot.dbconn, "dailyColton", str(daily_colton))
-        utils.update_cache(bot.dbconn, "totalColton", str(total_colton))
+        await bot.say("The `!claire` command has been retired on account of Claire no longer being a virgin.")
     except Exception as e:
         await utils.report(bot, str(e), source="!claire command")
 
@@ -467,7 +446,6 @@ async def dev(ctx):
             description = "A list of features useful for "
             helpdict = {
                 "channelid": "Posts the ID of the current channel",
-                "colton": "Check the `!colton` data",
                 "dump": "A debug command for the bot to dump a variable into chat",
                 "flag": "Tests the `flag` function",
                 "load": "Loads an extension",
@@ -482,11 +460,6 @@ async def dev(ctx):
 
         elif func == "channelid":
             await bot.say("Channel ID: " + ctx.message.channel.id)
-
-        elif func == "colton":
-            await bot.say("Colton has mentioned being forever alone {} times.\n"
-                          "The last time he mentioned being forever alone was **{}**"
-                          .format(total_colton, last_colton.strftime("%c")))
 
         elif func == "dump":
             await bot.say("AT THE DUMP")
@@ -727,13 +700,9 @@ def loadswears():
 
 def loadcache():
     """ Load Cache values from database """
-    global currently_playing, daily_colton, total_colton, last_colton, scribble_bank
+    global currently_playing, scribble_bank
     try:
         currently_playing = utils.loadfromcache(bot.dbconn, "currPlaying")
-        daily_colton = int(utils.loadfromcache(bot.dbconn, "dailyColton"))
-        total_colton = int(utils.loadfromcache(bot.dbconn, "totalColton"))
-        timestamp = utils.loadfromcache(bot.dbconn, "lastColton")
-        last_colton = datetime.utcfromtimestamp(int(timestamp))
         scribble_bank = utils.loadfromcache(bot.dbconn, "scribble").split(',')
     except Exception as e:
         bot.loading_failure["cache"] = e
