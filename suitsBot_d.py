@@ -19,7 +19,7 @@ from utils import embedfromdict
 # ------------------------ BOT CONSTANTS ---------------------------------
 
 # File paths
-AUTH_FILE_PATH = "../suitsBotOAuth.txt"
+AUTH_FILE_PATH = "/home/dwcamp/suitsBotOAuth.txt"
 
 DEV_CHANNEL_ID = '341428321109671939'
 ALERT_CHANNEL_ID = '458462631397818369'
