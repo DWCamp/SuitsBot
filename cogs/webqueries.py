@@ -17,8 +17,9 @@ class WebQueries:
     @commands.command(pass_context=True, help=LONG_HELP['ud'], brief=BRIEF_HELP['ud'], aliases=ALIASES['ud'])
     async def ud(self, ctx):
 
-        # Removes the brackets around words, which UD puts around words in definitions and examples that have their own definitions
-        def stripBrackets(text):
+        # Removes the brackets around words, which UD puts around words in definitions
+        # and examples that have their own definitions
+        def strip_brackets(text):
             text = text.replace("[", " ").replace("]", "")
             return text
 
@@ -37,7 +38,7 @@ class WebQueries:
             # Query the API and post its response
             (ud_json, response) = await utils.get_json_with_get("http://api.urbandictionary.com/v0/define?term=" + quote(message))
             if response is not 200:
-                await bot.say("There was an error processing your request. I apologize for the inconvenience.")
+                await self.bot.say("There was an error processing your request. I apologize for the inconvenience.")
                 return
             if len(ud_json["list"]) > 0:
                 embed = Embed()
@@ -54,8 +55,8 @@ class WebQueries:
                         defText = definition["definition"].replace("*", "\\*")
                         exampleText = "**Example: " + definition["example"].replace("*", "\\*") + "**"
                         ud_embed.add_field(name=str(counter + 1),
-                                             value=utils.trimtolength(stripBrackets(defText + "\n\n" + exampleText), 1024),
-                                             inline=False)
+                                           value=utils.trimtolength(strip_brackets(defText + "\n\n" + exampleText), 1024),
+                                           inline=False)
                     counter += 1
                 ud_embed.colour = EMBED_COLORS['ud']  # Make the embed white
 

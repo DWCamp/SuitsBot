@@ -77,6 +77,7 @@ bot = commands.Bot(command_prefix=get_prefix, description=BOT_DESCRIPTION)
 
 # -------------------------- PERIODIC TASKS --------------------------------------
 
+
 async def post_apod(currTime):
     try:
         embed_icon = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA_logo.svg/" +\
