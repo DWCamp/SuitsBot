@@ -23,8 +23,8 @@ class Podcasts:
         self.podcasts = {"meco": "https://feeds.simplecast.com/Zg9AF5cA",
                          "on": "https://feeds.simplecast.com/iyz_ESAp",
                          "wm": "https://www.wemartians.com/feed/podcast/"}
-        self.hex = {"meco": 0x98E0ED,
-                    "on": 0x000000,
+        self.hex = {"meco": 0x9FB1C2,
+                    "on": 0x716C4F,
                     "wm": 0xC4511F}
 
     # Posts the url for the MECO episode with the passed number
