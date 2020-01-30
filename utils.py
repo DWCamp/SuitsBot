@@ -370,7 +370,13 @@ async def flag(bot, alert, description=None, ctx=None, message=None):
 
 async def report(bot, alert, source=None, ctx=None):
     """
-    Send an urgent message to the dev
+    Send an error message to the dev
+
+    This message should be called when a serious issue has occurred.
+    When report is called, an embed will be posted in the error-messages
+    channel on the dev server. It will print out all relevant details
+    including the alert message, the stack trace, and the exception
+    This embed is not returned, it is sent immediately
 
     Parameters
     -------------
@@ -406,9 +412,12 @@ async def report(bot, alert, source=None, ctx=None):
     if source is not None:
         error_embed.add_field(name="Source", value=source, inline=False)
     error_embed.add_field(name="Message", value=ctx.message.content, inline=False)
-    stack_trace = reversed(traceback.format_stack()[:-1])
-    stack_trace = "```" + trimtolength("".join(stack_trace), 2042) + "```"
-    error_embed.description = stack_trace
+
+    # Error message (exception + stacktrace)
+    error_message = traceback.format_exc(limit=5)
+    error_message = "```" + trimtolength(error_message, 2042) + "```"
+    error_embed.description = error_message
+
     await bot.send_message(bot.ERROR_CHANNEL, embed=error_embed)
 
 

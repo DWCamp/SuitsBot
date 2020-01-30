@@ -39,7 +39,7 @@ AUTHORIZED_IDS = [
 ]
 
 # Bot description
-BOT_DESCRIPTION = """SuitsBot v4.3.0
+BOT_DESCRIPTION = """SuitsBot v4.4.0
 Discord bot deployed to practice webAPI implementation and learn Python.
 Supports a variety of different functions including
 - Call-and-response user tags

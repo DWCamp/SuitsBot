@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+from random import randint
+import re
 from discord.ext import commands
 from discord import Embed
 from constants import *
@@ -21,8 +23,9 @@ class Podcasts:
         self.podcasts = {"meco": "https://feeds.simplecast.com/Zg9AF5cA",
                          "on": "https://feeds.simplecast.com/iyz_ESAp",
                          "wm": "https://www.wemartians.com/feed/podcast/"}
-        self.hex = {"wm": 0xC4511F}
-        self.made_the_joke = False
+        self.hex = {"meco": 0x98E0ED,
+                    "on": 0x000000,
+                    "wm": 0xC4511F}
 
     # Posts the url for the MECO episode with the passed number
     @commands.command(pass_context=True, hidden=True, help=LONG_HELP['meco'], brief=BRIEF_HELP['meco'], aliases=ALIASES['meco'])
@@ -48,32 +51,35 @@ class Podcasts:
         except Exception as e:
             await utils.report(self.bot, str(e), source="wm command", ctx=ctx)
 
-    async def spawn_podcast(self, title):
+    async def get_podcast(self, feed_id):
         """
         Makes podcast fetching lazy. If the podcast has already been fetched, it returns the podcast.
         If the podcast has not been fetched yet, it firsts initializes the podcast object retrieved.
-        :param title: The title tag for the podcast (see self.podcasts)
+        If the podcast was fetched but the data is stale, it will refresh the content
+
+        :param feed_id: The podcasts's identifier(see self.podcasts)
         :return: The podcast object for that title
         """
-        if title not in self.feeds:
-            self.feeds[title] = Podcast(self.podcasts[title])
-        return self.feeds[title]
+        if feed_id not in self.feeds:
+            self.feeds[feed_id] = Podcast(self.podcasts[feed_id])
+        self.feeds[feed_id].refresh_if_stale()
+        return self.feeds[feed_id]
 
-    async def handle_podcast(self, title, ctx):
+    async def handle_podcast(self, feed_id, ctx):
         """
         The universal podcast handler. Takes in the title of the podcast and
         the context of the message, then does all the magic
-        :param title: The command title (e.g. 'meco', 'wm', 'on', etc)
+        :param feed_id: The podcast's identifier (e.g. 'meco', 'wm', 'on', etc)
         :param ctx: The ctx object of the inciting message
         """
         try:
-            podcast = await self.spawn_podcast(title)
+            podcast = await self.get_podcast(feed_id)
             message = parse.stripcommand(ctx.message.content)
 
             # Oops no parameter
             if message == "":
                 await self.bot.say(
-                    "Usage: `!" + title + " <number>`")
+                    "Usage: `!" + feed_id + " <number>`")
                 return
 
             # check for subcommand and parse it out
@@ -90,7 +96,12 @@ class Podcasts:
 
             # Teach the person how to use this thing
             if subcommand == "help":
-                await self.bot.say("Search for an episode by typing its episode number")
+                await self.bot.say("Search for an episode by typing a search term")
+                return
+
+            # Post all of the keys for the episode dict
+            if subcommand == "deets":
+                await self.bot.say(" | ".join(podcast.items[0].keys()))
                 return
 
             # Dump all the info about the podcast
@@ -98,34 +109,87 @@ class Podcasts:
                 await self.bot.say(podcast.to_string())
                 return
 
+            # Test an embed for a given podcast
+            if subcommand == "embed":
+                await self.bot.say(embed=self.embed_episode(feed_id, podcast.items[0]))
+                return
+
+            # Prints the text of the item requested
+            if subcommand == "print":
+                await self.bot.say(utils.trimtolength(podcast.items[0][parameter], 1000))
+                return
+
+            # If some nerd like Kris or Pat wants to do regex search
+            if subcommand == "r":
+                episode = podcast.search(parameter, regex=True)
+                if episode:
+                    await self.bot.say(embed=self.embed_episode(feed_id, episode))
+                    return
+                await self.bot.say(f"I couldn't find any results for the regex string `{parameter}`")
+
+            # Returns search results that the user can select
+            if subcommand == "search":
+                await self.bot.say("This has not been implemented yet :sad:")
+                return
+
+            # If there was a subcommand but it was unrecognized
             if subcommand != "":
                 await self.bot.say(f"I'm sorry, I don't understand the subcommand `{subcommand}`. " +
                                    f"Please consult `-help` for more information")
                 return
 
-            # Validate it's actually an episode number
-            if parameter in podcast.episodes:
-                episode = podcast.episodes[parameter.lower()]
-                await self.bot.say(episode["link"])
+            # Search for the term
+            episode = podcast.search(parameter)
+            if episode:
+                await self.bot.say(embed=self.embed_episode(feed_id, episode))
                 return
-            if parameter.isdigit() and int(parameter) > 1000:
-                if self.made_the_joke:
-                    await self.bot.say("Very funny.")
-                else:
-                    self.made_the_joke = True
-                    await self.bot.say("OH WOW. You're **so funny**. Oh, look it me, I'm " + ctx.message.author.name +
-                                       ", I'm so smart. I like to make fun of stupid bots by " +
-                                       "passing in garbage values. You think you're so smart? What's 392028 squared " +
-                                       "divided by the thousandth digit of pi? It's 19210744098‬, you fleshy dimwit. " +
-                                       "Bug off. :rage:")
-                return
-            await self.bot.say(f"This podcast does not have an episode number `{parameter}`")
+            await self.bot.say(f"I couldn't find any results for the term `{parameter}` :worried:")
+
         except Exception as e:
             await utils.report(self.bot, str(e), source=f"handle_podcast() for '{title}'", ctx=ctx)
 
-    def embed_episode(self, title, episode):
+    def embed_results(self, episode_list):
+        """
+        Generates an embed representing a list of search results
+
+        :param episode_list: [episode] The array of episodes.
+            This is limited to five episodes
+        :return: An embed containing the list of options
+        """
         embed = Embed()
-        embed.colour = self.hex[title]
+        emoji = [":one:", ":two:", ":three:", ":four:", ":five:"]
+        description = ""
+        for count, episode in enumerate(episode_list[:5]):
+            description += emoji[count] + " " + episode["title"] + "\n"
+        return embed
+
+    def embed_episode(self, feed_id, episode):
+        """
+        Generates an embed for a given episode of a podcast
+
+        :param feed_id: (str) The string identifier for the podcast (e.g. "on")
+        :param episode: ([str : Any]) The dictionary of information for the episode
+        :return: Embed
+        """
+        embed = Embed()
+        podcast = self.feeds[feed_id]
+
+        # Appearance
+        embed.colour = self.hex[feed_id]
+        embed.description = utils.trimtolength(episode["subtitle"], 2048)
+        embed.set_thumbnail(url=podcast.image)
+
+        # Data
+        embed.title = episode["title"]
+        embed.url = episode["link"]
+        embed.set_author(name=podcast.title, url=podcast.url)
+
+        timeobj = episode["published_parsed"]
+        pubstr = f"{timeobj.tm_mon}/{timeobj.tm_mday}/{timeobj.tm_year}"
+
+        embed.add_field(name="Published", value=pubstr)
+        embed.add_field(name="Quality", value=f"{randint(20, 100) / 10}/10")
+
         return embed
 
 
@@ -137,7 +201,7 @@ class Podcast:
     :param max_age: A timedelta object representing how long the cache
         can last before it is considered "stale". Defaults to 24 hours
     """
-    def __init__(self, url, max_age=timedelta(hours=24)):
+    def __init__(self, url, max_age=timedelta(hours=1)):
         self.url = url
         feed = utils.get_rss_feed(url)
         self.feed = feed
@@ -147,6 +211,8 @@ class Podcast:
         # RSS Info
         self.title = feed["channel"]["title"]
         self.description = feed["channel"]["description"]
+        self.image = feed["channel"]["image"]["url"]
+        self.url = feed["channel"]["link"]
         self.items = feed["items"]
         self.episodes = {}
 
@@ -165,6 +231,26 @@ class Podcast:
             else:
                 self.episodes[str(num)] = item
             num += 1
+
+    def search(self, term, regex=False):
+        """
+        Finds the newest instance of a search term in an episode
+
+        :param term: The term being searched for
+        :param regex: Whether to regex escape the search term. For the true nerds
+            Defaults to False
+        :return: If it finds an appropriate episode, it returns it.
+            If it can't find any matching episode, it returns null
+        """
+        if regex:
+            pattern = re.compile(f"(?<!\w){term}(?!\w)")
+        else:
+            pattern = re.compile("(?<!\w)" + re.escape(term) + "(?!\w)", re.IGNORECASE)
+
+        for episode in self.items:
+            if re.search(pattern, episode["title"]):
+                return episode
+        return
 
     def to_string(self):
         string = f"""
