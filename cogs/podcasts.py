@@ -99,6 +99,11 @@ class Podcasts:
                 await self.bot.say("Search for an episode by typing a search term")
                 return
 
+            # Check the age
+            if subcommand == "age":
+                await self.bot.say(f"{podcast.fetchtime}\n{podcast.is_stale()}")
+                return
+
             # Post all of the keys for the episode dict
             if subcommand == "deets":
                 await self.bot.say(" | ".join(podcast.items[0].keys()))
@@ -127,6 +132,12 @@ class Podcasts:
                     return
                 await self.bot.say(f"I couldn't find any results for the regex string `{parameter}`")
 
+            # Force a refresh on the feed
+            if subcommand == "refresh":
+                self.feeds[feed_id].refresh()
+                await self.bot.say(f"Alright, I have refreshed the feed `{feed_id}`")
+                return
+
             # Returns search results that the user can select
             if subcommand == "search":
                 await self.bot.say("This has not been implemented yet :sad:")
@@ -146,7 +157,7 @@ class Podcasts:
             await self.bot.say(f"I couldn't find any results for the term `{parameter}` :worried:")
 
         except Exception as e:
-            await utils.report(self.bot, str(e), source=f"handle_podcast() for '{title}'", ctx=ctx)
+            await utils.report(self.bot, str(e), source=f"handle_podcast() for '{feed_id}'", ctx=ctx)
 
     def embed_results(self, episode_list):
         """
@@ -198,15 +209,15 @@ class Podcast:
     Creates an object representing a podcast feed
 
     :param url: The url of the feed
-    :param max_age: A timedelta object representing how long the cache
-        can last before it is considered "stale". Defaults to 24 hours
+    :param ttl: A timedelta object representing how long the cache
+        can last before it is considered "stale". Defaults to 1 minute
     """
-    def __init__(self, url, max_age=timedelta(hours=1)):
+    def __init__(self, url, ttl=timedelta(hours=1)):
         self.url = url
         feed = utils.get_rss_feed(url)
         self.feed = feed
         self.fetchtime = datetime.today()
-        self.max_age = max_age
+        self.expire_time = self.fetchtime + ttl
 
         # RSS Info
         self.title = feed["channel"]["title"]
@@ -265,7 +276,7 @@ Ep Nums: {list(self.episodes.keys())}
         Checks if the information is stale (older than 24 hours)
         :return: Returns 'True' if the stored data was cached more than 24 hours ago
         """
-        return self.max_age < (datetime.today() - self.fetchtime)
+        return datetime.today() > self.expire_time
 
     def refresh(self):
         """
