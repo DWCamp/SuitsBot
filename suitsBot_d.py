@@ -314,6 +314,8 @@ async def on_message(message):
             sub = match[0].strip()  # Get the full match from the regex tuple
             subname = sub[sub.find("r/") + 2:]  # strip off "/r/"
             if subname not in sublist:  # Check for duplicates
+                if await embedGenerator.is_recent_embed(f"{message.channel.id}-subreddits-{subname}"):
+                    continue
                 sublist.append(subname)
                 subembed = None
                 try:
@@ -334,7 +336,7 @@ async def on_message(message):
                                 (bot.regex.find_newegg, embedGenerator.newegg)]  # Newegg links
 
             for (regex, generator) in generator_fodder:
-                for embed in await embedGenerator.embeds_from_regex(regex(content), generator):
+                for embed in await embedGenerator.embeds_from_regex(regex(content), generator, message):
                     await bot.send_message(message.channel, embed=embed)
 
         except Exception as e:

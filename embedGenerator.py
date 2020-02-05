@@ -4,9 +4,22 @@ from discord import Embed
 from constants import EMBED_COLORS
 import credentials
 import utils
+import redis
+
+redis_db = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)
 
 
-async def embeds_from_regex(matchlist, embed_method):
+async def is_recent_embed(key):
+    """Check if a trigger has been recently responded to.  If not, add to track."""
+    key_to_check = f"suitsBot-{key}"
+    if redis_db.exists(key_to_check):
+        return True
+    else:
+        redis_db.set(key_to_check, "", 600)
+        return False
+
+
+async def embeds_from_regex(matchlist, embed_method, message):
     """
     Returns a list of embeds generated from a list of strings and
     a method used to convert those strings into embeds
@@ -18,6 +31,8 @@ async def embeds_from_regex(matchlist, embed_method):
     embed_list = list()
     for match in matchlist:
         link = match.strip()
+        if await is_recent_embed(f"{message.channel.id}-{embed_method.__name__}-{link}"):
+            continue
         embed = await embed_method(link)
         if embed is not None:
             if isinstance(embed, list):
