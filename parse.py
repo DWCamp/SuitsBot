@@ -11,7 +11,6 @@ class Regex:
         self.comment = re.compile('https:\/\/' + subdomains + 'reddit\.com\/r\/\w+\/comments\/\w{6}\/[\w%]+\/\w{7}\/?')
         self.post = re.compile('https?://' + subdomains + 'reddit.com/r/\w{1,20}/comments/\w{5,6}/\w+/?\B')
         self.subreddit = re.compile('((^|\s)\/?r\/\w+(\s|$))')
-        self.swear = re.compile('.*(fu+c(c|k)|sh+i+t+)')
         self.twitter_handle = re.compile('(\s|^)(@{1})(\w{1,15})($|\s)')
         self.twitter_id = re.compile('\\b(https://twitter\\.com/\\w{1,15}/status/)(\\d{19})\\b')
         self.url = re.compile("https?:\/\/" +  # Protocol
@@ -21,33 +20,6 @@ class Regex:
                               "(\.[a-zA-Z]+)?" +  # File type
                               "(\?(([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)&)*" +  # URL parameters (1/2)
                               "([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)?)?")  # URL parameters (2/2)
-
-    def is_swear(self, string):
-        string = string.lower()
-
-        # Detect "Fuck" and "Shit"
-        if self.swear.match(string) is not None:
-            return True
-
-        punctuation = "!@#$%^&*()\{\}\\;:,.<>/?`~|-=_+\"'"
-        for letter in punctuation:
-            string = string.replace(letter, "")
-            string = string.strip()
-
-        # Any word that even contains these strings is probably a curse
-        # 'Fuck' and 'shit' are already parsed by the regex above
-        fullswears = ["asshole", "bitch", "cock", "cunt", "damn",
-                      "dammit", "dick", "faggot", "piss", "pussy"]
-        # These strings aren't curses unless they're isolated
-        partialswears = ["ass", "fag", "hell"]
-
-        for swear in fullswears:
-            if string.find(swear) >= 0:
-                return True
-
-        if string in partialswears:
-            return True
-        return False
 
     def is_url(self, string):
         """

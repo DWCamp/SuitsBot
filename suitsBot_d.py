@@ -38,8 +38,6 @@ GLOBAL_TAG_OWNER = "----GLOBAL TAG----"
 
 currently_playing = "with bytes"
 
-swear_tally = {}
-
 scribble_bank = list()
 
 # -------------------- COMMAND WHITELIST -------------------------------
@@ -204,8 +202,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    global swear_tally
-
     # ---------------------------- HELPER METHODS
     try:
         # ------------------------------------------- FILTER OTHER BOTS
@@ -344,26 +340,6 @@ async def on_message(message):
         except Exception as e:
             await utils.report(bot, str(e), source="embed generation in on_message")
 
-        # -------------------------------------------- Counting Swears
-        # try:
-        #     if message.channel.id != DEV_CHANNEL_ID:
-        #         words = message.content.split()
-        #         swears = 0
-        #         for word in words:
-        #             if bot.regex.is_swear(word):
-        #                 swears += 1
-        #         if message.author.id not in swear_tally.keys():
-        #             swear_tally[message.author.id] = [0, 0, 0.0]
-        #             add_user_swears(message.author.id)
-        #         talleyarray = swear_tally[message.author.id]
-        #         talleyarray[0] += len(words)
-        #         talleyarray[1] += swears
-        #         talleyarray[2] = talleyarray[1] / float(talleyarray[0])
-        #         update_user_swears(message.author.id)
-        # except Exception as e:
-        #     await utils.report(bot, str(e), source="swear detection")
-        #     return
-
         # ------------------------------------------------------------
 
         await bot.process_commands(message)
@@ -453,7 +429,6 @@ async def dev(ctx):
                 "reload": "Reloads an extension",
                 "report": "Tests the `report` function",
                 "serverid": "Posts the ID of the current channel",
-                "swears": "Find out who swears the most",
                 "test": "A catch-all command for inserting code into the bot to test",
             }
             await bot.say("`!dev` User Guide", embed=embedfromdict(helpdict, title=title, description=description))
@@ -507,15 +482,6 @@ async def dev(ctx):
 
         elif func == "serverid":
             await bot.say("Server ID: " + ctx.message.server.id)
-
-        elif func == "swears":
-            sortedlist = sorted(list(swear_tally.items()), key=lambda user_tally: user_tally[1][2], reverse=True)
-            message = ""
-            for i, user in enumerate(sortedlist):
-                message += ("**" + str(i + 1) + ".** " + bot.users[user[0]] + " - " +
-                            str(round(user[1][2]*100, 2)) + "%\n")
-            if len(message) > 0:
-                await bot.say(utils.trimtolength(message, 2000))
 
         elif func == "reload":
             bot.unload_extension(parameter)
@@ -631,36 +597,6 @@ def add_user(user_id, username):
     bot.dbconn.commit()
 
 
-def add_user_swears(user_id):
-    """ Adds a user to the swear table
-
-    Parameters
-    -------------
-    user_id : str
-        The 18 digit user id of the user
-    """
-    bot.dbconn.ensure_sql_connection()
-    add_command = "INSERT INTO Swears VALUES (%s, %s, %s)"
-    add_data = (user_id, 0, 0)
-    bot.dbconn.execute(add_command, add_data)
-    bot.dbconn.commit()
-
-
-def update_user_swears(user_id):
-    """ Updates the swear count for the user
-
-    Parameters
-    -------------
-    user_id : str
-        The 18 digit user id of the user
-    """
-    bot.dbconn.ensure_sql_connection()
-    add_command = "UPDATE Swears SET Words=%s, Swears=%s WHERE ID=%s"
-    add_data = (swear_tally[user_id][0], swear_tally[user_id][1], user_id)
-    bot.dbconn.execute(add_command, add_data)
-    bot.dbconn.commit()
-
-
 # --------------------- LOADING DB ----------------------------------
 
 
@@ -668,7 +604,6 @@ def load():
     """ Load everything """
     loadusers()
     loadcache()
-    loadswears()
 
 
 def loadusers():
@@ -681,21 +616,6 @@ def loadusers():
             bot.users[ID] = Name
     except Exception as e:
         bot.loading_failure["users"] = e
-
-
-def loadswears():
-    """ Load swear count table from database """
-    global swear_tally
-    try:
-        query = "SELECT * FROM Swears"
-        cursor = bot.dbconn.execute(query)
-        for (user_id, words, swears) in cursor:
-            if float(words) > 0:
-                swear_tally[user_id] = [words, swears, swears / float(words)]
-            else:
-                swear_tally[user_id] = [words, swears, 0]
-    except Exception as e:
-        bot.loading_failure["swears"] = e
 
 
 def loadcache():
