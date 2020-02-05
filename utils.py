@@ -289,7 +289,7 @@ def update_cache(dbconn, key, value):
     dbconn.commit()
 
 
-def loadfromcache(dbconn, key):
+def loadfromcache(dbconn, key, default=None):
     """
     Load a cache values from database
 
@@ -299,6 +299,9 @@ def loadfromcache(dbconn, key):
         A database connection object
     key : str
         The cache key
+    default : Any
+        The value to return if the cache contains
+        no row for the provided key
 
     Returns
     -------------
@@ -310,7 +313,7 @@ def loadfromcache(dbconn, key):
     cursor = dbconn.execute(query, data)
     row = cursor.fetchone()
     if row is None:
-        return None
+        return default
     return row[1].decode("utf-8")
 
 
