@@ -28,10 +28,10 @@ class Images:
 
     def __init__(self, bot):
         self.bot = bot
-        [meow_successes, meow_attempts] = utils.loadfromcache(bot.dbconn, "meowFailRate").split("/")
+        [meow_successes, meow_attempts] = utils.loadfromcache(bot.dbconn, "meowFailRate", "1/1").split("/")
         self.meow_successes = int(meow_successes)
         self.meow_attempts = int(meow_attempts)
-        self.next_meow_url = utils.loadfromcache(bot.dbconn, "meowURL")
+        self.next_meow_url = utils.loadfromcache(bot.dbconn, "meowURL", "")
         self.gritty_urls = ["https://media.newyorker.com/photos/5bbd10430cdf452cf93ca22f/master/w_1023,c_limit/Crouch-Gritty.jpg",
                             "https://media.phillyvoice.com/media/images/Dn9LBKjU8AAaIYO.jpg-large.ad646704.fill-735x490.jpg",
                             "https://i.imgflip.com/2imt3r.gif",

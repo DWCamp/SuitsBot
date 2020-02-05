@@ -13,7 +13,7 @@ class Yiff:
         self._unlocked = True
         self._loop = bot.loop
         self._dbconn = bot.dbconn
-        self._queue = utils.loadfromcache(bot.dbconn, "yiffURL").split(" ")
+        self._queue = utils.loadfromcache(bot.dbconn, "yiffURL", "").split(" ")
 
     def __len__(self):
         return len(self._queue)
