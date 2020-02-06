@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import List, Callable, Optional, Union
 from bs4 import BeautifulSoup
@@ -8,15 +9,18 @@ import utils
 import redis
 
 redis_db = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)
+REDIS_PREFIX = "suitsBot-"
+RECENTLY_UNFURLED_TIMEOUT_SECONDS = 30                 # How long to wait before unfurling the same thing again
+UNFURLED_CLEANUP_TRACKING_IN_SECONDS = 60 * 60 * 24     # How long to track messages to cleanup unfurls
 
 
 async def recently_unfurled(key: str) -> bool:
     """Check if key exists, if not set it."""
-    key_to_check = f"suitsBot-{key}"
+    key_to_check = f"{REDIS_PREFIX}{key}"
     if redis_db.exists(key_to_check):
         return True
     else:
-        redis_db.set(key_to_check, "", 300)
+        redis_db.set(key_to_check, "", RECENTLY_UNFURLED_TIMEOUT_SECONDS)
         return False
 
 
@@ -45,6 +49,30 @@ async def embeds_from_regex(matchlist: List[str],
             else:
                 embed_list.append(embed)
     return embed_list
+
+
+def get_trig_message_key(message_id: int) -> str:
+    return f"{REDIS_PREFIX}trig-message-{message_id}"
+
+
+async def get_unfurls_for_trigger_message(trigger_message: Message) -> List[str]:
+    """Retrieve all messages IDs created from trigger message"""
+    trig_message_key = get_trig_message_key(trigger_message.id)
+    trig_message_value = redis_db.get(trig_message_key)
+    if trig_message_value:
+        return json.loads(trig_message_value)
+    else:
+        return []
+
+
+async def record_unfurl(trigger_message: Message, unfurl_message: Message) -> None:
+    """Record data about unfurled messages"""
+
+    # Record unfurled message triggering message as trigger_message_id: [unfurl_message_id, ...]
+    trig_message_key = get_trig_message_key(trigger_message.id)
+    unfurl_messages = await get_unfurls_for_trigger_message(trigger_message)
+    unfurl_messages.append(unfurl_message.id)
+    redis_db.set(trig_message_key, json.dumps(unfurl_messages), UNFURLED_CLEANUP_TRACKING_IN_SECONDS)
 
 
 async def amazon(url: str) -> Optional[Embed]:
