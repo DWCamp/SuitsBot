@@ -16,7 +16,7 @@ async def recently_unfurled(key: str) -> bool:
     if redis_db.exists(key_to_check):
         return True
     else:
-        redis_db.set(key_to_check, "", 600)
+        redis_db.set(key_to_check, "", 300)
         return False
 
 
