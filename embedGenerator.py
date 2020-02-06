@@ -1,23 +1,46 @@
+import json
 from datetime import datetime
+from typing import List, Callable, Optional, Union
 from bs4 import BeautifulSoup
-from discord import Embed
+from discord import Embed, Message
 from constants import EMBED_COLORS
 import credentials
 import utils
+import redis
+
+redis_db = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)
+REDIS_PREFIX = "suitsBot-"
+RECENTLY_UNFURLED_TIMEOUT_SECONDS = 300                 # How long to wait before unfurling the same thing again
+UNFURLED_CLEANUP_TRACKING_IN_SECONDS = 60 * 60 * 24     # How long to track messages to cleanup unfurls
 
 
-async def embeds_from_regex(matchlist, embed_method):
+async def recently_unfurled(key: str) -> bool:
+    """Check if key exists, if not set it."""
+    key_to_check = f"{REDIS_PREFIX}{key}"
+    if redis_db.exists(key_to_check):
+        return True
+    else:
+        redis_db.set(key_to_check, "", RECENTLY_UNFURLED_TIMEOUT_SECONDS)
+        return False
+
+
+async def embeds_from_regex(matchlist: List[str],
+                            embed_method: Callable[[str], Union[List[Embed], Embed, None]],
+                            message: Message) -> List[Embed]:
     """
     Returns a list of embeds generated from a list of strings and
     a method used to convert those strings into embeds
     :param matchlist: The list of strings to convert
     :param embed_method: A method which takes a string (normally a url or id)
     and converts it into an embed or list of embeds
+    :param message: The message triggering this embed response
     :return: A list of embeds
     """
     embed_list = list()
     for match in matchlist:
         link = match.strip()
+        if await recently_unfurled(f"{message.channel.id}-{embed_method.__name__}-{link}"):
+            continue
         embed = await embed_method(link)
         if embed is not None:
             if isinstance(embed, list):
@@ -28,7 +51,31 @@ async def embeds_from_regex(matchlist, embed_method):
     return embed_list
 
 
-async def amazon(url: str):
+def get_trig_message_key(message_id: int) -> str:
+    return f"{REDIS_PREFIX}trig-message-{message_id}"
+
+
+async def get_unfurls_for_trigger_message(trigger_message: Message) -> List[str]:
+    """Retrieve all messages IDs created from trigger message"""
+    trig_message_key = get_trig_message_key(trigger_message.id)
+    trig_message_value = redis_db.get(trig_message_key)
+    if trig_message_value:
+        return json.loads(trig_message_value)
+    else:
+        return []
+
+
+async def record_unfurl(trigger_message: Message, unfurl_message: Message) -> None:
+    """Record data about unfurled messages"""
+
+    # Record unfurled message triggering message as trigger_message_id: [unfurl_message_id, ...]
+    trig_message_key = get_trig_message_key(trigger_message.id)
+    unfurl_messages = await get_unfurls_for_trigger_message(trigger_message)
+    unfurl_messages.append(unfurl_message.id)
+    redis_db.set(trig_message_key, json.dumps(unfurl_messages), UNFURLED_CLEANUP_TRACKING_IN_SECONDS)
+
+
+async def amazon(url: str) -> Optional[Embed]:
     text = await utils.get_website_text(url)
     if text is None:
         return None
@@ -64,7 +111,7 @@ async def amazon(url: str):
     return embed
 
 
-async def newegg(url: str):
+async def newegg(url: str) -> Optional[Embed]:
     text = await utils.get_website_text(url)
     if text is None:
         return None
@@ -89,7 +136,7 @@ async def newegg(url: str):
     return embed
 
 
-async def subreddit(subname: str, allow_nsfw=True):
+async def subreddit(subname: str, allow_nsfw: bool = True) -> Optional[Embed]:
     """
     Gets an embed containing information about a subreddit
 
@@ -153,7 +200,7 @@ async def subreddit(subname: str, allow_nsfw=True):
     return subembed
 
 
-async def reddit_post(post_url: str):
+async def reddit_post(post_url: str) -> Optional[Embed]:
     """
 
     Parameters
@@ -231,7 +278,7 @@ async def reddit_post(post_url: str):
     return post_embed
 
 
-async def reddit_comment(comment_url: str):
+async def reddit_comment(comment_url: str) -> Optional[Embed]:
     """
 
     Parameters
@@ -289,7 +336,7 @@ async def reddit_comment(comment_url: str):
     return comment_embed
 
 
-async def twitter_handle(handle: str):
+async def twitter_handle(handle: str) -> Optional[Embed]:
     """
 
     Parameters
@@ -374,7 +421,7 @@ async def twitter_images(image_id):
     return embed_list[1:] if count else None  # Drop the last since we only care about showing the hidden images
 
 
-async def twitter_response(tweet_id):
+async def twitter_response(tweet_id: Union[str, int]) -> Optional[List[Embed]]:
     """
     Provided the id for a tweet, returns an embed with the
     information of the status that tweet was responding to

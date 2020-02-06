@@ -4,6 +4,7 @@
 import discord
 from discord.ext import commands
 from discord import Embed
+from discord.errors import NotFound
 import sys
 
 # ----------- Custom imports
@@ -314,12 +315,15 @@ async def on_message(message):
             sub = match[0].strip()  # Get the full match from the regex tuple
             subname = sub[sub.find("r/") + 2:]  # strip off "/r/"
             if subname not in sublist:  # Check for duplicates
+                if await embedGenerator.recently_unfurled(f"{message.channel.id}-subreddits-{subname}"):
+                    continue
                 sublist.append(subname)
                 subembed = None
                 try:
                     subembed = await embedGenerator.subreddit(subname)
                     if subembed is not None:
-                        await bot.send_message(message.channel, embed=subembed)
+                        unfurl_message = await bot.send_message(message.channel, embed=subembed)
+                        await embedGenerator.record_unfurl(message, unfurl_message)
                 except Exception as e:
                     details = {} if subembed is None else subembed.to_dict()
                     await utils.report(bot, str(e) + "\n" + str(details), source='subreddit detection')
@@ -334,8 +338,9 @@ async def on_message(message):
                                 (bot.regex.find_newegg, embedGenerator.newegg)]  # Newegg links
 
             for (regex, generator) in generator_fodder:
-                for embed in await embedGenerator.embeds_from_regex(regex(content), generator):
-                    await bot.send_message(message.channel, embed=embed)
+                for embed in await embedGenerator.embeds_from_regex(regex(content), generator, message):
+                    unfurl_message = await bot.send_message(message.channel, embed=embed)
+                    await embedGenerator.record_unfurl(message, unfurl_message)
 
         except Exception as e:
             await utils.report(bot, str(e), source="embed generation in on_message")
@@ -347,7 +352,18 @@ async def on_message(message):
         await utils.report(bot, str(e), source="on_message")
 
 
-# ----------------------------- EVENTS --------------------------------------
+@bot.event
+async def on_message_delete(message):
+    try:
+        for unfurl_message_id in await embedGenerator.get_unfurls_for_trigger_message(message):
+            try:
+                unfurl_message = await bot.get_message(message.channel, unfurl_message_id)
+                await bot.delete_message(unfurl_message)
+            except NotFound:
+                pass
+    except Exception as e:
+        await utils.report(bot, str(e), source="on_message_delete")
+
 
 @bot.event
 async def on_voice_state_update(before, after):
