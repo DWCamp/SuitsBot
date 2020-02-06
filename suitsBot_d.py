@@ -314,7 +314,7 @@ async def on_message(message):
             sub = match[0].strip()  # Get the full match from the regex tuple
             subname = sub[sub.find("r/") + 2:]  # strip off "/r/"
             if subname not in sublist:  # Check for duplicates
-                if await embedGenerator.is_recent_embed(f"{message.channel.id}-subreddits-{subname}"):
+                if await embedGenerator.recently_unfurled(f"{message.channel.id}-subreddits-{subname}"):
                     continue
                 sublist.append(subname)
                 subembed = None
