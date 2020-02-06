@@ -1,6 +1,6 @@
 aiohttp==3.3.2
 beautifulsoup4==4.6.3
-discord.py==0.16.12
+discord==0.16.12
 feedparser==5.2.1
 mysql-connector==2.2.9
 redis

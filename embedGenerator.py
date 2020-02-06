@@ -76,27 +76,41 @@ async def record_unfurl(trigger_message: Message, unfurl_message: Message) -> No
 
 
 async def amazon(url: str) -> Optional[Embed]:
+    """
+    Generates an embed describing an item listing at an Amazon URL
+
+    :param url: The url of the item listing
+    :return: An embed with details about the item
+    """
     text = await utils.get_website_text(url)
     if text is None:
         return None
     embed = Embed()
-    # Properties
+
+    # ==== Properties
+
     embed.url = url
     embed.colour = EMBED_COLORS['amazon']
     soup = BeautifulSoup(text, 'html.parser')
     embed.title = soup.find(id='productTitle').text.strip()
     embed.set_thumbnail(url=soup.find(id='landingImage').get('src'))
-    # Description
+
+    # ==== Description
+
     descdiv = soup.find(id='productDescription')
     if descdiv is not None:
         ptag = descdiv.p
         if ptag is not None:
             embed.description = utils.trimtolength(ptag.text, 2048)
-    # Fields
+
+    # ==== Fields
+
+    # Product Vendor
     vendor = soup.find(id='bylineInfo')
     if vendor is not None:
         embed.add_field(name="Vendor", value=vendor.text)
 
+    # Price
     price = soup.find(id='priceblock_ourprice')
     if price is not None:
         embed.add_field(name="Price", value=price.text)
@@ -105,6 +119,7 @@ async def amazon(url: str) -> Optional[Embed]:
         if price is not None:
             embed.add_field(name="Price", value=price.text)
 
+    # Star rating
     rating = soup.find(id='acrPopover')
     if rating is not None:
         embed.add_field(name="Rating", value=rating['title'])
@@ -112,25 +127,37 @@ async def amazon(url: str) -> Optional[Embed]:
 
 
 async def newegg(url: str) -> Optional[Embed]:
+    """
+    Generates an embed describing an item listing at a Newegg URL
+
+    :param url: The url of the item listing
+    :return: An embed with details about the item
+    """
     text = await utils.get_website_text(url)
     if text is None:
         return None
     embed = Embed()
-    # Properties
+
+    # ==== Properties
+
     embed.url = url
     embed.colour = EMBED_COLORS['newegg']
     soup = BeautifulSoup(text, 'html.parser')
     embed.title = soup.find(id='grpDescrip_h').span.text.strip()
     image_url = "http:" + soup.find(id="A2").span.img["src"]
     embed.set_thumbnail(url=image_url)
-    # Description
+
+    # ==== Description
+
     description = ""
     for bullet in soup.select(".itemColumn")[0].children:
         item = bullet.string.strip()  # filters weird parsing error
         if item:
             description += "**•** " + item + "\n"
     embed.description = utils.trimtolength(description, 2048)
-    # Fields
+
+    # ==== Fields
+
     if soup.select(".itmRating"):
         embed.add_field(name="Rating", value=soup.select(".itmRating")[0].i["title"])
     return embed
