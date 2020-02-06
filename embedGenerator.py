@@ -10,7 +10,7 @@ import redis
 
 redis_db = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)
 REDIS_PREFIX = "suitsBot-"
-RECENTLY_UNFURLED_TIMEOUT_SECONDS = 30                 # How long to wait before unfurling the same thing again
+RECENTLY_UNFURLED_TIMEOUT_SECONDS = 300                 # How long to wait before unfurling the same thing again
 UNFURLED_CLEANUP_TRACKING_IN_SECONDS = 60 * 60 * 24     # How long to track messages to cleanup unfurls
 
 
