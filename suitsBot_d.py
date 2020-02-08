@@ -343,6 +343,7 @@ async def on_message(message):
                     if subembed is not None:
                         unfurl_message = await bot.send_message(message.channel, embed=subembed)
                         await embedGenerator.record_unfurl(message, unfurl_message)
+                        await bot.add_reaction(unfurl_message, DELETE_EMOJI)
                 except Exception as e:
                     details = {} if subembed is None else subembed.to_dict()
                     await utils.report(bot, str(e) + "\n" + str(details), source='subreddit detection')
@@ -360,6 +361,7 @@ async def on_message(message):
                 for embed in await embedGenerator.embeds_from_regex(regex(content), generator, message):
                     unfurl_message = await bot.send_message(message.channel, embed=embed)
                     await embedGenerator.record_unfurl(message, unfurl_message)
+                    await bot.add_reaction(unfurl_message, DELETE_EMOJI)
 
         except Exception as e:
             await utils.report(bot, str(e), source="embed generation in on_message")
@@ -371,6 +373,41 @@ async def on_message(message):
         await utils.report(bot, str(e), source="on_message")
 
 
+
+
+@bot.event
+async def on_reaction_add(reaction, user):
+    try:
+        # Ignore reactions this bot adds
+        if user == bot.user:
+            return
+
+        # Check delete emojis to see if we should delete a bot created message
+        if reaction.emoji == DELETE_EMOJI:
+            unfurl_message = reaction.message
+            unfurl_message_author_id = await embedGenerator.get_author_for_unfurl_message(unfurl_message)
+            channel = unfurl_message.channel
+
+            if not unfurl_message_author_id:
+                return
+
+            can_delete = False
+            if unfurl_message_author_id == user.id:
+                can_delete = True
+
+            elif user.permissions_in(channel).manage_messages:
+                can_delete = True
+
+            elif reaction.count >= DELETE_EMOJI_COUNT_TO_DELETE:
+                can_delete = True
+
+            if can_delete:
+                try:
+                    await bot.delete_message(unfurl_message)
+                except NotFound:
+                    pass
+    except Exception as e:
+        await utils.report(bot, str(e), source="on_reaction_add")
 # ------------------------ GENERAL COMMANDS ---------------------------------
 
 

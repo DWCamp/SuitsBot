@@ -3,15 +3,12 @@ from datetime import datetime
 from typing import List, Callable, Optional, Union
 from bs4 import BeautifulSoup
 from discord import Embed, Message
-from constants import EMBED_COLORS
+from constants import *
 import credentials
 import utils
 import redis
 
 redis_db = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)
-REDIS_PREFIX = "suitsBot-"
-RECENTLY_UNFURLED_TIMEOUT_SECONDS = 300                 # How long to wait before unfurling the same thing again
-UNFURLED_CLEANUP_TRACKING_IN_SECONDS = 60 * 60 * 24     # How long to track messages to cleanup unfurls
 
 
 async def recently_unfurled(key: str) -> bool:
@@ -55,6 +52,10 @@ def get_trig_message_key(message_id: int) -> str:
     return f"{REDIS_PREFIX}trig-message-{message_id}"
 
 
+def get_unfurl_message_key(message_id: int) -> str:
+    return f"{REDIS_PREFIX}unfurl-message-{message_id}"
+
+
 async def get_unfurls_for_trigger_message(trigger_message: Message) -> List[str]:
     """Retrieve all messages IDs created from trigger message"""
     trig_message_key = get_trig_message_key(trigger_message.id)
@@ -65,6 +66,12 @@ async def get_unfurls_for_trigger_message(trigger_message: Message) -> List[str]
         return []
 
 
+async def get_author_for_unfurl_message(unfurl_message: Message) -> Optional[str]:
+    """Retrieve author for unfurled message"""
+    unfurl_message_key = get_unfurl_message_key(unfurl_message.id)
+    return redis_db.get(unfurl_message_key)
+
+
 async def record_unfurl(trigger_message: Message, unfurl_message: Message) -> None:
     """Record data about unfurled messages"""
 
@@ -73,6 +80,10 @@ async def record_unfurl(trigger_message: Message, unfurl_message: Message) -> No
     unfurl_messages = await get_unfurls_for_trigger_message(trigger_message)
     unfurl_messages.append(unfurl_message.id)
     redis_db.set(trig_message_key, json.dumps(unfurl_messages), UNFURLED_CLEANUP_TRACKING_IN_SECONDS)
+
+    # Record unfurled message triggering author as unfurl_message_id: author_id
+    unfurl_message_key = get_unfurl_message_key(unfurl_message.id)
+    redis_db.set(unfurl_message_key, trigger_message.author.id, UNFURLED_CLEANUP_TRACKING_IN_SECONDS)
 
 
 async def amazon(url: str) -> Optional[Embed]:
