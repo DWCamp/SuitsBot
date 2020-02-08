@@ -137,6 +137,47 @@ async def on_voice_state_update(before, after):
 
 
 @bot.event
+async def on_reaction_add(reaction, user):
+    """ On a reaction added to a message:
+
+    - If it's on an embed from SuitsBot and it's an :x: by
+        the author of the message SuitsBot responded to,
+        delete the embed
+    """
+    try:
+        # Ignore reactions this bot adds
+        if user == bot.user:
+            return
+
+        # Check delete emojis to see if we should delete a bot created message
+        if reaction.emoji == DELETE_EMOJI:
+            unfurl_message = reaction.message
+            unfurl_message_author_id = await embedGenerator.get_author_for_unfurl_message(unfurl_message)
+            channel = unfurl_message.channel
+
+            if not unfurl_message_author_id:
+                return
+
+            can_delete = False
+            if unfurl_message_author_id == user.id:
+                can_delete = True
+
+            elif user.permissions_in(channel).manage_messages:
+                can_delete = True
+
+            elif reaction.count >= DELETE_EMOJI_COUNT_TO_DELETE:
+                can_delete = True
+
+            if can_delete:
+                try:
+                    await bot.delete_message(unfurl_message)
+                except NotFound:
+                    pass
+    except Exception as e:
+        await utils.report(bot, str(e), source="on_reaction_add")
+
+
+@bot.event
 async def on_ready():
     print('------------\nLogged in as')
     print(bot.user.name)
@@ -373,41 +414,6 @@ async def on_message(message):
         await utils.report(bot, str(e), source="on_message")
 
 
-
-
-@bot.event
-async def on_reaction_add(reaction, user):
-    try:
-        # Ignore reactions this bot adds
-        if user == bot.user:
-            return
-
-        # Check delete emojis to see if we should delete a bot created message
-        if reaction.emoji == DELETE_EMOJI:
-            unfurl_message = reaction.message
-            unfurl_message_author_id = await embedGenerator.get_author_for_unfurl_message(unfurl_message)
-            channel = unfurl_message.channel
-
-            if not unfurl_message_author_id:
-                return
-
-            can_delete = False
-            if unfurl_message_author_id == user.id:
-                can_delete = True
-
-            elif user.permissions_in(channel).manage_messages:
-                can_delete = True
-
-            elif reaction.count >= DELETE_EMOJI_COUNT_TO_DELETE:
-                can_delete = True
-
-            if can_delete:
-                try:
-                    await bot.delete_message(unfurl_message)
-                except NotFound:
-                    pass
-    except Exception as e:
-        await utils.report(bot, str(e), source="on_reaction_add")
 # ------------------------ GENERAL COMMANDS ---------------------------------
 
 

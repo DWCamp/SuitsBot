@@ -17,8 +17,9 @@ ERROR_CHANNEL_ID = '455185027429433344'
 HERESY_CHANNEL_ID = '427619361222557698'
 
 # List of responses in the affirmative
-AFFIRMATIVE_RESPONSES = ['yes', 'yup', 'y', 'okay', 'ok', 'go ahead', 'affirmative', 'the affirmative',
-                         'in the affirmative', 'roger', 'ja', 'si', 'go', 'do it']
+AFFIRMATIVE_RESPONSES = ['yes', 'yup', 'y', 'yee', 'yep', 'okay', 'ok', 'go ahead',
+                         'affirmative', 'the affirmative', 'in the affirmative',
+                         'roger', 'ja', 'si', 'go', 'do it']
 
 # Command aliases
 ALIASES = {
@@ -99,6 +100,10 @@ COMMAND_THUMBNAILS = {
     "tag": "https://cdn2.iconfinder.com/data/icons/marketing-strategy/512/Loud_Speaker-512.png",
     "say": "https://cdn.discordapp.com/attachments/341428321109671939/487265313071824926/sayIcon.png",
     "wiki": "https://www.wikipedia.org/portal/wikipedia.org/assets/img/Wikipedia-logo-v2@2x.png"}
+
+# Emoji so users can let us know if an embed needs to be deleted
+DELETE_EMOJI = "❌"
+DELETE_EMOJI_COUNT_TO_DELETE = 5
 
 # Embed color hexcodes
 EMBED_COLORS = {"default": 0x4E2368,
@@ -197,7 +202,3 @@ RESERVED_LIST_IDS = ["BestGirl"]
 REDIS_PREFIX = "suitsBot-"                              # Prefix for all keys
 RECENTLY_UNFURLED_TIMEOUT_SECONDS = 300                 # How long to wait before unfurling the same thing again
 UNFURLED_CLEANUP_TRACKING_IN_SECONDS = 60 * 60 * 24     # How long to track messages to cleanup unfurls
-
-# Emoji so users can let us know if an embed needs to be deleted
-DELETE_EMOJI = "❌"
-DELETE_EMOJI_COUNT_TO_DELETE = 5
