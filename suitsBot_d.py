@@ -17,28 +17,9 @@ import utils
 import parse
 from utils import embedfromdict
 
-# ------------------------ BOT CONSTANTS ---------------------------------
-
-# File paths
-AUTH_FILE_PATH = "/home/dwcamp/suitsBotOAuth.txt"
-
-DEV_CHANNEL_ID = '341428321109671939'
-ALERT_CHANNEL_ID = '458462631397818369'
-ERROR_CHANNEL_ID = '455185027429433344'
-DEV_SERVER_ID = '219267501362642944'
-HERESY_CHANNEL_ID = '427619361222557698'
-
-# Command constants
-RESERVED_LIST_IDS = ["BestGirl"]
-
-# ---------------------------- MY SQL ------------------------------------
-
-GLOBAL_TAG_OWNER = "----GLOBAL TAG----"
-
-# ------------------------ GEN VARIABLES ---------------------------------
+# ------------------------ BOT VARIABLES ---------------------------------
 
 currently_playing = "with bytes"
-
 scribble_bank = list()
 
 # -------------------- COMMAND WHITELIST -------------------------------
@@ -105,16 +86,54 @@ async def post_apod(curr_time):
 
 @bot.event
 async def on_member_join(member: discord.member):
-    # If member of Off-Nominal server
-    if member.server.id == "360523650912223253":
-        # Get Ben's user object
-        benjaminherrin = await bot.get_user_info("576950553289031687")
-        # Send Ben the embed
-        embed = Embed(title="A new user has joined Off Nominal!")
-        embed.description = "Say hi!"
-        embed.add_field(name="Username", value=member.name)
-        embed.add_field(name="Joined on", value=member.joined_at)
-        await bot.send_message(benjaminherrin, embed=embed)
+    """ On member joining a server
+
+    - If it joined Off-Nominal, send a DM alerting @benjaminherrin
+    """
+    try:
+        if member.server.id == "360523650912223253":
+            # Get Ben's user object
+            benjaminherrin = await bot.get_user_info("576950553289031687")
+            # Send Ben the embed
+            embed = Embed(title="A new user has joined Off Nominal!")
+            embed.description = "Say hi!"
+            embed.add_field(name="Username", value=member.name)
+            embed.add_field(name="Joined on", value=member.joined_at)
+            await bot.send_message(benjaminherrin, embed=embed)
+    except Exception as e:
+        await utils.report(bot, str(e), source="on_member_join")
+
+
+@bot.event
+async def on_message_delete(message):
+    """ On message delete:
+
+    - Check if message was expanded by bot and, if so, delete embed
+    """
+    try:
+        for unfurl_message_id in await embedGenerator.get_unfurls_for_trigger_message(message):
+            try:
+                unfurl_message = await bot.get_message(message.channel, unfurl_message_id)
+                await bot.delete_message(unfurl_message)
+            except NotFound:
+                pass
+    except Exception as e:
+        await utils.report(bot, str(e), source="on_message_delete")
+
+
+@bot.event
+async def on_voice_state_update(before, after):
+    """ On voice state update:
+
+    - Leave if voice channel is now empty
+    """
+    try:
+        if after.voice.voice_channel is None and bot.is_voice_connected(before.server):
+            if len(bot.voice_client_in(after.server).channel.voice_members) == 1:
+                await bot.voice_client_in(after.server).disconnect()
+    except Exception as e:
+        await utils.report(bot, str(e), source="Voice status update")
+        return
 
 
 @bot.event
@@ -354,17 +373,6 @@ async def on_message(message):
         await utils.report(bot, str(e), source="on_message")
 
 
-@bot.event
-async def on_message_delete(message):
-    try:
-        for unfurl_message_id in await embedGenerator.get_unfurls_for_trigger_message(message):
-            try:
-                unfurl_message = await bot.get_message(message.channel, unfurl_message_id)
-                await bot.delete_message(unfurl_message)
-            except NotFound:
-                pass
-    except Exception as e:
-        await utils.report(bot, str(e), source="on_message_delete")
 
 
 @bot.event
@@ -400,18 +408,6 @@ async def on_reaction_add(reaction, user):
                     pass
     except Exception as e:
         await utils.report(bot, str(e), source="on_reaction_add")
-
-
-@bot.event
-async def on_voice_state_update(before, after):
-    try:
-        if after.voice.voice_channel is None and bot.is_voice_connected(before.server):
-            if len(bot.voice_client_in(after.server).channel.voice_members) == 1:
-                await bot.voice_client_in(after.server).disconnect()
-    except Exception as e:
-        await utils.report(bot, str(e), source="Voice status update")
-        return
-
 # ------------------------ GENERAL COMMANDS ---------------------------------
 
 

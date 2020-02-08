@@ -2,6 +2,20 @@
 List of constants necessary for the bot's operation
 """
 
+# User IDs
+
+BOT_USER_ID = '340287898433748993'
+AUTHORIZED_IDS = [
+    '187086824588443648'  # IWant2Die
+]
+
+# Channel/Server IDs
+ALERT_CHANNEL_ID = '458462631397818369'
+DEV_CHANNEL_ID = '341428321109671939'
+DEV_SERVER_ID = '219267501362642944'
+ERROR_CHANNEL_ID = '455185027429433344'
+HERESY_CHANNEL_ID = '427619361222557698'
+
 # List of responses in the affirmative
 AFFIRMATIVE_RESPONSES = ['yes', 'yup', 'y', 'okay', 'ok', 'go ahead', 'affirmative', 'the affirmative',
                          'in the affirmative', 'roger', 'ja', 'si', 'go', 'do it']
@@ -33,10 +47,8 @@ ALIASES = {
     "woof": ["dog", "doggo", "wof", "woofer", "wouef"],
     "youtube": ["yt", "YT", "YouTube", "youTube", "Youtube", "ytube", "yuotube", "youube", "youbue"]}
 
-# User IDs authorized to perform dev commands
-AUTHORIZED_IDS = [
-    '187086824588443648'  # IWant2Die
-]
+# Location of auth tokens file
+AUTH_FILE_PATH = "/home/dwcamp/suitsBotOAuth.txt"
 
 # Bot description
 BOT_DESCRIPTION = """SuitsBot v4.4.3
@@ -109,6 +121,8 @@ EMBED_COLORS = {"default": 0x4E2368,
                 "woof": 0x9E7132,
                 "yiff": 0xD4EFFF,
                 "youtube": 0xFF0000}
+
+GLOBAL_TAG_OWNER = "----GLOBAL TAG----"
 
 # Headers for web requests
 HEADERS = {'User-Agent': 'suitsBot Discord Bot - https://github.com/DWCamp',
