@@ -2,6 +2,9 @@
 List of constants necessary for the bot's operation
 """
 
+# A single place to define the bot's version number
+BOT_VERSION = "4.5.0"
+
 # User IDs
 
 BOT_USER_ID = '340287898433748993'
@@ -52,7 +55,7 @@ ALIASES = {
 AUTH_FILE_PATH = "/home/dwcamp/suitsBotOAuth.txt"
 
 # Bot description
-BOT_DESCRIPTION = """SuitsBot v4.4.3
+BOT_DESCRIPTION = f"""SuitsBot v{BOT_VERSION}
 Discord bot deployed to practice webAPI implementation and learn Python.
 Supports a variety of different functions including
 - Call-and-response user tags
@@ -130,7 +133,7 @@ EMBED_COLORS = {"default": 0x4E2368,
 GLOBAL_TAG_OWNER = "----GLOBAL TAG----"
 
 # Headers for web requests
-HEADERS = {'User-Agent': 'suitsBot Discord Bot - https://github.com/DWCamp',
+HEADERS = {'User-Agent': f"suitsBot Discord Bot v{BOT_VERSION}- https://github.com/DWCamp",
            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
            'Accept-Language': 'en-us'}
 
