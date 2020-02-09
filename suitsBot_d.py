@@ -677,8 +677,8 @@ def loadcache():
     """ Load Cache values from database """
     global currently_playing, scribble_bank
     try:
-        currently_playing = utils.loadfromcache(bot.dbconn, "currPlaying", "")
-        scribble_bank = utils.loadfromcache(bot.dbconn, "scribble", "").split(',')
+        currently_playing = utils.load_from_cache(bot.dbconn, "currPlaying", "")
+        scribble_bank = utils.load_from_cache(bot.dbconn, "scribble", "").split(',')
     except Exception as e:
         bot.loading_failure["cache"] = e
 

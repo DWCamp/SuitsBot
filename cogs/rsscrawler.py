@@ -8,48 +8,61 @@ import parse
 import utils
 
 
-class Podcasts:
+class RSSCrawler:
     """
-    Commands dealing with fetching information about podcasts
+    Commands dealing with fetching rss feeds
 
     Supports:
         - MECO (!meco)
         - Off-Nominal (!on)
         - We Martians (!wm)
+        + xkcd (!xkcd)  <- NOT IMPLEMENTED
     """
     def __init__(self, bot):
         self.bot = bot
         self.feeds = {}
-        self.podcasts = {"meco": "https://feeds.simplecast.com/Zg9AF5cA",
-                         "on": "https://feeds.simplecast.com/iyz_ESAp",
-                         "wm": "https://www.wemartians.com/feed/podcast/"}
-        self.hex = {"meco": 0x9FB1C2,
-                    "on": 0x716C4F,
-                    "wm": 0xC4511F}
+        self._feed_ids = {"meco": "https://feeds.simplecast.com/Zg9AF5cA",
+                          "on": "https://feeds.simplecast.com/iyz_ESAp",
+                          "wm": "https://www.wemartians.com/feed/podcast/",
+                          "xkcd": "https://xkcd.com/rss.xml"}
+        self._embed_hex_codes = {"meco": 0x9FB1C2,
+                                 "on": 0x716C4F,
+                                 "wm": 0xC4511F,
+                                 "xkcd": 0xFFFFFF}
 
-    # Posts the url for the MECO episode with the passed number
-    @commands.command(pass_context=True, hidden=True, help=LONG_HELP['meco'], brief=BRIEF_HELP['meco'], aliases=ALIASES['meco'])
+    # Posts the url for the MECO episode with the passed argument
+    @commands.command(pass_context=True, help=LONG_HELP['meco'], brief=BRIEF_HELP['meco'], aliases=ALIASES['meco'])
     async def meco(self, ctx):
         try:
             await self.handle_podcast("meco", ctx)
         except Exception as e:
             await utils.report(self.bot, str(e), source="meco command", ctx=ctx)
 
-    # Posts the url for the Off-Nominal episode with the passed number
-    @commands.command(pass_context=True, hidden=True, help=LONG_HELP['on'], brief=BRIEF_HELP['on'], aliases=ALIASES['on'])
+    # Posts the url for the Off-Nominal episode with the passed argument
+    @commands.command(pass_context=True, help=LONG_HELP['on'], brief=BRIEF_HELP['on'], aliases=ALIASES['on'])
     async def on(self, ctx):
         try:
             await self.handle_podcast("on", ctx)
         except Exception as e:
             await utils.report(self.bot, str(e), source="on command", ctx=ctx)
 
-    # Posts the url for the We Martians episode with the passed number
-    @commands.command(pass_context=True, hidden=True, help=LONG_HELP['wm'], brief=BRIEF_HELP['wm'], aliases=ALIASES['wm'])
+    # Posts the url for the We Martians episode with the passed argument
+    @commands.command(pass_context=True, help=LONG_HELP['wm'], brief=BRIEF_HELP['wm'], aliases=ALIASES['wm'])
     async def wm(self, ctx):
         try:
             await self.handle_podcast("wm", ctx)
         except Exception as e:
             await utils.report(self.bot, str(e), source="wm command", ctx=ctx)
+
+    # Posts the url for the xkcd comic with the passed argument
+    @commands.command(pass_context=True, hidden=True, help=LONG_HELP['wm'],
+                      brief=BRIEF_HELP['wm'], aliases=ALIASES['wm'])
+    async def xkcd(self, ctx):
+        try:
+            await self.bot.say("Shhhhhhhhhh...")
+            # await self.handle_podcast("xkcd", ctx)
+        except Exception as e:
+            await utils.report(self.bot, str(e), source="xkcd command", ctx=ctx)
 
     async def get_podcast(self, feed_id):
         """
@@ -61,7 +74,7 @@ class Podcasts:
         :return: The podcast object for that title
         """
         if feed_id not in self.feeds:
-            self.feeds[feed_id] = Podcast(self.podcasts[feed_id])
+            self.feeds[feed_id] = RSSFeed(self._feed_ids[feed_id])
         self.feeds[feed_id].refresh_if_stale()
         return self.feeds[feed_id]
 
@@ -69,7 +82,7 @@ class Podcasts:
         """
         The universal podcast handler. Takes in the title of the podcast and
         the context of the message, then does all the magic
-        :param feed_id: The podcast's identifier (e.g. 'meco', 'wm', 'on', etc)
+        :param feed_id: The podcast's identifier (e.g. 'meco', 'on', etc)
         :param ctx: The ctx object of the inciting message
         """
         try:
@@ -186,7 +199,7 @@ class Podcasts:
         podcast = self.feeds[feed_id]
 
         # Appearance
-        embed.colour = self.hex[feed_id]
+        embed.colour = self._embed_hex_codes[feed_id]
         embed.description = utils.trimtolength(episode["subtitle"], 2048)
         embed.set_thumbnail(url=podcast.image)
 
@@ -204,7 +217,7 @@ class Podcasts:
         return embed
 
 
-class Podcast:
+class RSSFeed:
     """
     Creates an object representing a podcast feed
 
@@ -295,4 +308,4 @@ Ep Nums: {list(self.episodes.keys())}
 
 
 def setup(bot):
-    bot.add_cog(Podcasts(bot))
+    bot.add_cog(RSSCrawler(bot))

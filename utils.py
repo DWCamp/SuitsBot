@@ -233,7 +233,7 @@ def get_rss_feed(url):
 
 # ------------------------------------------------------------------------ Database caching
 
-def addtocache(dbconn, key, value=None):
+def add_to_cache(dbconn, key, value=None):
     """
     Add an entry to the cache
 
@@ -289,7 +289,7 @@ def update_cache(dbconn, key, value):
     dbconn.commit()
 
 
-def loadfromcache(dbconn, key, default=None):
+def load_from_cache(dbconn, key, default=None):
     """
     Load a cache values from database
 

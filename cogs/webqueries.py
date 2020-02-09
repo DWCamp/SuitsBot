@@ -18,7 +18,7 @@ class WebQueries:
     async def ud(self, ctx):
         # Removes the brackets around words, which UD puts around words in definitions
         # and examples that have their own definitions
-        def stripBrackets(text):
+        def strip_brackets(text):
             text = text.replace("[", " ").replace("]", "")
             return text
 
@@ -35,27 +35,29 @@ class WebQueries:
                 return
 
             # Query the API and post its response
-            (ud_json, response) = await utils.get_json_with_get("http://api.urbandictionary.com/v0/define?term=" + quote(message))
+            url = "http://api.urbandictionary.com/v0/define?term=" + quote(message)
+            (ud_json, response) = await utils.get_json_with_get(url)
             if response is not 200:
                 await self.bot.say("There was an error processing your request. I apologize for the inconvenience.")
                 return
             if len(ud_json["list"]) > 0:
-                embed = Embed()
                 ud_embed = Embed()
-                ud_embed.set_footer(text="UrbanDictionary", icon_url="https://firebounty.com/image/635-urban-dictionary")
+                ud_embed.set_footer(text="UrbanDictionary",
+                                    icon_url="https://firebounty.com/image/635-urban-dictionary")
                 counter = 0
-                firstResult = ""
+                first_result = ""
                 while counter < len(ud_json["list"]) and counter <= maxdefinitions:
                     definition = ud_json["list"][counter]
                     if counter == 0:
-                        firstResult = definition["word"]
-                        ud_embed.title = utils.trimtolength(firstResult, 256).capitalize()
-                    if definition["word"] == firstResult:
-                        defText = definition["definition"].replace("*", "\\*")
-                        exampleText = "**Example: " + definition["example"].replace("*", "\\*") + "**"
+                        first_result = definition["word"]
+                        ud_embed.title = utils.trimtolength(first_result, 256).capitalize()
+                    if definition["word"] == first_result:
+                        def_text = definition["definition"].replace("*", "\\*")
+                        example_text = "**Example: " + definition["example"].replace("*", "\\*") + "**"
                         ud_embed.add_field(name=str(counter + 1),
-                                             value=utils.trimtolength(stripBrackets(defText + "\n\n" + exampleText), 1024),
-                                             inline=False)
+                                           value=utils.trimtolength(strip_brackets(def_text + "\n\n" + example_text),
+                                                                    1024),
+                                           inline=False)
                     counter += 1
                 ud_embed.colour = EMBED_COLORS['ud']  # Make the embed white
 
@@ -71,7 +73,7 @@ class WebQueries:
         # ---------------------------------------------------- HELPER METHODS
 
         # Find an article with a matching title
-        async def searchforterm(term):
+        async def search_for_term(term):
             wiki_search_url = ("http://en.wikipedia.org/w/api.php?action=query&format=json" +
                                "&prop=&list=search&titles=&srsearch=" + quote(term))
             # Looks for articles matching the search term
@@ -83,7 +85,7 @@ class WebQueries:
         # Gets the details of an article with an exact URL title (not always the same as the article title)
         # Returns a tuple of the article's title, its extract, and a brief description of the subject
         # Returns None if no article was found or the result has no extract
-        async def queryarticle(querytitle):
+        async def query_article(querytitle):
             # Makes the title URL friendly
             quoted_article_title = quote(querytitle)
             wiki_query_url = ("http://en.wikipedia.org/w/api.php?action=query&format=json" +
@@ -115,7 +117,7 @@ class WebQueries:
         try:
             # WIKI -------------------------------- SET-UP
 
-            (arguments, searchterm) = parse.args(ctx.message.content)
+            (arguments, search_term) = parse.args(ctx.message.content)
 
             # WIKI -------------------------------- ARGUMENTS
 
@@ -135,16 +137,16 @@ class WebQueries:
                 return
 
             # Performs article search
-            if searchterm == "":
+            if search_term == "":
                 await self.bot.say("I need a term to search")
                 return
-            articletitle = await searchforterm(searchterm)
-            if articletitle is None:
-                await self.bot.say("I found no articles matching the term '" + searchterm + "'")
+            article_title = await search_for_term(search_term)
+            if article_title is None:
+                await self.bot.say("I found no articles matching the term '" + search_term + "'")
                 return
 
             # Shows the text of the article searched for
-            [title, extract, summary] = await queryarticle(articletitle)
+            [title, extract, summary] = await query_article(article_title)
             wiki_embed = Embed()
             wiki_embed.title = title
             wiki_embed.set_footer(text="Wikipedia",
