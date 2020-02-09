@@ -182,14 +182,13 @@ async def on_ready():
     print('------------\nLogged in as')
     print(bot.user.name)
     print(bot.user.id)
-    bot.DEV_SERVER = bot.get_server("219267501362642944")
-    bot.DEV_CHANNEL = bot.get_channel("341428321109671939")
-    bot.ALERT_CHANNEL = bot.get_channel("458462631397818369")
-    bot.ERROR_CHANNEL = bot.get_channel("455185027429433344")
-    bot.SUITS_GENERAL = bot.get_channel("349040456530657280")
-    bot.SUITS_SPACE = bot.get_channel("601096185666863125")
-    bot.HERESY_CHANNEL = bot.get_channel("427619361222557698")
-    bot.NOMINAL_HISTORY = bot.get_channel("417876694813245441")
+    bot.DEV_SERVER = bot.get_server(DEV_SERVER_ID)
+    bot.DEV_CHANNEL = bot.get_channel(DEV_CHANNEL_ID)
+    bot.ALERT_CHANNEL = bot.get_channel(ALERT_CHANNEL_ID)
+    bot.ERROR_CHANNEL = bot.get_channel(ERROR_CHANNEL_ID)
+    bot.SUITS_GENERAL = bot.get_channel(SUITS_GENERAL_CHANNEL_ID)
+    bot.SUITS_SPACE = bot.get_channel(AEROSPACE_CHANNEL_ID)
+    bot.HERESY_CHANNEL = bot.get_channel(HERESY_CHANNEL_ID)
     bot.player = None
 
     try:
@@ -197,18 +196,10 @@ async def on_ready():
         ready_embed = Embed()
         ready_embed.title = "Bot Restart"
         ready_embed.add_field(name="Current Time", value=utils.currtime())
-        if len(sys.argv) == 1:
-            ready_embed.add_field(name="Previous Exit Code", value="Starting from cold boot")
-            ready_embed.add_field(name="Assumed cause of reboot", value="N/A")
-        else:
-            ready_embed.add_field(name="Previous Exit Code", value=str(sys.argv[1]))
-            if sys.argv[1] == "1" or sys.argv[1] == "120":
-                ready_embed.add_field(name="Assumed cause of reboot", value="Use of `!r`")
-            else:
-                ready_embed.add_field(name="Assumed cause of reboot", value="Random bug")
         ready_embed.add_field(name="Status", value="Loading Data...", inline=False)
         ready_embed.colour = EMBED_COLORS["default"]
         ready_message = await bot.send_message(bot.DEV_CHANNEL, embed=ready_embed)
+        status_field = len(ready_embed.fields) - 1
 
         # Check that data loaded well
         for key in bot.loading_failure.keys():
@@ -217,14 +208,14 @@ async def on_ready():
             await utils.report(bot, 'FAILED TO LOAD {}\n{}'.format(key.upper(), report))
 
         # Update restart embed
-        ready_embed.remove_field(3)
+        ready_embed.remove_field(status_field)
         ready_embed.add_field(name="Status", value="Loading web services...", inline=False)
         await bot.edit_message(ready_message, embed=ready_embed)
 
         print('Compiling Regex...')
 
         # Update restart embed
-        ready_embed.remove_field(3)
+        ready_embed.remove_field(status_field)
         ready_embed.add_field(name="Status", value="Compiling Regex...", inline=False)
         await bot.edit_message(ready_message, embed=ready_embed)
 
@@ -234,7 +225,7 @@ async def on_ready():
 
         try:
             # Update restart embed
-            ready_embed.remove_field(3)
+            ready_embed.remove_field(status_field)
             ready_embed.add_field(name="Status", value="Scheduling tasks...", inline=False)
             await bot.edit_message(ready_message, embed=ready_embed)
 
@@ -254,7 +245,7 @@ async def on_ready():
 
         print('------------\nOnline!\n------------')
 
-        ready_embed.remove_field(3)
+        ready_embed.remove_field(status_field)
         ready_embed.add_field(name="Status", value="Online!", inline=False)
         await bot.edit_message(ready_message, embed=ready_embed)
     except Exception as e:
@@ -492,7 +483,7 @@ async def dev(ctx):
             await bot.say("Channel ID: " + ctx.message.channel.id)
 
         elif func == "dump":
-            await bot.say("AT THE DUMP")
+            await bot.say(PODCAST_ALIASES)
 
         elif func == "flag":
             await bot.say("Triggering flag...")
@@ -715,7 +706,7 @@ startup_extensions = ['cogs.anilist',
                       'cogs.code',
                       'cogs.images',
                       'cogs.listcommands',
-                      'cogs.podcasts',
+                      'cogs.rsscrawler',
                       'cogs.rand',
                       'cogs.tags',
                       'cogs.voice',

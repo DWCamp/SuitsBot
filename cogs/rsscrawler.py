@@ -13,56 +13,46 @@ class RSSCrawler:
     Commands dealing with fetching rss feeds
 
     Supports:
+        - ATP (!atp)
         - MECO (!meco)
+        - MBMBAM (!mbmbam)
         - Off-Nominal (!on)
+        - The Adventure Zone (!taz)
         - We Martians (!wm)
         + xkcd (!xkcd)  <- NOT IMPLEMENTED
     """
     def __init__(self, bot):
         self.bot = bot
         self.feeds = {}
-        self._feed_ids = {"meco": "https://feeds.simplecast.com/Zg9AF5cA",
-                          "on": "https://feeds.simplecast.com/iyz_ESAp",
-                          "wm": "https://www.wemartians.com/feed/podcast/",
+        self._feed_ids = {"Accidental Tech Podcast": "http://atp.fm/episodes?format=rss",
+                          "Main Engine Cutoff": "https://feeds.simplecast.com/Zg9AF5cA",
+                          "My Brother My Brother and Me": "https://feeds.simplecast.com/wjQvYtdl",
+                          "Off-Nominal": "https://feeds.simplecast.com/iyz_ESAp",
+                          "The Adventure Zone": "https://feeds.simplecast.com/cYQVc__c",
+                          "We Martians": "https://www.wemartians.com/feed/podcast/",
                           "xkcd": "https://xkcd.com/rss.xml"}
-        self._embed_hex_codes = {"meco": 0x9FB1C2,
-                                 "on": 0x716C4F,
-                                 "wm": 0xC4511F,
+        self._embed_hex_codes = {"Accidental Tech Podcast": 0x203D65,
+                                 "Main Engine Cutoff": 0x9FB1C2,
+                                 "My Brother My Brother and Me": 0x4B4B4B,
+                                 "Off-Nominal": 0x716C4F,
+                                 "The Adventure Zone": 0xFFFFF,
+                                 "We Martians": 0xC4511F,
                                  "xkcd": 0xFFFFFF}
 
-    # Posts the url for the MECO episode with the passed argument
-    @commands.command(pass_context=True, help=LONG_HELP['meco'], brief=BRIEF_HELP['meco'], aliases=ALIASES['meco'])
-    async def meco(self, ctx):
+    # Searches for an episode of your favorite podcast
+    @commands.command(pass_context=True, help=LONG_HELP['podcast'],
+                      brief=BRIEF_HELP['podcast'], aliases=PODCAST_ALIASES)
+    async def podcast(self, ctx):
         try:
-            await self.handle_podcast("meco", ctx)
+            invoking_id = ctx.invoked_with
+            for key in FEED_ALIAS_LIST.keys():
+                if invoking_id in FEED_ALIAS_LIST[key]:
+                    await self.handle_podcast(key, ctx)
+                    return
+            await self.bot.say("This command can be used to search for episodes of your favorite podcast. It " +
+                               "currently supports the following shows:\n" + PODCAST_TEXT_LIST)
         except Exception as e:
-            await utils.report(self.bot, str(e), source="meco command", ctx=ctx)
-
-    # Posts the url for the Off-Nominal episode with the passed argument
-    @commands.command(pass_context=True, help=LONG_HELP['on'], brief=BRIEF_HELP['on'], aliases=ALIASES['on'])
-    async def on(self, ctx):
-        try:
-            await self.handle_podcast("on", ctx)
-        except Exception as e:
-            await utils.report(self.bot, str(e), source="on command", ctx=ctx)
-
-    # Posts the url for the We Martians episode with the passed argument
-    @commands.command(pass_context=True, help=LONG_HELP['wm'], brief=BRIEF_HELP['wm'], aliases=ALIASES['wm'])
-    async def wm(self, ctx):
-        try:
-            await self.handle_podcast("wm", ctx)
-        except Exception as e:
-            await utils.report(self.bot, str(e), source="wm command", ctx=ctx)
-
-    # Posts the url for the xkcd comic with the passed argument
-    @commands.command(pass_context=True, hidden=True, help=LONG_HELP['wm'],
-                      brief=BRIEF_HELP['wm'], aliases=ALIASES['wm'])
-    async def xkcd(self, ctx):
-        try:
-            await self.bot.say("Shhhhhhhhhh...")
-            # await self.handle_podcast("xkcd", ctx)
-        except Exception as e:
-            await utils.report(self.bot, str(e), source="xkcd command", ctx=ctx)
+            await utils.report(self.bot, str(e), source="podcast command", ctx=ctx)
 
     async def get_podcast(self, feed_id):
         """
@@ -199,7 +189,10 @@ class RSSCrawler:
         podcast = self.feeds[feed_id]
 
         # Appearance
-        embed.colour = self._embed_hex_codes[feed_id]
+        if feed_id not in self._embed_hex_codes:
+            embed.colour = EMBED_COLORS["default"]
+        else:
+            embed.colour = self._embed_hex_codes[feed_id]
         embed.description = utils.trimtolength(episode["subtitle"], 2048)
         embed.set_thumbnail(url=podcast.image)
 
@@ -229,8 +222,8 @@ class RSSFeed:
         self.url = url
         feed = utils.get_rss_feed(url)
         self.feed = feed
-        self.fetchtime = datetime.today()
-        self.expire_time = self.fetchtime + ttl
+        self.fetch_time = datetime.today()
+        self.ttl = ttl
 
         # RSS Info
         self.title = feed["channel"]["title"]
@@ -281,6 +274,7 @@ class RSSFeed:
 Title: {self.title}
 Count: {self.count}
 Ep Nums: {list(self.episodes.keys())}
+Fetch time: {self.fetch_time}
 """
         return string
 
@@ -289,7 +283,7 @@ Ep Nums: {list(self.episodes.keys())}
         Checks if the information is stale (older than 24 hours)
         :return: Returns 'True' if the stored data was cached more than 24 hours ago
         """
-        return datetime.today() > self.expire_time
+        return datetime.today() > self.fetch_time + self.ttl
 
     def refresh(self):
         """
@@ -297,7 +291,7 @@ Ep Nums: {list(self.episodes.keys())}
         :return:
         """
         self.feed = utils.get_rss_feed(self.url)
-        self.fetchtime = datetime.today()
+        self.fetch_time = datetime.today()
 
     def refresh_if_stale(self):
         """

@@ -5,29 +5,55 @@ List of constants necessary for the bot's operation
 # A single place to define the bot's version number
 BOT_VERSION = "4.5.0"
 
-# User IDs
+# ====== Important IDs
 
+# User IDs
 BOT_USER_ID = '340287898433748993'
 AUTHORIZED_IDS = [
     '187086824588443648'  # IWant2Die
 ]
 
 # Channel/Server IDs
+AEROSPACE_CHANNEL_ID = '601096185666863125'
 ALERT_CHANNEL_ID = '458462631397818369'
 DEV_CHANNEL_ID = '341428321109671939'
 DEV_SERVER_ID = '219267501362642944'
 ERROR_CHANNEL_ID = '455185027429433344'
 HERESY_CHANNEL_ID = '427619361222557698'
+SUITS_GENERAL_CHANNEL_ID = '349040456530657280'
+
+# ====== Stuff?
 
 # List of responses in the affirmative
 AFFIRMATIVE_RESPONSES = ['yes', 'yup', 'y', 'yee', 'yep', 'okay', 'ok', 'go ahead',
                          'affirmative', 'the affirmative', 'in the affirmative',
                          'roger', 'ja', 'si', 'go', 'do it']
 
+# ====== Feed stuff
+
+# Every podcast feed alias
+FEED_ALIAS_LIST = {
+    "Accidental Tech Podcast": ["atp", "ATP", "accidental"],
+    "Main Engine Cutoff": ["meco", "MECO", "Meco", "MainEngineCutOff", "podcast"],
+    "My Brother My Brother and Me": ["mbmbmam", "MBMBAM"],
+    "Off-Nominal": ["on", "offnominal", "OffNominal", "Off-nominal", "Off-Nominal", "ON"],
+    "The Adventure Zone": ["taz", "TAZ", "TheAdventureZone", "theAdventureZone", "theadventurezone"],
+    "We Martians": ["wm", "WM", "wemartians", "WeMartians", "We-martians", "Wemartians"],
+    "xkcd": ["xkcd", "XKCD"],
+}
+
+# The total list of podcast aliases
+PODCAST_ALIASES = [k for feed in FEED_ALIAS_LIST.values() for k in feed]
+
+# A bullet list of feeds in the form "- <title> (`!<first alias>`)"
+PODCAST_TEXT_LIST = "\n".join([f"- {feed_id} (`!{FEED_ALIAS_LIST[feed_id][0]}`)" for feed_id in FEED_ALIAS_LIST.keys()])
+
+# ====== Commands
+
 # Command aliases
 ALIASES = {
-    "anime": ["ani", "Anime", "animu", "aniem", "anilist", "AniList"],
     "aes": ["AES"],
+    "anime": ["ani", "Anime", "animu", "aniem", "anilist", "AniList"],
     "bestgirl": ["bestGirls", "bestGirl", "bestgirls", "bestGrils", "bestgril", "bestgrils", "bestGril", "bg", "BG"],
     "code": ["Code", "program", "exe", "swift", "python", "java", "cpp", "brainfuck", "golang", "ide", "IDE", "cobol",
              "pascal", "fortran", "vbn", "scala", "bash", "php", "perl", "cpp14", "c", "csharp", "lua", "rust"],
@@ -36,16 +62,13 @@ ALIASES = {
     "join": ["jion", "joni"],
     "leave": ["shut up", "fuckOff", "gtfo", "GTFO"],
     "ls": ["list", "lsit", "l", "lists"],
-    "meco": ["MECO", "Meco", "MainEngineCutOff", "podcast"],
     "meow": ["cat", "moew", "mewo", "nyaa", "nyan"],
     "nasa": ["NASA", "APOTD", "APOD", "apod", "apotd"],
-    "on": ["offnominal", "OffNominal", "Off-nominal", "Off-Nominal", "ON", "OFFNOMINAL", "OFF_NOMINAL", "OFF-NOMINAL"],
     "picture": ["snek", "Snek", "sneks", "Sneks", "snake", "snakes", "pic", "photo", "unsplash", "Unsplash"],
     "rand": ["random", "ran", "randmo"],
     "say": ["voice", "speak"],
     "tag": ["tags", "Tag", "Tags"],
     "ud": ["urbanDictionary", "urbandict", "urbanDict", "UD", "uD", "Ud"],
-    "wm": ["WM", "wemartians", "WeMartians", "We-martians", "Wemartians"],
     "wiki": ["wikipedia", "Wikipedia", "Wiki", "WIKI"],
     "wolf": ["wolfram", "wA", "Wolfram", "WolframAlpha", "wolframAlpha", "woflram", "wofl"],
     "woof": ["dog", "doggo", "wof", "woofer", "wouef"],
@@ -82,6 +105,7 @@ BRIEF_HELP = {
     "nasa": "A stunning astonomy picture",
     "on": "Posts the URL to the Off-Nominal podcast episode with the number provided",
     "picture": "Get a random picture of something",
+    "podcast": "Fetches an episode of this podcast",
     "rand": "Generate a random result",
     "say": "Have the bot say dumb things in voice",
     "tag": "Have the bot repeat a message when given a key phrase",
@@ -162,7 +186,6 @@ LONG_HELP = {
            "user possesses multiple tables of data which the user can edit by going into and performing edit " +
            "commands similar to those found in the `!bestGirl` command. Type `!list help` for a full list of the " +
            "commands you can use and how they work."),
-    "meco": "Give it a positive integer and it will give you the link to that MECO episode",
     "meow": "Cat.",
     "nasa": ("Provides an HD image of an astronomical nature. This image is provided by NASA's Astronomy Picture Of " + 
              "the Day API and changes every midnight EST. As it is provided by a third party API, this bot assumes " + 
@@ -172,6 +195,9 @@ LONG_HELP = {
                 "a cute snek. Be aware that the search is *very* lose, so the image you receive may have seemingly " +
                 "nothing to do with your search term.\n\nWARNING\nThis command is rate limited, so try not to spam " +
                 "it too much"),
+    "podcast": ("Search for podcasts! Just summon this command with `!<podcast name>` and you'll get the most recent " +
+                "episode of your favorite show. You can also search for an episode title with `!<name> <term>.\n" +
+                "Currently supports the following shows:" + PODCAST_TEXT_LIST),
     "rand": ("Uses a random number generator to answer questions of dice rolls, coin flips, or what to do for " +
              "dinner. An example is `!rand item A, B, C...`, where it will return a randomly selected member of a " +
              "comma separated list. Type `!random help` for the complete user guide."),
