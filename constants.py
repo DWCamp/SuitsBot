@@ -5,23 +5,6 @@ List of constants necessary for the bot's operation
 # A single place to define the bot's version number
 BOT_VERSION = "4.5.0"
 
-# ====== Important IDs
-
-# User IDs
-BOT_USER_ID = '340287898433748993'
-AUTHORIZED_IDS = [
-    '187086824588443648'  # IWant2Die
-]
-
-# Channel/Server IDs
-AEROSPACE_CHANNEL_ID = '601096185666863125'
-ALERT_CHANNEL_ID = '458462631397818369'
-DEV_CHANNEL_ID = '341428321109671939'
-DEV_SERVER_ID = '219267501362642944'
-ERROR_CHANNEL_ID = '455185027429433344'
-HERESY_CHANNEL_ID = '427619361222557698'
-SUITS_GENERAL_CHANNEL_ID = '349040456530657280'
-
 # ====== Stuff?
 
 # List of responses in the affirmative
@@ -74,20 +57,6 @@ ALIASES = {
     "woof": ["dog", "doggo", "wof", "woofer", "wouef"],
     "youtube": ["yt", "YT", "YouTube", "youTube", "Youtube", "ytube", "yuotube", "youube", "youbue"]}
 
-# Location of auth tokens file
-AUTH_FILE_PATH = "/home/dwcamp/suitsBotOAuth.txt"
-
-# Bot description
-BOT_DESCRIPTION = f"""SuitsBot v{BOT_VERSION}
-Discord bot deployed to practice webAPI implementation and learn Python.
-Supports a variety of different functions including
-- Call-and-response user tags
-- Searching Wikipedia and AniList.co
-- Creating and managing lists
-- Playing audio clips in voice chat
-
-More information at: https://github.com/DWCamp/SuitsBot/wiki
-"""
 
 # Command brief help text
 BRIEF_HELP = {
@@ -156,11 +125,6 @@ EMBED_COLORS = {"default": 0x4E2368,
 
 GLOBAL_TAG_OWNER = "----GLOBAL TAG----"
 
-# Headers for web requests
-HEADERS = {'User-Agent': f"suitsBot Discord Bot v{BOT_VERSION}- https://github.com/DWCamp",
-           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-           'Accept-Language': 'en-us'}
-
 # Full help text for commands
 LONG_HELP = {
     "anime": "Things I guess",
@@ -217,12 +181,6 @@ LONG_HELP = {
              "question and the bot will return the WolframAlpha response"),
     "woof": "Woof.",
     "youtube": "Searches YouTube for the video title provided and provides a link to the first search result"}
-
-# Server Command Prefixes
-PREFIXES = {
-    "352255498697048082": "%",
-    "630095143088816147": "?"
-}
 
 # List of reserved list ids
 RESERVED_LIST_IDS = ["BestGirl"]

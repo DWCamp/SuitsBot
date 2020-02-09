@@ -13,6 +13,7 @@ import embedGenerator
 from scheduler import Scheduler
 from dbconnection import DBConnection
 from constants import *
+from local_config import *
 import utils
 import parse
 from utils import embedfromdict
@@ -46,10 +47,10 @@ command_whitelist = {"360523650912223253": ["help",
 def get_prefix(client, message):
     if message.server is None:
         return ['!', '&', '?', '%', '#', ']', '..', '.']
-    elif message.server.id in PREFIXES.keys():
-        return PREFIXES[message.server.id]
+    elif message.server.id in CUSTOM_PREFIXES.keys():
+        return CUSTOM_PREFIXES[message.server.id]
     else:
-        return '!'
+        return DEFAULT_COMMAND_PREFIX
 
 
 bot = commands.Bot(command_prefix=get_prefix, description=BOT_DESCRIPTION)
@@ -77,7 +78,7 @@ async def post_apod(curr_time):
             embed.set_footer(icon_url=embed_icon,
                              text="NASA Astronomy Photo of the Day https://apod.nasa.gov/apod/astropix.html")
             embed.colour = EMBED_COLORS["nasa"]
-            await bot.send_message(bot.SUITS_SPACE, embed=embed)
+            await bot.send_message(bot.APOD_CHANNELS, embed=embed)
     except Exception as e:
         await utils.report(bot, str(e), source="Daily APOD command")
 
@@ -186,8 +187,9 @@ async def on_ready():
     bot.DEV_CHANNEL = bot.get_channel(DEV_CHANNEL_ID)
     bot.ALERT_CHANNEL = bot.get_channel(ALERT_CHANNEL_ID)
     bot.ERROR_CHANNEL = bot.get_channel(ERROR_CHANNEL_ID)
-    bot.SUITS_GENERAL = bot.get_channel(SUITS_GENERAL_CHANNEL_ID)
-    bot.SUITS_SPACE = bot.get_channel(AEROSPACE_CHANNEL_ID)
+    bot.APOD_CHANNELS = []
+    for channel_id in APOD_CHANNEL_IDS:
+        bot.APOD_CHANNELS.append(bot.get_channel(channel_id))
     bot.HERESY_CHANNEL = bot.get_channel(HERESY_CHANNEL_ID)
     bot.player = None
 
@@ -506,11 +508,11 @@ async def dev(ctx):
                 if ctx.message.server is None:
                     await bot.say("I can't do that here")
                     return
-                newnick = parameter
-                if newnick == "":
-                    newnick = None
-                botmember = ctx.message.server.get_member("340287898433748993")  # Gets the bot's own member object
-                await bot.change_nickname(botmember, newnick)
+                new_nick = parameter
+                if new_nick == "":
+                    new_nick = None
+                bot_member = ctx.message.server.get_member(BOT_USER_ID)  # Gets the bot's own member object
+                await bot.change_nickname(bot_member, new_nick)
             except Exception as e:
                 await utils.report(bot, str(e), source="!dev nick", ctx=ctx)
 
@@ -675,15 +677,6 @@ def loadcache():
 
 
 # -----------------------   START UP   -----------------------------------
-
-# load all Discord, MySQL, and API credentials
-tokenFile = open(AUTH_FILE_PATH, "r", encoding="utf-8")
-tokenLines = tokenFile.read().splitlines()
-tokens = {}
-for line in tokenLines:
-    key_value = line.split(":")
-    tokens[key_value[0]] = key_value[1]
-credentials.set_tokens(tokens)
 
 # Create MySQL connection
 bot.dbconn = DBConnection(credentials.tokens["MYSQL_USER"], credentials.tokens["MYSQL_PASSWORD"], "suitsBot")

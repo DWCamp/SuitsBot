@@ -4,7 +4,8 @@ from datetime import datetime
 import random
 import traceback
 from discord import Embed
-from constants import EMBED_COLORS, HEADERS
+from local_config import *
+from constants import EMBED_COLORS
 
 
 # ------------------------------------------------------------------------ Utilities

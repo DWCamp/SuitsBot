@@ -3,6 +3,7 @@ from discord.ext import commands
 from constants import *
 import utils
 import parse
+from local_config import AUTHORIZED_IDS
 
 
 class ListCommands:

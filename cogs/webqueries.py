@@ -6,6 +6,7 @@ from constants import *
 import parse
 import utils
 import credentials
+from local_config import *
 
 
 class WebQueries:
@@ -27,7 +28,7 @@ class WebQueries:
             # removes the invocation portion of the message
             message = parse.stripcommand(ctx.message.content)
 
-            maxdefinitions = 4
+            max_definitions = 4
 
             # Reject empty messages
             if message == "":
@@ -46,7 +47,7 @@ class WebQueries:
                                     icon_url="https://firebounty.com/image/635-urban-dictionary")
                 counter = 0
                 first_result = ""
-                while counter < len(ud_json["list"]) and counter <= maxdefinitions:
+                while counter < len(ud_json["list"]) and counter <= max_definitions:
                     definition = ud_json["list"][counter]
                     if counter == 0:
                         first_result = definition["word"]
