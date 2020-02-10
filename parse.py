@@ -6,7 +6,7 @@ class Regex:
     def __init__(self, bot):
         subdomains = "(?:(?:www|old|np|m|en|dd|us|de)\.)?"
         self.bot = bot
-        self.amazon = re.compile('https://www\.amazon\.com/(?:\w+-)+\w+/dp/(?:\w{10})')
+        self.amazon = re.compile('https://www\.amazon\.com/(?:(?:\w+-)+\w+/)?[dg]p/(?:product/)?(?:\w{10})')
         self.newegg = re.compile('https://www\.newegg\.com/Product/Product\.aspx\?Item=(?:\w{15})', re.IGNORECASE)
         self.comment = re.compile('https:\/\/' + subdomains + 'reddit\.com\/r\/\w+\/comments\/\w{6}\/[\w%]+\/\w{7}\/?')
         self.post = re.compile('https?://' + subdomains + 'reddit.com/r/\w{1,20}/comments/\w{5,6}/\w+/?\B')
