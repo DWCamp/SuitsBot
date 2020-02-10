@@ -1,6 +1,5 @@
-AUTH_FILE_PATH = "/authFile.txt"
-DEFAULT_COMMAND_PREFIX = "!"
 BOT_VERSION = "4.2.0"
+DEFAULT_COMMAND_PREFIX = "!"
 
 # Bot description
 BOT_DESCRIPTION = f"""SuitsBot v{BOT_VERSION}
@@ -21,8 +20,8 @@ HEADERS = {'User-Agent': f"suitsBot Discord Bot v{BOT_VERSION}- https://github.c
 
 # Per-Server Command Prefixes
 CUSTOM_PREFIXES = {
-    "352255498697048082": "%",
-    "630095143088816147": "?"
+    "314159265358979323": "%",
+    "846264338327950288": "?"
 }
 
 # =========== IDS
