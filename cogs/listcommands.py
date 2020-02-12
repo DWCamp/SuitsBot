@@ -486,12 +486,12 @@ class ListEngine:
         """
         # LIST -------------------------------------- PRELIMINARY PROCESSES
 
-        authorid = ctx.message.author.id
+        author_id = ctx.message.author.id
         # Gets the nickname name of the author if it exists, otherwise gets the Discord name
-        if ctx.message.author.nick is None:
-            authorname = ctx.message.author.name
+        if ctx.message.channel.is_private or ctx.message.author.nick is None:
+            author_name = ctx.message.author.name
         else:
-            authorname = ctx.message.author.nick
+            author_name = ctx.message.author.nick
 
         # parse message of apostrophes
         parsed_ctx = parse.apos(ctx.message.content)
@@ -500,19 +500,19 @@ class ListEngine:
         [func, parameter] = parse.func_param(parsed_ctx)
 
         # Premptively creates a list table if author does not have one
-        if authorid not in self.user_table.keys():
-            self.user_table[authorid] = {}
-        author_lists = self.user_table[authorid]
+        if author_id not in self.user_table.keys():
+            self.user_table[author_id] = {}
+        author_lists = self.user_table[author_id]
 
         # Creates a 'None' entry in the self.spaces if author is not in it
-        if authorid not in self.spaces.keys():
-            self.spaces[authorid] = None
+        if author_id not in self.spaces.keys():
+            self.spaces[author_id] = None
 
         # Also sets the current list
         if list_id is None:
-            currlist = self.spaces[authorid]
+            curr_list = self.spaces[author_id]
         else:
-            currlist = self.user_table[authorid][list_id]
+            curr_list = self.user_table[author_id][list_id]
         # LIST -------------------------------- FUNCTIONS
 
         # --------------------- DISPLAY FUNCTIONS
@@ -520,15 +520,15 @@ class ListEngine:
         # updating
         if func in ["", "updating"]:
             try:
-                if currlist is None:
+                if curr_list is None:
                     await self._bot.send_message(ctx.message.channel,
                                                  "You are not currently in any list. Type `!list use <id>` to "
                                                  "begin editing a list or `!list help` for more information")
                     return
-                embeds = currlist.get_embeds()
-                currlist.updatingMessages = []
+                embeds = curr_list.get_embeds()
+                curr_list.updatingMessages = []
                 for embed in embeds:
-                    currlist.updatingMessages.append(await self._bot.send_message(ctx.message.channel, embed=embed))
+                    curr_list.updatingMessages.append(await self._bot.send_message(ctx.message.channel, embed=embed))
             except Exception as e:
                 await  utils.report(self._bot, str(e), source="List updating command, via " + command, ctx=ctx)
             return
@@ -536,12 +536,12 @@ class ListEngine:
         # static
         if func == "static":
             try:
-                if currlist is None:  # If there is no currently active list, reject the command
+                if curr_list is None:  # If there is no currently active list, reject the command
                     await self._bot.send_message(ctx.message.channel,
                                                  "You are not currently in any list. Type `!list use <id>` to "
                                                  "begin editing a list or `!list help` for more information")
                     return
-                embeds = currlist.get_embeds()
+                embeds = curr_list.get_embeds()
                 for embed in embeds:
                     await self._bot.send_message(ctx.message.channel, embed=embed)
             except Exception as e:
@@ -551,7 +551,7 @@ class ListEngine:
         # --------------------- EDIT FUNCTIONS
 
         closed_for_dev_work = False
-        if closed_for_dev_work and authorid not in AUTHORIZED_IDS:
+        if closed_for_dev_work and author_id not in AUTHORIZED_IDS:
             await self._bot.send_message(ctx.message.channel,
                                          "Editing lists has been temporarily disabled because it is undergoing "
                                          "development. Attempts to use this command could fail or cause data loss")
@@ -561,21 +561,21 @@ class ListEngine:
         # add [<index>] <element>
         if func in ["add", "insert"]:  # X
             try:
-                if currlist is None:  # If there is no currently active list, reject the command
+                if curr_list is None:  # If there is no currently active list, reject the command
                     await self._bot.send_message(ctx.message.channel,
                                                  "You are not currently in any list. Type `!list use <id>` to " +
                                                  "begin editing a list or `!list help` for more information")
                     return
                 [element, rank] = parse.stringandoptnum(parameter)  # Get index and element
-                currlist.add(element, rank)
-                self.update_list_add(authorid, currlist.id, element, rank)
-                if await currlist.update_messages():
-                    embeds = currlist.get_embeds()
-                    currlist.updatingMessages = []
+                curr_list.add(element, rank)
+                self.update_list_add(author_id, curr_list.id, element, rank)
+                if await curr_list.update_messages():
+                    embeds = curr_list.get_embeds()
+                    curr_list.updatingMessages = []
                     for embed in embeds:
-                        currlist.updatingMessages.append(await self._bot.send_message(ctx.message.channel, embed=embed))
+                        curr_list.updatingMessages.append(await self._bot.send_message(ctx.message.channel, embed=embed))
                 if rank is None:
-                    rank = len(currlist)
+                    rank = len(curr_list)
                 await self._bot.send_message(ctx.message.channel,
                                              "I have now recognized `` {} `` as the number {} entry in your list"
                                              .format(element, rank))
@@ -595,13 +595,13 @@ class ListEngine:
                     return
                 list_id = parameter.lower()
                 if list_id == "":  # If no ID was provided, use the currently active list
-                    if currlist is None:  # If there is no currently active list, reject the command
+                    if curr_list is None:  # If there is no currently active list, reject the command
                         await self._bot.send_message(ctx.message.channel,
                                                      "You are not currently in any list. Type `!list use <id>` to " +
                                                      "begin editing a list or `!list help` for more information")
                         return
-                    list_id = currlist.id  # Record the ID
-                    currlist.clear()  # clear the list
+                    list_id = curr_list.id  # Record the ID
+                    curr_list.clear()  # clear the list
                 else:  # If the user specified a list_id
                     if list_id not in author_lists.keys():  # If there is no list with that ID, reject the command
                         await self._bot.send_message(ctx.message.channel,
@@ -609,9 +609,9 @@ class ListEngine:
                                                      "Type `!" + command + " show` to see your table of list IDs")
                         return
                     author_lists[list_id].clear()  # clear the list
-                if currlist is not None:
-                    await currlist.update_messages()
-                self.clear_list(authorid, currlist.id)
+                if curr_list is not None:
+                    await curr_list.update_messages()
+                self.clear_list(author_id, curr_list.id)
                 await self._bot.send_message(ctx.message.channel,
                                              "Your list with ID `` " + list_id + " `` has been cleared")
             except Exception as e:
@@ -619,16 +619,16 @@ class ListEngine:
             return
 
         # curr
-        if func in ["curr", "currlist"]:
+        if func in ["curr", "curr_list"]:
             try:
                 if list_id is not None:
                     await self._bot.send_message(ctx.message.channel,
                                                  "The command `" + command + "` is only available when using '!list'")
                     return
-                if self.spaces[authorid] is None:  # If the user is not currently in a list
+                if self.spaces[author_id] is None:  # If the user is not currently in a list
                     await self._bot.send_message(ctx.message.channel, "You are not currently in a list")
                 else:
-                    await self._bot.send_message(ctx.message.channel, "`" + self.spaces[authorid].id + "`")
+                    await self._bot.send_message(ctx.message.channel, "`" + self.spaces[author_id].id + "`")
             except Exception as e:
                 await  utils.report(self._bot, str(e), source="List curr command, via " + command, ctx=ctx)
             return
@@ -651,10 +651,10 @@ class ListEngine:
                 if list_id == "":  # If the user did not provide an ID, reject the command
                     await self._bot.send_message(ctx.message.channel, "You cannot create a list with a blank ID")
                     return
-                author_lists[list_id] = UserList(self._bot, list_id=list_id, username=authorname)
+                author_lists[list_id] = UserList(self._bot, list_id=list_id, username=author_name)
 
-                self.spaces[authorid] = author_lists[list_id]  # Set the new list to the author's active list
-                self.create_list(authorid, list_id)
+                self.spaces[author_id] = author_lists[list_id]  # Set the new list to the author's active list
+                self.create_list(author_id, list_id)
                 new_embed = await self._bot.send_message(ctx.message.channel,
                                                          embed=author_lists[list_id].get_embeds()[0])
                 author_lists[list_id].updating = [new_embed]
@@ -668,12 +668,12 @@ class ListEngine:
         # dev
         if func == "dev":
             try:
-                if currlist is None:  # If there is no current list, reject the command
+                if curr_list is None:  # If there is no current list, reject the command
                     await self._bot.send_message(ctx.message.channel,
                                                  "You are not currently in any list. Type `!list use <id>` to " +
                                                  "begin editing a list or `!list help` for more information")
                     return
-                await self._bot.send_message(ctx.message.channel, str(currlist.updating))
+                await self._bot.send_message(ctx.message.channel, str(curr_list.updating))
             except Exception as e:
                 await  utils.report(self._bot, str(e), source="List dev command", ctx=ctx)
             return
@@ -696,12 +696,12 @@ class ListEngine:
                                                      "You do not have a list with the ID `` " + list_id +
                                                      " ``. Type `!list show` to see your table of list IDs")
                         return
-                if self.spaces[authorid] == author_lists[list_id]:  # If removed list was active list, set space to None
-                    self.spaces[authorid] = None
+                if self.spaces[author_id] == author_lists[list_id]:  # If removed list was active list, set space to None
+                    self.spaces[author_id] = None
                 del author_lists[list_id]  # Drop the list
-                self.drop_list(authorid, list_id)
-                if currlist is not None and currlist.updating is not None:
-                    for message in currlist.updating:
+                self.drop_list(author_id, list_id)
+                if curr_list is not None and curr_list.updating is not None:
+                    for message in curr_list.updating:
                         await self._bot.delete_message(message)
                 await self._bot.send_message(ctx.message.channel,
                                              "Your list with ID `` " + list_id + " `` has been dropped")
@@ -712,15 +712,15 @@ class ListEngine:
         # move <index> <index>
         if func == "move":
             try:
-                if currlist is None:  # If there is no current list, reject the command
+                if curr_list is None:  # If there is no current list, reject the command
                     await self._bot.send_message(ctx.message.channel,
                                                  "You are not currently in any list. Type `!list use <id>` to " +
                                                  "begin editing a list or `!list help` for more information")
                     return
                 numbers = parse.twonumbers(parameter)
-                element = currlist.move(numbers[0], numbers[1])
-                self.update_list_move(authorid, currlist.id, from_rank=numbers[0], to_rank=numbers[1])
-                await currlist.update_messages()
+                element = curr_list.move(numbers[0], numbers[1])
+                self.update_list_move(author_id, curr_list.id, from_rank=numbers[0], to_rank=numbers[1])
+                await curr_list.update_messages()
                 await self._bot.send_message(ctx.message.channel,
                                              "Alright, I moved `` " + element + " `` to index " + str(numbers[1]))
             except ValueError as e:
@@ -732,7 +732,7 @@ class ListEngine:
         # multiadd <element>;<element>;<element>...
         if func == "multiadd":
             try:
-                if currlist is None:  # If there is no active list, reject the command
+                if curr_list is None:  # If there is no active list, reject the command
                     await self._bot.send_message(ctx.message.channel,
                                                  "You are not currently in any list. Type `!list use <id>` to " +
                                                  "begin editing a list or `!list help` for more information")
@@ -741,17 +741,17 @@ class ListEngine:
                     elements = parameter.split(';')
                     addition = ""
                     for (i, element) in enumerate(elements):
-                        addition += "**" + str(len(currlist) + i + 1) + ".** " + element + "\n"
+                        addition += "**" + str(len(curr_list) + i + 1) + ".** " + element + "\n"
                     for element in elements:  # Split the list at semicolons
                         element = element.strip()
                         if len(element) > 0:  # Add the item only if the element has text
-                            currlist.add(element)  # Add the element
-                            self.update_list_add(authorid, currlist.id, element)
-                    if await currlist.update_messages():
-                        embeds = currlist.get_embeds()
-                        currlist.updatingMessages = []
+                            curr_list.add(element)  # Add the element
+                            self.update_list_add(author_id, curr_list.id, element)
+                    if await curr_list.update_messages():
+                        embeds = curr_list.get_embeds()
+                        curr_list.updatingMessages = []
                         for embed in embeds:
-                            currlist.updatingMessages.append(await self._bot.send_message(ctx.message.channel,
+                            curr_list.updatingMessages.append(await self._bot.send_message(ctx.message.channel,
                                                                                           embed=embed))
                     if len(elements) == 1:
                         await self._bot.send_message(ctx.message.channel,
@@ -768,7 +768,7 @@ class ListEngine:
         # remove <index>
         if func in ["remove", "delete"]:
             try:
-                if currlist is None:
+                if curr_list is None:
                     await self._bot.send_message(ctx.message.channel,
                                                  "You are not currently in any list. Type `!list use <id>` to "
                                                  "begin editing a list or `!list help` for more information")
@@ -792,7 +792,7 @@ class ListEngine:
                 shifted_ranks = list()
                 for rank in int_ranks:
                     # Check bounds
-                    if rank > len(currlist):
+                    if rank > len(curr_list):
                         await self._bot.send_message(ctx.message.channel,
                                                      "The index `" + str(rank) + "` exceeds the length of your list")
                         return
@@ -808,13 +808,13 @@ class ListEngine:
                 removed_elements = list()
                 for rank in shifted_ranks:
                     rank = int(rank)
-                    removed_elements.append(currlist.remove(rank))
-                    if len(currlist) > 0:
-                        self.update_list_remove(authorid, currlist.id, rank)
+                    removed_elements.append(curr_list.remove(rank))
+                    if len(curr_list) > 0:
+                        self.update_list_remove(author_id, curr_list.id, rank)
                     else:
-                        self.clear_list(authorid, currlist.id)
+                        self.clear_list(author_id, curr_list.id)
 
-                await currlist.update_messages()
+                await curr_list.update_messages()
                 await self._bot.send_message(ctx.message.channel,
                                              "I have removed `` " + " ``, `` ".join(removed_elements) +
                                              " `` from your list")
@@ -827,7 +827,7 @@ class ListEngine:
         # replace [<index>] <entry>
         if func in ["replace", "rename", "edit"]:
             try:
-                if currlist is None:
+                if curr_list is None:
                     await self._bot.send_message(ctx.message.channel,
                                                  "You are not currently in any list. Type `!list use <id>` to "
                                                  "begin editing a list or `!list help` for more information")
@@ -838,13 +838,13 @@ class ListEngine:
                                                  "I don't see an index to modify. Make sure it is enclosed in "
                                                  "[square brackets]")
                     return
-                old_val = currlist.replace(element, rank)
-                if await currlist.update_messages():
-                    embeds = currlist.get_embeds()
-                    currlist.updatingMessages = []
+                old_val = curr_list.replace(element, rank)
+                if await curr_list.update_messages():
+                    embeds = curr_list.get_embeds()
+                    curr_list.updatingMessages = []
                     for embed in embeds:
-                        currlist.updatingMessages.append(await self._bot.send_message(ctx.message.channel, embed=embed))
-                self.update_list_element(authorid, currlist.id, rank, element)
+                        curr_list.updatingMessages.append(await self._bot.send_message(ctx.message.channel, embed=embed))
+                self.update_list_element(author_id, curr_list.id, rank, element)
                 await self._bot.send_message(ctx.message.channel,
                                              "The element `` {} `` has been renamed to `` {} ``"
                                              .format(old_val, element))
@@ -883,7 +883,7 @@ class ListEngine:
 
                 for list_id in sorted(author_lists.keys()):
                     if list_id not in RESERVED_LIST_IDS:
-                        if self.spaces[authorid] is not None and self.spaces[authorid].id == list_id:
+                        if self.spaces[author_id] is not None and self.spaces[author_id].id == list_id:
                             message += "> "
                         else:
                             message += "  "
@@ -903,15 +903,15 @@ class ListEngine:
         # swap <index> <index>
         if func == "swap":
             try:
-                if currlist is None:
+                if curr_list is None:
                     await self._bot.send_message(ctx.message.channel,
                                                  "You are not currently in any list. Type `!list use <id>` to begin " +
                                                  "editing a list or `!list help` for more information")
                     return
                 numbers = parse.twonumbers(parameter)
-                elements = currlist.swap(numbers[0], numbers[1])
-                self.update_list_swap(authorid, currlist.id, numbers[0], numbers[1])
-                await currlist.update_messages()
+                elements = curr_list.swap(numbers[0], numbers[1])
+                self.update_list_swap(author_id, curr_list.id, numbers[0], numbers[1])
+                await curr_list.update_messages()
                 await self._bot.send_message(ctx.message.channel,
                                              "Alright, I swapped `` {} `` with `` {} ``".format(elements[0],
                                                                                                 elements[1]))
@@ -926,17 +926,17 @@ class ListEngine:
         # icon <url>
         if func == "thumbnail" or func == "icon":
             try:
-                if currlist is None:
+                if curr_list is None:
                     await self._bot.send_message(ctx.message.channel,
                                                  "You are not currently in any list. Type `!list use <id>` to begin " +
                                                  "editing a list or `!list help` for more information")
                     return
                 if len(ctx.message.attachments) == 0:
-                    await currlist.set_thumbnail(parameter)
+                    await curr_list.set_thumbnail(parameter)
                 else:
-                    await currlist.set_thumbnail(ctx.message.attachments[0]['url'])
-                self.update_list_details(authorid, currlist.id)
-                await currlist.update_messages()
+                    await curr_list.set_thumbnail(ctx.message.attachments[0]['url'])
+                self.update_list_details(author_id, curr_list.id)
+                await curr_list.update_messages()
                 await self._bot.send_message(ctx.message.channel, "Congratulations, your thumbnail has been updated")
             except ValueError as e:
                 await self._bot.send_message(ctx.message.channel, str(e))
@@ -947,7 +947,7 @@ class ListEngine:
         # title <title>
         if func == "title":
             try:
-                if currlist is None:
+                if curr_list is None:
                     await self._bot.send_message(ctx.message.channel,
                                                  "You are not currently in any list. Type `!list use <id>` to begin " +
                                                  "editing a list or `!list help` for more information")
@@ -959,14 +959,14 @@ class ListEngine:
                     return
 
                 if parameter == "" and list_id is "BestGirl":
-                    parameter = currlist.username + "'s Best Girl List"
+                    parameter = curr_list.username + "'s Best Girl List"
 
-                old_title = currlist.title
-                currlist.title = parameter  # Set the title
+                old_title = curr_list.title
+                curr_list.title = parameter  # Set the title
 
-                self.update_list_details(authorid, currlist.id)  # Save to database
-                if currlist is not None:
-                    await currlist.update_messages()
+                self.update_list_details(author_id, curr_list.id)  # Save to database
+                if curr_list is not None:
+                    await curr_list.update_messages()
                 if old_title == "":
                     await self._bot.send_message(ctx.message.channel,
                                                  "Alright. I have set your title to `` " + parameter + " ``")
@@ -998,13 +998,13 @@ class ListEngine:
                             "I don't see a list with the ID `` " + list_id +
                             " ``. Type `!list show` to see the table of list IDs"))
                     return
-                self.spaces[authorid] = author_lists[list_id]  # Set the list to be active
-                currlist = author_lists[list_id]
+                self.spaces[author_id] = author_lists[list_id]  # Set the list to be active
+                curr_list = author_lists[list_id]
 
-                embeds = currlist.get_embeds()
-                currlist.updatingMessages = []
+                embeds = curr_list.get_embeds()
+                curr_list.updatingMessages = []
                 for embed in embeds:
-                    currlist.updatingMessages.append(await self._bot.send_message(ctx.message.channel, embed=embed))
+                    curr_list.updatingMessages.append(await self._bot.send_message(ctx.message.channel, embed=embed))
 
                 await self._bot.send_message(ctx.message.channel,
                                              "Alright, you are now using the list '" + list_id + "'")
