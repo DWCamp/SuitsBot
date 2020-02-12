@@ -26,10 +26,10 @@ FEED_ALIAS_LIST = {
 }
 
 # The total list of podcast aliases
-PODCAST_ALIASES = [k for feed in FEED_ALIAS_LIST.values() for k in feed]
+FEED_ALIASES = [k for feed in FEED_ALIAS_LIST.values() for k in feed]
 
 # A bullet list of feeds in the form "- <title> (`!<first alias>`)"
-PODCAST_TEXT_LIST = "\n".join([f"- {feed_id} (`!{FEED_ALIAS_LIST[feed_id][0]}`)" for feed_id in FEED_ALIAS_LIST.keys()])
+FEED_TEXT_LIST = "\n".join([f"- {feed_id} (`!{FEED_ALIAS_LIST[feed_id][0]}`)" for feed_id in FEED_ALIAS_LIST.keys()])
 
 # ====== Commands
 
@@ -74,7 +74,7 @@ BRIEF_HELP = {
     "nasa": "A stunning astonomy picture",
     "on": "Posts the URL to the Off-Nominal podcast episode with the number provided",
     "picture": "Get a random picture of something",
-    "podcast": "Fetches an episode of this podcast",
+    "rssfeed": "Fetches an item of an rss feed/podcast",
     "rand": "Generate a random result",
     "say": "Have the bot say dumb things in voice",
     "tag": "Have the bot repeat a message when given a key phrase",
@@ -159,9 +159,9 @@ LONG_HELP = {
                 "a cute snek. Be aware that the search is *very* lose, so the image you receive may have seemingly " +
                 "nothing to do with your search term.\n\nWARNING\nThis command is rate limited, so try not to spam " +
                 "it too much"),
-    "podcast": ("Search for podcasts! Just summon this command with `!<podcast name>` and you'll get the most recent " +
+    "rssfeed": ("Search rss feeds! Just summon this command with `!<feed name>` and you'll get the most recent " +
                 "episode of your favorite show. You can also search for an episode title with `!<name> <term>.\n" +
-                "Currently supports the following shows:" + PODCAST_TEXT_LIST),
+                "Currently supports the following shows:" + FEED_TEXT_LIST),
     "rand": ("Uses a random number generator to answer questions of dice rolls, coin flips, or what to do for " +
              "dinner. An example is `!rand item A, B, C...`, where it will return a randomly selected member of a " +
              "comma separated list. Type `!random help` for the complete user guide."),

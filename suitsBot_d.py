@@ -6,6 +6,7 @@ from discord.ext import commands
 from discord import Embed
 from discord.errors import NotFound
 import sys
+import ssl
 
 # ----------- Custom imports
 import credentials
@@ -677,6 +678,9 @@ def loadcache():
 
 
 # -----------------------   START UP   -----------------------------------
+
+# Monkeypatching so feedparser works
+ssl._create_default_https_context=ssl._create_unverified_context
 
 # Create MySQL connection
 bot.dbconn = DBConnection(credentials.tokens["MYSQL_USER"], credentials.tokens["MYSQL_PASSWORD"], "suitsBot")
