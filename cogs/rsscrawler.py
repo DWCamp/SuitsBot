@@ -41,9 +41,6 @@ class RSSCrawler:
             Podcast("We Martians",
                     "https://www.wemartians.com/feed/podcast/",
                     color=0xC4511F),
-            RSSFeed("xkcd",
-                    "https://xkcd.com/rss.xml",
-                    color=0xFFFFFF)
         ]
 
     # Searches for an item in your favorite RSS Feeds
@@ -170,7 +167,8 @@ class RSSCrawler:
             if episode:
                 await self.bot.say(embed=feed.get_embed(episode))
                 return
-            await self.bot.say(f"I couldn't find any results for the term `{parameter}` :worried:")
+            await self.bot.say(f"I couldn't find any results in the {feed.title} feed "
+                               f"for the term `{parameter}` :worried:")
 
         except Exception as e:
             await utils.report(self.bot, str(e), source=f"handle_podcast() for '{feed.feed_id}'", ctx=ctx)
@@ -201,7 +199,7 @@ class RSSFeed:
         self.title = feed_id  # The title of the feed (temporarily set to feed_id)
         self.description = None  # The description of the feed
         self.image = None  # The covert art for the feed
-        self.url = None  # The url for the website associated with the feed
+        self.link = None  # The website associated with the feed
         self.items = None  # The list of items in the feed
 
     def __len__(self):
@@ -256,12 +254,12 @@ Fetch time: {self.fetch_time}
         """
         self.feed = utils.get_rss_feed(self.url)
         self.fetch_time = datetime.today()
-        # if "channel" not in self.feed:
-        #     self.title = self.feed["channel"]["title"]
-        #     self.description = self.feed["channel"]["description"]
-        #     if "image" in self.feed["channel"]:
-        #         self.image = self.feed["channel"]["image"]["url"]
-        #     self.url = self.feed["channel"]["link"]
+        if "channel" in self.feed:
+            self.title = self.feed["channel"]["title"]
+            self.description = self.feed["channel"]["description"]
+            if "image" in self.feed["channel"]:
+                self.image = self.feed["channel"]["image"]["url"]
+            self.link = self.feed["channel"]["link"]
         self.items = self.feed["items"]
 
     def refresh_if_stale(self):
@@ -284,23 +282,6 @@ Fetch time: {self.fetch_time}
 
 
 class Podcast(RSSFeed):
-    """
-    A specific implementation of an RSS feed linking to a podcast
-    """
-    def __init__(self,
-                 url,
-                 aliases,
-                 ttl=timedelta(hours=1),
-                 color=EMBED_COLORS["default"]):
-        """
-
-        :param url: The url of the feed
-        :param aliases: The aliases of the feed
-        :param ttl:
-        :param color:
-        """
-        super().__init__(url, aliases, ttl=ttl)
-        self.color = color
 
     def get_embed(self, episode):
         """
@@ -319,7 +300,7 @@ class Podcast(RSSFeed):
         # Data
         embed.title = episode["title"]
         embed.url = episode["link"]
-        embed.set_author(name=self.title, url=self.url)
+        embed.set_author(name=self.title, url=self.link)
 
         timeobj = episode["published_parsed"]
         pubstr = f"{timeobj.tm_mon}/{timeobj.tm_mday}/{timeobj.tm_year}"
