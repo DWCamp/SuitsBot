@@ -5,7 +5,6 @@ import discord
 from discord.ext import commands
 from discord import Embed
 from discord.errors import NotFound
-import sys
 
 # ----------- Custom imports
 import credentials
@@ -275,7 +274,7 @@ async def on_message(message):
                     await bot.voice_client_in(message.server).disconnect()  # Disconnect from voice
                 await bot.send_message(message.channel, "Restarting...")
                 await bot.close()
-                sys.exit(1)
+                exit(1)
             else:
                 await bot.send_message(message.channel, "You do not have authority to restart the bot")
 
@@ -485,7 +484,7 @@ async def dev(ctx):
             await bot.say("Channel ID: " + ctx.message.channel.id)
 
         elif func == "dump":
-            await bot.say(PODCAST_ALIASES)
+            await bot.say("hello")
 
         elif func == "flag":
             await bot.say("Triggering flag...")
@@ -511,7 +510,7 @@ async def dev(ctx):
                 new_nick = parameter
                 if new_nick == "":
                     new_nick = None
-                bot_member = ctx.message.server.get_member(BOT_USER_ID)  # Gets the bot's own member object
+                bot_member = ctx.message.server.get_member(credentials.tokens["CLIENT_ID"])
                 await bot.change_nickname(bot_member, new_nick)
             except Exception as e:
                 await utils.report(bot, str(e), source="!dev nick", ctx=ctx)
