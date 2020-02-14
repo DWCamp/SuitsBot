@@ -24,6 +24,11 @@ CUSTOM_PREFIXES = {
     "846264338327950288": "?"
 }
 
+LOCAL_COGS = [
+    "private.vacation",
+    "cogs.ksp",
+]
+
 # =========== IDS
 
 # Server IDs
