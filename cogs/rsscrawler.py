@@ -27,7 +27,7 @@ class RSSCrawler:
             Podcast("Accidental Tech Podcast",
                     "http://atp.fm/episodes?format=rss",
                     color=0x203D65),
-            RSSFeed("KSP History",
+            Podcast("KSP History",
                     "https://dwcamp.net/feeds/ksp_history.xml",
                     color=0x339BDC),
             Podcast("Main Engine Cutoff",
@@ -44,7 +44,7 @@ class RSSCrawler:
             Podcast("We Martians",
                     "https://www.wemartians.com/feed/podcast/",
                     color=0xC4511F),
-            RSSFeed("xkcd",
+            Podcast("xkcd",
                     "https://dwcamp.net/feeds/xkcd.xml",
                     color=0xFFFFFF),
         ]
