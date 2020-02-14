@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import utils
 
 
@@ -28,19 +29,15 @@ class Scheduler:
         self._monthly_midnight = list()
         self._yearly_midnight = list()
 
-        now = datetime.now()
-        self._curr_year = now.year
-        self._curr_month = now.month
-        self._curr_day = now.day
-        self._curr_hour = now.hour
-        self._loop.create_task(self._task_loop())
+        self.reset_last_runs()
 
-    def reset(self):
+    def reset_last_runs(self):
         now = datetime.now()
-        self._curr_year = now.year
-        self._curr_month = now.month
-        self._curr_day = now.day
-        self._curr_hour = now.hour
+        self._year_last_run = datetime(now.year, 1, 1)
+        self._month_last_run = datetime(now.year, now.month, 1)
+        self._day_last_run = datetime(now.year, now.month, now.day)
+        self._hour_last_run = datetime(now.year, now.month, now.day, now.hour)
+        self._loop.create_task(self._task_loop())
 
     # ===============================================================  Add Function To Task Group
 
@@ -164,22 +161,22 @@ class Scheduler:
                 await asyncio.sleep(delta)
                 now = datetime.now()
 
-                if now.year > self._curr_year:
-                    self._curr_year = now.year
+                if now > self._year_last_run + relativedelta(years=1):
+                    self._year_last_run = datetime(now.year, 1, 1)
                     self._loop.create_task(self._run_yearly(now))
 
-                if now.month > self._curr_month:
-                    self._curr_month = now.month
+                if now > self._month_last_run + relativedelta(months=1):
+                    self._month_last_run = datetime(now.year, now.month, 1)
                     self._loop.create_task(self._run_monthly(now))
 
-                if now.day > self._curr_day:
-                    self._curr_day = now.day
+                if now > self._day_last_run + relativedelta(days=1):
+                    self._day_last_run = datetime(now.year, now.month, now.day)
                     self._loop.create_task(self._run_daily(now, midnight=True))
                     if now.weekday() == 0:
                         self._loop.create_task(self._run_weekly(now, midnight=True))
 
-                if now.hour > self._curr_hour:
-                    self._curr_hour = now.hour
+                if now > self._hour_last_run + relativedelta(hours=1):
+                    self._hour_last_run = datetime(now.year, now.month, now.day, now.hour)
                     self._loop.create_task(self._run_hourly(now))
 
                     # Run daily, weekly, monthly, and yearly tasks that are delayed until 9 am
