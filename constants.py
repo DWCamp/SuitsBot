@@ -17,7 +17,7 @@ AFFIRMATIVE_RESPONSES = ['yes', 'yup', 'y', 'yee', 'yep', 'okay', 'ok', 'go ahea
 # Every podcast feed alias
 FEED_ALIAS_LIST = {
     "Accidental Tech Podcast": ["atp", "ATP", "accidental"],
-    "KSP History": ["ksp", "KSP", "ksphistory"],
+    "KSP History": ["ksp", "ksphistory", "history"],
     "Main Engine Cutoff": ["meco", "MECO", "Meco", "MainEngineCutOff", "podcast"],
     "My Brother My Brother and Me": ["mbmbmam", "MBMBAM"],
     "Off-Nominal": ["on", "offnominal", "OffNominal", "Off-nominal", "Off-Nominal", "ON"],
