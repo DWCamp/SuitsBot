@@ -4,3 +4,4 @@ discord==0.16.12
 feedparser==5.2.1
 mysql-connector==2.2.9
 redis
+python-dateutil

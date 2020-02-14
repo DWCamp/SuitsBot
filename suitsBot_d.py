@@ -77,7 +77,8 @@ async def post_apod(curr_time):
             embed.set_footer(icon_url=embed_icon,
                              text="NASA Astronomy Photo of the Day https://apod.nasa.gov/apod/astropix.html")
             embed.colour = EMBED_COLORS["nasa"]
-            await bot.send_message(bot.APOD_CHANNELS, embed=embed)
+            for apod_channel in bot.APOD_CHANNELS:
+                await bot.send_message(apod_channel, embed=embed)
     except Exception as e:
         await utils.report(bot, str(e), source="Daily APOD command")
 
