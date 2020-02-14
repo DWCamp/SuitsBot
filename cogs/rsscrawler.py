@@ -51,7 +51,7 @@ class RSSCrawler:
 
     # Searches for an item in your favorite RSS Feeds
     @commands.command(pass_context=True, help=LONG_HELP['rssfeed'],
-                      brief=BRIEF_HELP['rssfeed'], aliases=FEED_ALIASES)
+                      brief=BRIEF_HELP['rssfeed'], aliases=ALIASES["rssfeed"])
     async def rssfeed(self, ctx):
         try:
             invoking_id = ctx.invoked_with
@@ -308,7 +308,8 @@ class Podcast(RSSFeed):
 
         # Appearance
         embed.colour = self.color
-        embed.description = utils.trimtolength(episode["subtitle"], 2048)
+        description = episode["subtitle"] if "subtitle" in episode else episode["summary"]
+        embed.description = utils.trimtolength(description, 2048)
         embed.set_thumbnail(url=self.image)
 
         # Data
@@ -321,6 +322,11 @@ class Podcast(RSSFeed):
 
         embed.add_field(name="Published", value=pub_str)
         embed.add_field(name="Quality", value=f"{randint(20, 100) / 10}/10")
+
+        # Image enclosure
+        # Discord just ignores URLs it can't handle
+        if episode.enclosures:
+            embed.set_image(url=episode.enclosures[0].href)
 
         return embed
 
