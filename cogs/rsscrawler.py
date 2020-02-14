@@ -27,6 +27,9 @@ class RSSCrawler:
             Podcast("Accidental Tech Podcast",
                     "http://atp.fm/episodes?format=rss",
                     color=0x203D65),
+            RSSFeed("KSP History",
+                    "https://dwcamp.net/feeds/ksp_history.xml",
+                    color=0x339BDC),
             Podcast("Main Engine Cutoff",
                     "https://feeds.simplecast.com/Zg9AF5cA",
                     color=0x9FB1C2),
@@ -41,6 +44,9 @@ class RSSCrawler:
             Podcast("We Martians",
                     "https://www.wemartians.com/feed/podcast/",
                     color=0xC4511F),
+            RSSFeed("xkcd",
+                    "https://dwcamp.net/feeds/xkcd.xml",
+                    color=0xFFFFFF),
         ]
 
     # Searches for an item in your favorite RSS Feeds
@@ -171,7 +177,7 @@ class RSSCrawler:
                                f"for the term `{parameter}` :worried:")
 
         except Exception as e:
-            await utils.report(self.bot, str(e), source=f"handle_podcast() for '{feed.feed_id}'", ctx=ctx)
+            await utils.report(self.bot, str(e), source=f"handle_rss_feed() for '{feed.feed_id}'", ctx=ctx)
 
 
 class RSSFeed:
@@ -186,7 +192,7 @@ class RSSFeed:
     """
     def __init__(self, feed_id, url, color=EMBED_COLORS["default"], ttl=timedelta(hours=1)):
         self.feed_id = feed_id
-        self.url = url
+        self.feed_url = url
         self.aliases = FEED_ALIAS_LIST[feed_id]
         self.color = color
         self.ttl = ttl
@@ -252,7 +258,7 @@ Fetch time: {self.fetch_time}
         Updates the cached data
         :return:
         """
-        self.feed = utils.get_rss_feed(self.url)
+        self.feed = utils.get_rss_feed(self.feed_url)
         self.fetch_time = datetime.today()
         if "channel" in self.feed:
             self.title = self.feed["channel"]["title"]
@@ -277,7 +283,15 @@ Fetch time: {self.fetch_time}
         """
         embed = Embed()
         embed.colour = self.color
+        if self.image:
+            embed.set_author(name=self.title, url=self.link, icon_url=self.image)
+        else:
+            embed.set_author(name=self.title, url=self.link)
         embed.title = item["title"]
+        embed.url = self.link
+        if "image" in item.keys():
+            embed.set_image(url=item["image"])
+            embed.set_footer(text=utils.trimtolength(f"{self.title} - {self.description}", 256))
         return embed
 
 
@@ -302,10 +316,10 @@ class Podcast(RSSFeed):
         embed.url = episode["link"]
         embed.set_author(name=self.title, url=self.link)
 
-        timeobj = episode["published_parsed"]
-        pubstr = f"{timeobj.tm_mon}/{timeobj.tm_mday}/{timeobj.tm_year}"
+        time_obj = episode["published_parsed"]
+        pub_str = f"{time_obj.tm_mon}/{time_obj.tm_mday}/{time_obj.tm_year}"
 
-        embed.add_field(name="Published", value=pubstr)
+        embed.add_field(name="Published", value=pub_str)
         embed.add_field(name="Quality", value=f"{randint(20, 100) / 10}/10")
 
         return embed

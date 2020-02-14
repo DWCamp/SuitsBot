@@ -694,16 +694,16 @@ load()
 print("Loading cogs...")
 
 # Load cogs
-startup_extensions = ['cogs.anilist',
-                      'cogs.code',
-                      'cogs.images',
-                      'cogs.listcommands',
-                      'cogs.rsscrawler',
-                      'cogs.rand',
-                      'cogs.tags',
-                      'cogs.voice',
-                      'cogs.webqueries',
-                      'cogs.yiff']
+startup_extensions = LOCAL_COGS
+startup_extensions += ['cogs.anilist',
+                       'cogs.code',
+                       'cogs.images',
+                       'cogs.listcommands',
+                       'cogs.rsscrawler',
+                       'cogs.rand',
+                       'cogs.tags',
+                       'cogs.voice',
+                       'cogs.webqueries']
 
 if __name__ == "__main__":
     for extension in startup_extensions:
