@@ -30,6 +30,9 @@ class RSSCrawler:
             Podcast("Main Engine Cutoff",
                     "https://feeds.simplecast.com/Zg9AF5cA",
                     color=0x9FB1C2),
+            Podcast("KSP History",
+                    "ksp_history_rss.xml",
+                    color=0xAAD4FF),
             Podcast("My Brother My Brother and Me",
                     "https://feeds.simplecast.com/wjQvYtdl",
                     color=0x4B4B4B),
@@ -294,7 +297,8 @@ class Podcast(RSSFeed):
 
         # Appearance
         embed.colour = self.color
-        embed.description = utils.trimtolength(episode["subtitle"], 2048)
+        description = episode["subtitle"] if "subtitle" in episode else episode["summary"]
+        embed.description = utils.trimtolength(description, 2048)
         embed.set_thumbnail(url=self.image)
 
         # Data
@@ -307,6 +311,11 @@ class Podcast(RSSFeed):
 
         embed.add_field(name="Published", value=pubstr)
         embed.add_field(name="Quality", value=f"{randint(20, 100) / 10}/10")
+
+        # Image enclosure
+        # Discord just ignores URLs it can't handle
+        if episode.enclosures:
+            embed.set_image(url=episode.enclosures[0].href)
 
         return embed
 

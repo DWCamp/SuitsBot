@@ -17,6 +17,7 @@ AFFIRMATIVE_RESPONSES = ['yes', 'yup', 'y', 'yee', 'yep', 'okay', 'ok', 'go ahea
 # Every podcast feed alias
 FEED_ALIAS_LIST = {
     "Accidental Tech Podcast": ["atp", "ATP", "accidental"],
+    "KSP History": ["ksp", "KSP", "ksphistory"],
     "Main Engine Cutoff": ["meco", "MECO", "Meco", "MainEngineCutOff", "podcast"],
     "My Brother My Brother and Me": ["mbmbmam", "MBMBAM"],
     "Off-Nominal": ["on", "offnominal", "OffNominal", "Off-nominal", "Off-Nominal", "ON"],
@@ -67,6 +68,7 @@ BRIEF_HELP = {
     "gritty": "The bot graces your server with an image of His Royal Orangeness",
     "hello": "The bot says hi to you",
     "join": "Join a user in voice",
+    "ksp": "Posts the URL to the KSP History part with the number provided",
     "leave": "leave voice",
     "ls": "Arbitrary list creation",
     "meco": "Posts the URL to the MECO podcast episode with the number provided",
