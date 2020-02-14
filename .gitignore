@@ -107,3 +107,5 @@ ENV/
 # Sensitive Config Files
 local_config.py
 credentials.py
+private/*
+!private/__init__.py
