@@ -26,9 +26,6 @@ FEED_ALIAS_LIST = {
     "xkcd": ["xkcd", "XKCD"],
 }
 
-# The total list of podcast aliases
-FEED_ALIASES = [k for feed in FEED_ALIAS_LIST.values() for k in feed]
-
 # A bullet list of feeds in the form "- <title> (`!<first alias>`)"
 FEED_TEXT_LIST = "\n".join([f"- {feed_id} (`!{FEED_ALIAS_LIST[feed_id][0]}`)" for feed_id in FEED_ALIAS_LIST.keys()])
 
@@ -50,6 +47,7 @@ ALIASES = {
     "nasa": ["NASA", "APOTD", "APOD", "apod", "apotd"],
     "picture": ["snek", "Snek", "sneks", "Sneks", "snake", "snakes", "pic", "photo", "unsplash", "Unsplash"],
     "rand": ["random", "ran", "randmo"],
+    "rssfeed": [k for feed in FEED_ALIAS_LIST.values() for k in feed],
     "say": ["voice", "speak"],
     "tag": ["tags", "Tag", "Tags"],
     "ud": ["urbanDictionary", "urbandict", "urbanDict", "UD", "uD", "Ud"],
