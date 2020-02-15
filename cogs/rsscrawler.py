@@ -11,42 +11,33 @@ import utils
 class RSSCrawler:
     """
     Commands dealing with fetching rss feeds
-
-    Supports:
-        - ATP (!atp)
-        - MECO (!meco)
-        - MBMBAM (!mbmbam)
-        - Off-Nominal (!on)
-        - The Adventure Zone (!taz)
-        - We Martians (!wm)
-        + xkcd (!xkcd)  <- NOT IMPLEMENTED
     """
     def __init__(self, bot):
         self.bot = bot
         self.feeds = [
-            Podcast("Accidental Tech Podcast",
+            RSSFeed("Accidental Tech Podcast",
                     "http://atp.fm/episodes?format=rss",
                     color=0x203D65),
-            Podcast("KSP History",
+            RSSFeed("KSP History",
                     "https://dwcamp.net/feeds/ksp_history.xml",
                     color=0x339BDC),
-            Podcast("Main Engine Cutoff",
+            RSSFeed("Main Engine Cutoff",
                     "https://feeds.simplecast.com/Zg9AF5cA",
                     color=0x9FB1C2),
-            Podcast("My Brother My Brother and Me",
+            RSSFeed("My Brother My Brother and Me",
                     "https://feeds.simplecast.com/wjQvYtdl",
                     color=0x4B4B4B),
-            Podcast("Off-Nominal",
+            RSSFeed("Off-Nominal",
                     "https://feeds.simplecast.com/iyz_ESAp",
                     color=0x716C4F),
-            Podcast("The Adventure Zone",
+            RSSFeed("The Adventure Zone",
                     "https://feeds.simplecast.com/cYQVc__c"),
-            Podcast("We Martians",
+            RSSFeed("We Martians",
                     "https://www.wemartians.com/feed/podcast/",
                     color=0xC4511F),
-            Podcast("xkcd",
-                    "https://dwcamp.net/feeds/xkcd.xml",
-                    color=0xFFFFFF),
+            WebComic("xkcd",
+                     "https://dwcamp.net/feeds/xkcd.xml",
+                     color=0xFFFFFF),
         ]
 
     # Searches for an item in your favorite RSS Feeds
@@ -100,31 +91,8 @@ class RSSCrawler:
                 await self.bot.say("Search for an item by typing a search term")
                 return
 
-            # Check the age
-            if subcommand == "age":
-                await self.bot.say(f"{feed.fetchtime}\n{feed.is_stale()}")
-                return
-
-            # Check the age
-            if subcommand == "bozo":
-                if feed.feed.bozo:
-                    await self.bot.say(f"Detected error: {feed.feed.bozo_exception}")
-                else:
-                    await self.bot.say("There were no issues parsing this feed")
-                return
-
-            # Post all of the keys for the channel dict
-            if subcommand == "channel":
-                await self.bot.say("Channel Deets:\n" + " | ".join(feed.feed["channel"].keys()))
-                return
-
-            # Post all of the keys for the item dict
-            if subcommand == "deets":
-                await self.bot.say(" | ".join(feed.items[0].keys()))
-                return
-
             # Dump all the info about the feed
-            if subcommand == "dump":
+            if subcommand == "details":
                 await self.bot.say(feed.to_string())
                 return
 
@@ -133,14 +101,11 @@ class RSSCrawler:
                 await self.bot.say(embed=feed.get_embed(feed.items[0]))
                 return
 
-            # Post all of the keys for the feed dict
-            if subcommand == "feed":
-                await self.bot.say("Feed Deets:\n" + " | ".join(feed.feed.keys()))
-                return
-
-            # Prints the text of the field requested for the first item in the feed
-            if subcommand == "print":
-                await self.bot.say(utils.trimtolength(feed.items[0][parameter], 1000))
+            # Test an embed for a given feed
+            if subcommand == "image":
+                embed = Embed()
+                embed.set_image(url=feed.image)
+                await self.bot.say(embed=embed)
                 return
 
             # If some nerd like Kris or Pat wants to do regex search
@@ -190,7 +155,7 @@ class RSSFeed:
     :param ttl: A timedelta object representing how long the cache
         can last before it is considered "stale". Defaults to 1 minute
     """
-    def __init__(self, feed_id, url, color=EMBED_COLORS["default"], ttl=timedelta(hours=1)):
+    def __init__(self, feed_id, url, color=EMBED_COLORS["default"], ttl=timedelta(hours=24)):
         self.feed_id = feed_id
         self.feed_url = url
         self.aliases = FEED_ALIAS_LIST[feed_id]
@@ -200,10 +165,12 @@ class RSSFeed:
         # RSS Info. These values are not defined at init and
         # must be fetched by refreshing the feed
 
-        self.feed = None  # The feed dictionary
+        self.raw_rss = None  # The feedparser dictionary
+        self.feed = None  # The "feed" object from feedparser
+        self.channel = None  # The channel object
         self.fetch_time = None  # When the item was fetched
         self.title = feed_id  # The title of the feed (temporarily set to feed_id)
-        self.description = None  # The description of the feed
+        self.subtitle = None  # The description of the feed
         self.image = None  # The covert art for the feed
         self.link = None  # The website associated with the feed
         self.items = None  # The list of items in the feed
@@ -249,7 +216,7 @@ Fetch time: {self.fetch_time}
         Checks if the information is stale (older than 24 hours)
         :return: Returns 'True' if the stored data was cached more than 24 hours ago
         """
-        if self.feed is None:
+        if self.raw_rss is None:
             return True
         return datetime.today() > self.fetch_time + self.ttl
 
@@ -258,15 +225,22 @@ Fetch time: {self.fetch_time}
         Updates the cached data
         :return:
         """
-        self.feed = utils.get_rss_feed(self.feed_url)
+        self.raw_rss = utils.get_rss_feed(self.feed_url)
         self.fetch_time = datetime.today()
-        if "channel" in self.feed:
-            self.title = self.feed["channel"]["title"]
-            self.description = self.feed["channel"]["description"]
-            if "image" in self.feed["channel"]:
-                self.image = self.feed["channel"]["image"]["url"]
-            self.link = self.feed["channel"]["link"]
-        self.items = self.feed["items"]
+        self.channel = self.raw_rss["channel"]
+        self.items = self.raw_rss["items"]
+
+        self.feed = self.raw_rss["feed"]
+        self.subtitle = self.feed.subtitle
+        self.link = self.feed["link"]
+        if self.feed.image:
+            self.image = self.feed.image["href"]
+
+        self.title = self.channel["title"]
+
+        # Optional elements
+        if "ttl" in self.channel:
+            self.ttl = self.channel["ttl"]
 
     def refresh_if_stale(self):
         """
@@ -283,52 +257,59 @@ Fetch time: {self.fetch_time}
         """
         embed = Embed()
         embed.colour = self.color
-        if self.image:
-            embed.set_author(name=self.title, url=self.link, icon_url=self.image)
-        else:
-            embed.set_author(name=self.title, url=self.link)
         embed.title = item["title"]
-        embed.url = self.link
-        if "image" in item.keys():
-            embed.set_image(url=item["image"])
-            embed.set_footer(text=utils.trimtolength(f"{self.title} - {self.description}", 256))
-        return embed
-
-
-class Podcast(RSSFeed):
-
-    def get_embed(self, episode):
-        """
-        Generates an embed for a given episode of a podcast
-
-        :param episode: ([str : Any]) The dictionary of information for the episode
-        :return: Embed
-        """
-        embed = Embed()
-
-        # Appearance
-        embed.colour = self.color
-        description = episode["subtitle"] if "subtitle" in episode else episode["summary"]
-        embed.description = utils.trimtolength(description, 2048)
-        embed.set_thumbnail(url=self.image)
-
-        # Data
-        embed.title = episode["title"]
-        embed.url = episode["link"]
+        embed.url = item["link"]
+        if "description" in item:
+            description = item["subtitle"] if "subtitle" in item else item["summary"]
+            embed.description = utils.trimtolength(description, 2048)
         embed.set_author(name=self.title, url=self.link)
+        if self.image:
+            embed.set_thumbnail(url=self.image)
 
-        time_obj = episode["published_parsed"]
-        pub_str = f"{time_obj.tm_mon}/{time_obj.tm_mday}/{time_obj.tm_year}"
-
-        embed.add_field(name="Published", value=pub_str)
+        embed.add_field(name="Published", value=format_time(item["published_parsed"]))
         embed.add_field(name="Quality", value=f"{randint(20, 100) / 10}/10")
 
-        # Image enclosure
-        # Discord just ignores URLs it can't handle
-        if episode.enclosures:
-            embed.set_image(url=episode.enclosures[0].href)
+        # look through enclosures for an image
+        for enclosure in item.links:
+            if enclosure["type"].startswith("image"):
+                embed.set_image(url=enclosure["href"])
+
+        embed.set_footer(text=utils.trimtolength(f"{self.title} - {self.subtitle}", 256))
+        return embed
+
+
+class WebComic(RSSFeed):
+    """
+    A special case RSS feed, without fields and the description moved to the footer
+    """
+    def get_embed(self, item):
+        """
+        Generates an embed for an issue of a webcomic
+
+        :param item: ([str : Any]) The dictionary of information for the panel
+        :return: Embed
+        """
+        embed = super().get_embed(item)
+
+        # Remove all fields
+        embed.clear_fields()
+
+        # Move description to footer
+        embed.description = ""
+        description = item["subtitle"] if "subtitle" in item else item["summary"]
+        embed.set_footer(text=utils.trimtolength(description, 2048))
 
         return embed
+
+
+def format_time(time):
+    """
+    Formats a datetime object for easy human viewing
+    Formats to ISO 8601
+    :param time: The datetime object
+    :return: The time in 'YYYY-MM-DD' format
+    """
+    return f"{time.tm_year}-{time.tm_mon}-{time.tm_mday}"
 
 
 def setup(bot):
