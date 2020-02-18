@@ -108,6 +108,8 @@ class Images:
             else:
                 embed = Embed().set_image(url=json['hdurl'])
                 embed.title = json['title']
+                date = json["date"][2:].replace("-", "")
+                embed.url = f"https://apod.nasa.gov/apod/ap{date}.html"
                 embed.description = json['explanation']
                 embed.set_footer(icon_url=embed_icon,
                                  text="NASA Astronomy Photo of the Day https://apod.nasa.gov/apod/astropix.html")
