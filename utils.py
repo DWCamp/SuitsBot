@@ -131,7 +131,7 @@ def embedfromdict(dictionary, title=None, description=None, thumbnail_url=None, 
     return embed
 
 
-async def get_json_with_get(url, params=None, headers=HEADERS, content_type=None):
+async def get_json_with_get(url, params=None, headers=None, content_type=None):
     """
     Requests JSON data using a GET request
 
@@ -159,8 +159,17 @@ async def get_json_with_get(url, params=None, headers=HEADERS, content_type=None
     [0] - resp.status
     """
 
+    # Create parameter dictionary if none passed
     if params is None:
         params = {}
+
+    # Use default headers if none passed, otherwise
+    # add passed headers to default dictionary
+    if headers is None:
+        headers = HEADERS
+    else:
+        merged_headers = HEADERS
+        headers = merged_headers.update(headers)
 
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url, params=params) as resp:
@@ -170,7 +179,7 @@ async def get_json_with_get(url, params=None, headers=HEADERS, content_type=None
             return [None, resp.status]
 
 
-async def get_json_with_post(url, params=None, json=None):
+async def get_json_with_post(url, params=None, headers=None, json=None):
     """
     Requests JSON data using a POST request
 
@@ -181,6 +190,9 @@ async def get_json_with_post(url, params=None, json=None):
     params : Optional - dict{str:str}
         Parameters passed in the request. 
         If not provided, an empty dict is passed
+    headers : dict{str:str}
+        Headers passed in the request
+        If not provided, the default headers are used
     json : Optional - dict{str:str}
         The JSON dictionary to be posted with the API
 
@@ -195,12 +207,23 @@ async def get_json_with_post(url, params=None, json=None):
     [0] - resp.status
     """
 
+    # Create parameter dictionary if none passed
     if params is None:
         params = {}
+
+    # Use default headers if none passed, otherwise
+    # add passed headers to default dictionary
+    if headers is None:
+        headers = HEADERS
+    else:
+        merged_headers = HEADERS
+        headers = merged_headers.update(headers)
+
+    # Create json dictionary if none passed
     if json is None:
         json = {}
 
-    async with aiohttp.ClientSession(headers=HEADERS) as session:
+    async with aiohttp.ClientSession(headers=headers) as session:
         async with session.post(url, params=params, json=json) as resp:
             json = await resp.json()
             return [json, resp.status]

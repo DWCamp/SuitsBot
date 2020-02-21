@@ -3,9 +3,10 @@ from discord.ext import commands
 from discord import Embed
 from urllib.parse import quote
 from constants import *
-import credentials
+from credentials import tokens
 import parse
 import utils
+from stringcache import StringCache
 
 
 class Images:
@@ -28,10 +29,7 @@ class Images:
 
     def __init__(self, bot):
         self.bot = bot
-        [meow_successes, meow_attempts] = utils.load_from_cache(bot.dbconn, "meowFailRate", "1/1").split("/")
-        self.meow_successes = int(meow_successes)
-        self.meow_attempts = int(meow_attempts)
-        self.next_meow_url = utils.load_from_cache(bot.dbconn, "meowURL", "")
+        self.meow_cache = CatCache(bot)
         self.gritty_urls = ["https://media.newyorker.com/photos/5bbd10430cdf452cf93ca22f/master/w_1023,c_limit/Crouch-Gritty.jpg",
                             "https://media.phillyvoice.com/media/images/Dn9LBKjU8AAaIYO.jpg-large.ad646704.fill-735x490.jpg",
                             "https://i.imgflip.com/2imt3r.gif",
@@ -78,15 +76,13 @@ class Images:
     @commands.command(pass_context=True, help=LONG_HELP['meow'], brief=BRIEF_HELP['meow'], aliases=ALIASES['meow'])
     async def meow(self, ctx):
         try:
-            if self.next_meow_url is None:
-                await self.get_meow_url()
-            if self.next_meow_url is None:
-                await self.bot.say("This command is having a problem. Try again in a bit.")
-                return
-            embed = Embed().set_image(url=self.next_meow_url)
-            embed.colour = EMBED_COLORS["meow"]
-            await self.bot.say(embed=embed)
-            await self.get_meow_url()
+            meow_url = self.meow_cache.next()
+            if meow_url:
+                embed = Embed().set_image(url=meow_url)
+                embed.colour = EMBED_COLORS["meow"]
+                await self.bot.say(embed=embed)
+            else:
+                await self.bot.say("I'm sorry, I don't have a cat photo at the moment. Please try again in a minute")
         except Exception as e:
             await utils.report(self.bot, str(e), source="Meow command", ctx=ctx)
 
@@ -127,7 +123,7 @@ class Images:
                              'xhc2hfaWNvbl8xNTMxMTA2MTg5XzA5OQ/icon.png?w=170&fakeurl=1&type=.png')
             headers = {
                 "User-Agent": "suitsBot Discord Bot - https://github.com/DWCamp",
-                "Authorization": "Client-ID " + credentials.tokens["UNSPLASH_CLIENT_ID"],
+                "Authorization": "Client-ID " + tokens["UNSPLASH_CLIENT_ID"],
                 "Accept-Version": "v1"
             }
 
@@ -177,19 +173,17 @@ class Images:
         """Gets a random Gritty url"""
         return random.choice(self.gritty_urls)
 
-    async def get_meow_url(self):
-        """ Gets the url of a random image from aws.random.cat and caches the value """
-        json = None
-        status_code = 0
-        counter = 0
-        while status_code != 200 and counter < 100:
-            [json, status_code] = await utils.get_json_with_get("http://aws.random.cat/meow")
-            self.meow_attempts += 1
-            counter += 1
-        self.next_meow_url = json['file']
-        self.meow_successes += 1
-        utils.update_cache(self.bot.dbconn, "meowURL", json['file'])
-        utils.update_cache(self.bot.dbconn, "meowFailRate", "{}/{}".format(self.meow_successes, self.meow_attempts))
+
+class CatCache(StringCache):
+    """ An implementation of the StringCache for cat photos """
+    def __init__(self, bot):
+        StringCache.__init__(self, bot, cache_id="meow")
+
+    async def gather(self):
+        """ Fetches cat urls from thecatapi.com """
+        json = await utils.get_json_with_get("https://api.thecatapi.com/v1/images/search?limit=10",
+                                             headers={"x-api-token": tokens["THECATAPI"]})
+        return [result["url"] for result in json[0]]
 
 
 def setup(bot):
