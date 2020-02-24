@@ -169,7 +169,8 @@ async def get_json_with_get(url, params=None, headers=None, content_type=None):
         headers = HEADERS
     else:
         merged_headers = HEADERS
-        headers = merged_headers.update(headers)
+        merged_headers.update(headers)
+        headers = merged_headers
 
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url, params=params) as resp:
@@ -217,7 +218,8 @@ async def get_json_with_post(url, params=None, headers=None, json=None):
         headers = HEADERS
     else:
         merged_headers = HEADERS
-        headers = merged_headers.update(headers)
+        merged_headers.update(headers)
+        headers = merged_headers
 
     # Create json dictionary if none passed
     if json is None:

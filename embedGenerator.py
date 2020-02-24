@@ -4,7 +4,7 @@ from typing import List, Callable, Optional, Union
 from bs4 import BeautifulSoup
 from discord import Embed, Message
 from constants import *
-import credentials
+from credentials import tokens
 import utils
 import redis
 
@@ -388,7 +388,7 @@ async def twitter_handle(handle: str) -> Optional[Embed]:
     Will return 'None' if the account does not exist
     """
     twitter_api_url = "https://api.twitter.com/1.1/users/show.json?screen_name=" + handle
-    headers = {"Authorization": "Bearer " + credentials.tokens["TWITTER_BEARER"]}
+    headers = {"Authorization": "Bearer " + tokens["TWITTER_BEARER"]}
     [json, response] = await utils.get_json_with_get(twitter_api_url, headers=headers)
     if response is not 200:
         return None
@@ -434,7 +434,7 @@ async def twitter_images(image_id):
     parameters = {"id": str(image_id),
                   "tweet_mode": "extended",
                   "include_entities": "true"}
-    headers = {"Authorization": "Bearer " + credentials.tokens["TWITTER_BEARER"]}
+    headers = {"Authorization": "Bearer " + tokens["TWITTER_BEARER"]}
     [json, response] = await utils.get_json_with_get(twitter_api_url, headers=headers, params=parameters)
     if response is not 200 or "extended_entities" not in json.keys():
         return None
@@ -480,7 +480,7 @@ async def twitter_response(tweet_id: Union[str, int]) -> Optional[List[Embed]]:
     parameters = {"id": str(tweet_id),
                   "tweet_mode": "extended",
                   "include_entities": "true"}
-    headers = {"Authorization": "Bearer " + credentials.tokens["TWITTER_BEARER"]}
+    headers = {"Authorization": "Bearer " + tokens["TWITTER_BEARER"]}
     [json, response] = await utils.get_json_with_get(twitter_api_url, headers=headers, params=parameters)
     if response is not 200 or (json['in_reply_to_status_id_str'] is None and not json['is_quote_status']):
         return None
