@@ -90,27 +90,11 @@ class Images:
     @commands.command(pass_context=True, help=LONG_HELP['nasa'], brief=BRIEF_HELP['nasa'], aliases=ALIASES['nasa'])
     async def nasa(self, ctx):
         try:
-            embed_icon = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA_logo.svg/" +\
-                         "1200px-NASA_logo.svg.png"
-            api_url = "https://api.nasa.gov/planetary/apod?api_key=OSoqPlD9uDBXvXXpn4ybhFt1ulflqtmGtQnkLgAD"
-            [json, status_code] = await utils.get_json_with_get(api_url)
-            if status_code != 200:
-                await utils.report(self.bot,
-                                   "Error with !nasa, response code " + str(status_code) + "\n" + str(json),
-                                   source="NASA APOD command", ctx=ctx)
-                return
-            if json['media_type'] == "video":
-                await self.bot.say("**{}**\n{}\n{}".format(json['title'], json['explanation'], json['url']))
+            apod_post = get_apod_embed()
+            if isinstance(apod_post, str):
+                await self.bot(apod_post)
             else:
-                embed = Embed().set_image(url=json['hdurl'])
-                embed.title = json['title']
-                date = json["date"][2:].replace("-", "")
-                embed.url = f"https://apod.nasa.gov/apod/ap{date}.html"
-                embed.description = json['explanation']
-                embed.set_footer(icon_url=embed_icon,
-                                 text="NASA Astronomy Photo of the Day https://apod.nasa.gov/apod/astropix.html")
-                embed.colour = EMBED_COLORS["nasa"]
-                await self.bot.say(embed=embed)
+                await self.bot(embed=apod_post)
         except Exception as e:
             await utils.report(self.bot, str(e), source="NASA APOD command", ctx=ctx)
 
@@ -184,6 +168,35 @@ class CatCache(StringCache):
         json = await utils.get_json_with_get("https://api.thecatapi.com/v1/images/search?limit=10",
                                              headers={"x-api-token": tokens["THECATAPI"]})
         return [result["url"] for result in json[0]]
+
+
+async def get_apod_embed():
+    """
+    Get's the day's APOD and returns an entity which can be posted
+     This entity will either be an embed with the picture and its
+     description or a string (if the post is a video) containing
+     a message about the post. Videos need to be sent as strings
+     since videos cannot be put into containers
+
+    :return: Either an embed (for images) or a string (for videos)
+    """
+    embed_icon = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA_logo.svg/" + \
+                 "1200px-NASA_logo.svg.png"
+    api_url = f"https://api.nasa.gov/planetary/apod?api_key={tokens['APOD']}"
+    [json, status_code] = await utils.get_json_with_get(api_url)
+    if status_code != 200:
+        raise RuntimeError(f"Failed to retrieve APOD, status code: {status_code}")
+    if json['media_type'] == "video":
+        return f"**{json['title']}**\n{json['explanation']}\n{json['url']}"
+    embed = Embed().set_image(url=json['hdurl'])
+    embed.title = json['title']
+    date = json["date"][2:].replace("-", "")
+    embed.url = f"https://apod.nasa.gov/apod/ap{date}.html"
+    embed.description = json['explanation']
+    embed.set_footer(icon_url=embed_icon,
+                     text="NASA Astronomy Photo of the Day https://apod.nasa.gov/apod/astropix.html")
+    embed.colour = EMBED_COLORS["nasa"]
+    return embed
 
 
 def setup(bot):

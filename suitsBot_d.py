@@ -7,7 +7,7 @@ from discord import Embed
 from discord.errors import NotFound
 
 # ----------- Custom imports
-import credentials
+from credentials import tokens
 import embedGenerator
 from scheduler import Scheduler
 from dbconnection import DBConnection
@@ -15,6 +15,7 @@ from constants import *
 from local_config import *
 import utils
 import parse
+from cogs import images
 from utils import embedfromdict
 
 # ------------------------ BOT VARIABLES ---------------------------------
@@ -58,29 +59,18 @@ bot = commands.Bot(command_prefix=get_prefix, description=BOT_DESCRIPTION)
 
 
 async def post_apod(curr_time):
+    """
+    Post the APOD to the channels defined in local_config.py
+    :param curr_time: A value passed to all scheduled tasks
+    """
     try:
-        embed_icon = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA_logo.svg/" +\
-                     "1200px-NASA_logo.svg.png"
-        api_url = "https://api.nasa.gov/planetary/apod?api_key=OSoqPlD9uDBXvXXpn4ybhFt1ulflqtmGtQnkLgAD"
-        [json, status_code] = await utils.get_json_with_get(api_url)
-        if status_code != 200:
-            await utils.report(bot,
-                               "Error with !nasa, response code " + str(status_code) + "\n" + str(json),
-                               source="NASA APOD command")
-            return
-        if json['media_type'] == "video":
-            await bot.send_message(bot.SUITS_SPACE, "**{}**\n{}\n{}".format(json['title'], json['explanation'], json['url']))
-        else:
-            embed = Embed().set_image(url=json['hdurl'])
-            embed.title = json['title']
-            date = json["date"][2:].replace("-", "")
-            embed.url = f"https://apod.nasa.gov/apod/ap{date}.html"
-            embed.description = json['explanation']
-            embed.set_footer(icon_url=embed_icon,
-                             text="NASA Astronomy Photo of the Day https://apod.nasa.gov/apod/astropix.html")
-            embed.colour = EMBED_COLORS["nasa"]
+        apod_post = images.get_apod_embed()
+        if isinstance(apod_post, str):
             for apod_channel in bot.APOD_CHANNELS:
-                await bot.send_message(apod_channel, embed=embed)
+                await bot.send_message(apod_channel, apod_post)
+        else:
+            for apod_channel in bot.APOD_CHANNELS:
+                await bot.send_message(apod_channel, embed=apod_post)
     except Exception as e:
         await utils.report(bot, str(e), source="Daily APOD command")
 
@@ -513,7 +503,7 @@ async def dev(ctx):
                 new_nick = parameter
                 if new_nick == "":
                     new_nick = None
-                bot_member = ctx.message.server.get_member(credentials.tokens["CLIENT_ID"])
+                bot_member = ctx.message.server.get_member(tokens["CLIENT_ID"])
                 await bot.change_nickname(bot_member, new_nick)
             except Exception as e:
                 await utils.report(bot, str(e), source="!dev nick", ctx=ctx)
@@ -681,7 +671,7 @@ def loadcache():
 # -----------------------   START UP   -----------------------------------
 
 # Create MySQL connection
-bot.dbconn = DBConnection(credentials.tokens["MYSQL_USER"], credentials.tokens["MYSQL_PASSWORD"], "suitsBot")
+bot.dbconn = DBConnection(tokens["MYSQL_USER"], tokens["MYSQL_PASSWORD"], "suitsBot")
 bot.loading_failure = {}
 
 # Load opus library
@@ -721,4 +711,4 @@ print("------------")
 print("Logging in...")
 
 # Start the bot
-bot.run(credentials.tokens["BOT_TOKEN"])
+bot.run(tokens["BOT_TOKEN"])
