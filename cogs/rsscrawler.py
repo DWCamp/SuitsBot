@@ -65,14 +65,14 @@ class RSSCrawler:
         try:
             message = parse.stripcommand(ctx.message.content)
 
-            # Oops no parameter
-            if message == "":
-                await self.bot.say(
-                    "Usage: `!" + feed.aliases[0] + " <number>`")
-                return
-
             # Update feed
             feed.refresh_if_stale()
+
+            # Show most recent episode
+            if message == "":
+                episode = feed.items[0]
+                await self.bot.say(embed=feed.get_embed(episode))
+                return
 
             # check for subcommand and parse it out
             subcommand = ""
@@ -88,7 +88,20 @@ class RSSCrawler:
 
             # Teach the person how to use this thing
             if subcommand == "help":
-                await self.bot.say("Search for an item by typing a search term")
+                command_name = ctx.invoked_with
+                title = f"!{command_name} - User Guide"
+                description = f"Searches the RSS feed for {feed.title}"
+                helpdict = {
+                    f"!{command_name}": "Post the most recent item in the feed",
+                    f"!{command_name} <word>": "Post the most recent item whose title contains the whole word <word>",
+                    f"!{command_name} -help": "Posts this message",
+                    f"!{command_name} -reg <regex>": "Perform a regular expression search for the most "
+                                                     "recent item title matching <regex>",
+                    f"!{command_name} -refresh": "Force the bot to refresh its cache"}
+                await self.bot.say(embed=utils.embedfromdict(helpdict,
+                                                             title=title,
+                                                             description=description,
+                                                             thumbnail_url=COMMAND_THUMBNAILS["rssfeed"]))
                 return
 
             # Dump all the info about the feed
@@ -109,7 +122,7 @@ class RSSCrawler:
                 return
 
             # If some nerd like Kris or Pat wants to do regex search
-            if subcommand == "r":
+            if subcommand == "reg":
                 episode = feed.search(parameter, regex=True)
                 if episode:
                     await self.bot.say(embed=feed.get_embed(episode))

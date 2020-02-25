@@ -92,6 +92,7 @@ COMMAND_THUMBNAILS = {
     "ls": ("https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/WikiProject_Council_project_list_icon.svg/" +
            "2000px-WikiProject_Council_project_list_icon.svg.png"),
     "rand": "https://aruzegaming.com/wp-content/uploads/2016/04/Red-Dice-Wild_CHARACTER.png",
+    "rssfeed": "https://upload.wikimedia.org/wikipedia/en/thumb/4/43/Feed-icon.svg/1200px-Feed-icon.svg.png",
     "tag": "https://cdn2.iconfinder.com/data/icons/marketing-strategy/512/Loud_Speaker-512.png",
     "say": "https://cdn.discordapp.com/attachments/341428321109671939/487265313071824926/sayIcon.png",
     "wiki": "https://www.wikipedia.org/portal/wikipedia.org/assets/img/Wikipedia-logo-v2@2x.png"}
