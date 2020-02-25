@@ -98,10 +98,11 @@ class RSSCrawler:
                     f"!{command_name} -reg <regex>": "Perform a regular expression search for the most "
                                                      "recent item title matching <regex>",
                     f"!{command_name} -refresh": "Force the bot to refresh its cache"}
+                thumbnail = feed.image if feed.image is not None else COMMAND_THUMBNAILS["rssfeed"]
                 await self.bot.say(embed=utils.embedfromdict(helpdict,
                                                              title=title,
                                                              description=description,
-                                                             thumbnail_url=COMMAND_THUMBNAILS["rssfeed"]))
+                                                             thumbnail_url=thumbnail))
                 return
 
             # Dump all the info about the feed
