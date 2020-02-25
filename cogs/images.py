@@ -90,7 +90,7 @@ class Images:
     @commands.command(pass_context=True, help=LONG_HELP['nasa'], brief=BRIEF_HELP['nasa'], aliases=ALIASES['nasa'])
     async def nasa(self, ctx):
         try:
-            apod_post = get_apod_embed()
+            apod_post = await get_apod_embed()
             if isinstance(apod_post, str):
                 await self.bot.say(apod_post)
             else:
@@ -187,7 +187,8 @@ async def get_apod_embed():
     if status_code != 200:
         raise RuntimeError(f"Failed to retrieve APOD, status code: {status_code}")
     if json['media_type'] == "video":
-        return f"**{json['title']}**\n{json['explanation']}\n{json['url']}"
+        link_url = json['url'].replace("embed/", "watch?v=")  # Convert embed link to regular url
+        return f"**{json['title']}**\n{json['explanation']}\n\n{link_url}"
     embed = Embed().set_image(url=json['hdurl'])
     embed.title = json['title']
     date = json["date"][2:].replace("-", "")

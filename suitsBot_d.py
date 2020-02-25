@@ -64,7 +64,7 @@ async def post_apod(curr_time):
     :param curr_time: A value passed to all scheduled tasks
     """
     try:
-        apod_post = images.get_apod_embed()
+        apod_post = await images.get_apod_embed()
         if isinstance(apod_post, str):
             for apod_channel in bot.APOD_CHANNELS:
                 await bot.send_message(apod_channel, apod_post)
