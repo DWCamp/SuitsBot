@@ -92,9 +92,9 @@ class Images:
         try:
             apod_post = get_apod_embed()
             if isinstance(apod_post, str):
-                await self.bot(apod_post)
+                await self.bot.say(apod_post)
             else:
-                await self.bot(embed=apod_post)
+                await self.bot.say(embed=apod_post)
         except Exception as e:
             await utils.report(self.bot, str(e), source="NASA APOD command", ctx=ctx)
 
