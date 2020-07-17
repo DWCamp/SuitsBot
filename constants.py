@@ -42,7 +42,7 @@ ALIASES = {
     "hello": ["hi", "hey"],
     "join": ["jion", "joni"],
     "leave": ["shut up", "fuckOff", "gtfo", "GTFO"],
-    "ls": ["list", "lsit", "l", "lists"],
+    "ls": ["list", "lsit", "lists"],
     "meow": ["cat", "moew", "mewo", "nyaa", "nyan"],
     "nasa": ["NASA", "APOTD", "APOD", "apod", "apotd"],
     "picture": ["snek", "Snek", "sneks", "Sneks", "snake", "snakes", "pic", "photo", "unsplash", "Unsplash"],

@@ -25,22 +25,13 @@ scribble_bank = list()
 
 # -------------------- COMMAND WHITELIST -------------------------------
 
-command_whitelist = {"360523650912223253": ["help",
-                                            "code",
-                                            "dev",
-                                            "gritty",
-                                            "nasa",
-                                            "meow",
-                                            "on",
-                                            "rand",
-                                            "rssfeed",
-                                            "tag",
-                                            "ud",
-                                            "wiki",
-                                            "wm",
-                                            "wolf",
-                                            "woof",
-                                            "youtube"]}
+command_blacklist = {"360523650912223253": ["aes",
+                                            "scribble",
+                                            "join",
+                                            "leave",
+                                            "say",
+                                            "bestgirl",
+                                            "anime"]}
 
 # ------------------------ DEFINE BOT ----------------------------------
 
@@ -332,8 +323,8 @@ async def on_message(message):
                       "Your appreciation warms my heart :heart:"]
             await bot.send_message(message.channel, utils.random_element(thanks))
 
-        # ------------------------------------------- FILTER UN-WHITELISTED COMMANDS
-        if message.server is not None and message.server.id in command_whitelist:
+        # ------------------------------------------- FILTER BLACKLISTED COMMANDS
+        if message.server is not None and message.server.id in command_blacklist:
             if len(message.content) > 1 and message.content[0] == "!":
                 spaceloc = message.content.find(" ", 2)
                 if spaceloc > -1:
@@ -342,14 +333,14 @@ async def on_message(message):
                     command = message.content[1:]
 
                 aliaslist = []
-                for allowedCommand in command_whitelist[message.server.id]:
-                    aliaslist.append(allowedCommand)
-                    if allowedCommand in ALIASES:
-                        for alias in ALIASES[allowedCommand]:
+                for blockedCommand in command_blacklist[message.server.id]:
+                    aliaslist.append(blockedCommand)
+                    if blockedCommand in ALIASES:
+                        for alias in ALIASES[blockedCommand]:
                             aliaslist.append(alias)
 
-                if command not in aliaslist:
-                    return
+                if command in aliaslist:
+                    return  # Ignore blacklisted command
 
         # -------------------------------------------- Embed response detection
         content = message.content
