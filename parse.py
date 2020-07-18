@@ -7,16 +7,17 @@ class Regex:
         subdomains = "(?:(?:www|old|np|m|en|dd|us|de)\.)?"
         self.bot = bot
         self.amazon = re.compile('https://www\.amazon\.com/(?:(?:\w+-)+\w+/)?[dg]p/(?:product/)?(?:\w{10})')
+        self.discord = re.compile('discord(app)?.com/channels/(\d{18})/(\d{18})/(\d{18})')
         self.newegg = re.compile('https://www\.newegg\.com/Product/Product\.aspx\?Item=(?:\w{15})', re.IGNORECASE)
-        self.comment = re.compile('https:\/\/' + subdomains + 'reddit\.com\/r\/\w+\/comments\/\w{6}\/[\w%]+\/\w{7}\/?')
-        self.post = re.compile('https?://' + subdomains + 'reddit.com/r/\w{1,20}/comments/\w{5,6}/\w+/?\B')
-        self.subreddit = re.compile('((^|\s)\/?r\/\w+(\s|$))')
+        self.reddit_comment = re.compile('https://' + subdomains + 'reddit\.com/r/\w+/comments/\w{6}/[\w%]+/\w{7}/?')
+        self.reddit_post = re.compile('https?://' + subdomains + 'reddit.com/r/\w{1,20}/comments/\w{5,6}/\w+/?\B')
+        self.subreddit = re.compile('((^|\s)/?r/\w+(\s|$))')
         self.twitter_handle = re.compile('(\s|^)(@{1})(\w{1,15})($|\s)')
         self.twitter_id = re.compile('\\b(https://twitter\\.com/\\w{1,15}/status/)(\\d{19})\\b')
-        self.url = re.compile("https?:\/\/" +  # Protocol
+        self.url = re.compile("https?://" +  # Protocol
                               "(([\w\$\-+!*'\(\),])+\.){1,}" +  # Domain
                               "([\w\$\-+!*'\(\),])+" +  # Top level domain
-                              "(\/[\w\$\-+#!*'\(\),]+)*(\/)?" +  # directory
+                              "(/[\w\$\-+#!*'\(\),]+)*(\/)?" +  # directory
                               "(\.[a-zA-Z]+)?" +  # File type
                               "(\?(([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)&)*" +  # URL parameters (1/2)
                               "([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)?)?")  # URL parameters (2/2)
@@ -36,13 +37,23 @@ class Regex:
         """
         return self.url.fullmatch(string) is not None
 
+    """
+    ======================================================================================
+    Wow I can't believe I ever wrote something this godawful. This needs to get fixed asap
+    ====================================================================================== 
+    """
+
+    # Discord
+    def find_discord_message(self, message):
+        return re.findall(self.discord, message)
+
     # Reddit
 
     def find_comments(self, message):
-        return re.findall(self.comment, message)
+        return re.findall(self.reddit_comment, message)
 
     def find_posts(self, message):
-        return re.findall(self.post, message)
+        return re.findall(self.reddit_post, message)
 
     def find_subreddits(self, message):
         return re.findall(self.subreddit, message)

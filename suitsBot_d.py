@@ -46,6 +46,7 @@ def get_prefix(client, message):
 
 
 bot = commands.Bot(command_prefix=get_prefix, description=BOT_DESCRIPTION)
+utils.bot = bot  # Store the bot where other scripts can get it
 
 # -------------------------- PERIODIC TASKS --------------------------------------
 
@@ -365,22 +366,24 @@ async def on_message(message):
                 except Exception as e:
                     details = {} if subembed is None else subembed.to_dict()
                     await utils.report(bot, str(e) + "\n" + str(details), source='subreddit detection')
-
         try:
-            generator_fodder = [(bot.regex.find_posts, embedGenerator.reddit_post),  # Reddit posts
-                                (bot.regex.find_comments, embedGenerator.reddit_comment),  # Reddit comments
-                                # (bot.regex.find_twitter_handle, embedGenerator.twitter_handle),  # Twitter handles
-                                # (bot.regex.find_twitter_id, embedGenerator.twitter_images),  # Images from tweets
-                                (bot.regex.find_twitter_id, embedGenerator.twitter_response),  # Response to tweets
-                                (bot.regex.find_amazon, embedGenerator.amazon),  # Amazon links
-                                (bot.regex.find_newegg, embedGenerator.newegg)]  # Newegg links
-
+            generator_fodder = [(bot.regex.find_posts, embedGenerator.reddit_post),                 # Reddit posts
+                                (bot.regex.find_comments, embedGenerator.reddit_comment),           # Reddit comments
+                                # (bot.regex.find_twitter_handle, embedGenerator.twitter_handle),   # Twitter handles
+                                # (bot.regex.find_twitter_id, embedGenerator.twitter_images),       # Images from tweets
+                                (bot.regex.find_twitter_id, embedGenerator.twitter_response),       # Response to tweets
+                                (bot.regex.find_amazon, embedGenerator.amazon),                     # Amazon links
+                                (bot.regex.find_newegg, embedGenerator.newegg),                     # Newegg links
+                                (bot.regex.find_discord_message, embedGenerator.discord_message)    # Discord msg link
+                                ]
             for (regex, generator) in generator_fodder:
                 for embed in await embedGenerator.embeds_from_regex(regex(content), generator, message):
                     unfurl_message = await bot.send_message(message.channel, embed=embed)
-                    await embedGenerator.record_unfurl(message, unfurl_message)
+                    try:
+                        await embedGenerator.record_unfurl(message, unfurl_message)
+                    except Exception as e:
+                        await utils.report(bot, str(e), source="Recording unfurl to redis DB in on_message")
                     await bot.add_reaction(unfurl_message, DELETE_EMOJI)
-
         except Exception as e:
             await utils.report(bot, str(e), source="embed generation in on_message")
 

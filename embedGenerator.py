@@ -34,8 +34,9 @@ async def embeds_from_regex(matchlist: List[str],
     :return: A list of embeds
     """
     embed_list = list()
-    for match in matchlist:
-        link = match.strip()
+    for link in matchlist:
+        if isinstance(link, str):
+            link = link.strip()
         if await recently_unfurled(f"{message.channel.id}-{embed_method.__name__}-{link}"):
             continue
         embed = await embed_method(link)
@@ -134,6 +135,45 @@ async def amazon(url: str) -> Optional[Embed]:
     rating = soup.find(id='acrPopover')
     if rating is not None:
         embed.add_field(name="Rating", value=rating['title'])
+    return embed
+
+
+async def discord_message(ids: str) -> Optional[Embed]:
+    """
+    Generates an embed containing the text and information from a linked Discord Message
+    :param ids: The tuple of ids pulled from the discord link
+    :return: An embed with details about the item
+    """
+    (_, _, channel_id, message_id) = ids
+    bot = utils.get_bot()
+    channel = bot.get_channel(channel_id)
+    message = await bot.get_message(channel, message_id)
+    if message is None:
+        return None
+
+    """ Make the Embed """
+    embed = Embed()
+    embed.url = f"http://discord.com/channels/{ids[1]}/{ids[2]}/{ids[3]}"
+    embed.colour = EMBED_COLORS['discord']
+    embed.set_author(name=(message.author.name if message.author.nick is None else message.author.nick))
+    embed.description = message.content
+
+    """ This probably isn't necessary, right? """
+    # if message.server is not None:
+    #     embed.add_field(name="Server", value=message.server.name)
+    # if not message.channel.is_private:
+    #     embed.add_field(name="Channel", value=f"#{message.channel.name}")
+
+    """ Add timestamp to footer """
+    if message.edited_timestamp:
+        timestamp = message.edited_timestamp
+        verb = "Edited"
+    else:
+        timestamp = message.timestamp
+        verb = "Sent"
+    embed.set_footer(text=f"{verb} at {timestamp.strftime('%H:%M  %Y-%m-%d')}",
+                     icon_url="https://cdn3.iconfinder.com/data/icons/logos-and-brands-adobe/512/91_Discord-512.png")
+
     return embed
 
 

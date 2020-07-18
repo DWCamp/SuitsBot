@@ -8,11 +8,21 @@ from local_config import *
 from constants import EMBED_COLORS
 
 
+# ------------------------------------------------------------------------ THE BOT
+
+bot = None
+
+
 # ------------------------------------------------------------------------ Utilities
 
 def currtime():
     """ Returns a human readable printout of the current time """
     return datetime.now().strftime("%a %b %d, %I:%M:%S %p")
+
+
+def get_bot():
+    """ Sometimes you just need the bot """
+    return bot
 
 
 def random_element(array):
