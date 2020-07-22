@@ -155,14 +155,17 @@ async def discord_message(ids: str) -> Optional[Embed]:
     embed = Embed()
     embed.url = f"http://discord.com/channels/{ids[1]}/{ids[2]}/{ids[3]}"
     embed.colour = EMBED_COLORS['discord']
-    embed.set_author(name=(message.author.name if message.author.nick is None else message.author.nick))
-    embed.description = message.content
+    embed.title = message.author.name if message.author.nick is None else message.author.nick
+    embed.description = utils.trimtolength(message.content, 2048)
 
     """ This probably isn't necessary, right? """
     # if message.server is not None:
     #     embed.add_field(name="Server", value=message.server.name)
     # if not message.channel.is_private:
     #     embed.add_field(name="Channel", value=f"#{message.channel.name}")
+
+    if message.author.avatar_url:
+        embed.set_thumbnail(url=message.author.avatar_url)
 
     """ Add timestamp to footer """
     if message.edited_timestamp:
