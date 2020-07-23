@@ -3,7 +3,7 @@ List of constants necessary for the bot's operation
 """
 
 # A single place to define the bot's version number
-BOT_VERSION = "5.0.0"
+BOT_VERSION = "5.0.1"
 
 # ====== Stuff?
 
@@ -11,6 +11,14 @@ BOT_VERSION = "5.0.0"
 AFFIRMATIVE_RESPONSES = ['yes', 'yup', 'y', 'yee', 'yep', 'okay', 'ok', 'go ahead',
                          'affirmative', 'the affirmative', 'in the affirmative',
                          'roger', 'ja', 'si', 'go', 'do it']
+
+EMOJI = {
+    "heart": "❤️",
+    "heavy_check_mark": "✔️",
+    "v": "✌️",
+    "white_check_mark": "✅",
+    "x": "❌",
+}
 
 # ====== Feed stuff
 
@@ -98,7 +106,7 @@ COMMAND_THUMBNAILS = {
     "wiki": "https://www.wikipedia.org/portal/wikipedia.org/assets/img/Wikipedia-logo-v2@2x.png"}
 
 # Emoji so users can let us know if an embed needs to be deleted
-DELETE_EMOJI = "❌"
+DELETE_EMOJI = EMOJI['x']
 DELETE_EMOJI_COUNT_TO_DELETE = 5
 
 # Embed color hexcodes

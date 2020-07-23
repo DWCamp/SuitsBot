@@ -29,7 +29,7 @@ class Tags(Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.tags = {"global": {}, "guild": {}, "user": {}}
+        self.tags = {"global": {}, "server": {}, "user": {}}
         try:
             self.loadtags()
         except Exception as e:
@@ -116,9 +116,9 @@ class Tags(Cog):
                 # Changes the selected tag group to the user's tags
                 selected_tags = self.tags["user"][ctx.author.id]
             else:
-                # Selecting tag group (default is 'guild')
+                # Selecting tag group (default is 'server')
                 if ctx.guild.id not in self.tags["server"].keys():
-                    self.tags["guild"][ctx.guild.id] = {}
+                    self.tags["server"][ctx.guild.id] = {}
                 # Gets domain tag group
                 selected_tags = self.tags["server"][ctx.guild.id]
                 # MySQL parameter to specify owner of the tag
@@ -231,6 +231,11 @@ class Tags(Cog):
         except Exception as e:
             await utils.report(self.bot, str(e), source="Tag command", ctx=ctx)
 
+    # Posts the "No! No! No! ...NO!" JoJo video because I keep thinking the command exists
+    @commands.command(hidden=True)
+    async def no(self, ctx):
+        await ctx.send("https://www.youtube.com/watch?v=O3WPHJEDMwc")
+
     # Posts the "Yes! Yes! YES!" JoJo video because people kept typing `!yes` instead of `!tag yes`
     @commands.command(hidden=True)
     async def yes(self, ctx):
@@ -242,6 +247,7 @@ class Tags(Cog):
         query = "SELECT * FROM Tags"
         cursor = self.bot.dbconn.execute(query)
         for (owner_id, key_string, value_string, domain) in cursor:
+            owner_id = int(owner_id)    # ID has to be cast to int now because v1.0
             key_string = key_string.decode("utf-8")
             value_string = value_string.decode("utf-8")
             if domain == "global":

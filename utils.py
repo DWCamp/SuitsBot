@@ -5,7 +5,7 @@ import random
 import traceback
 from discord import Embed
 from discord.abc import PrivateChannel
-from local_config import *
+from config.local_config import *
 from constants import EMBED_COLORS
 
 

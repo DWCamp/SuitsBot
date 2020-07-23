@@ -3,16 +3,16 @@
 # ----------- For core functionality
 import discord
 from discord.ext import commands
-from discord import Embed
+from discord import Embed, Emoji
 from discord.errors import NotFound
 
 # ----------- Custom imports
-from credentials import tokens
+from config.credentials import tokens
 import embedGenerator
 from scheduler import Scheduler
 from dbconnection import DBConnection
 from constants import *
-from local_config import *
+from config.local_config import *
 import utils
 import parse
 from cogs import images
@@ -286,6 +286,10 @@ async def on_message(message):
             thanks = ["Thank you :smile:", "Thank you :smile:", "Aww, thanks!", ":blush:", "Oh, stop it, you :blush:",
                       "Your appreciation warms my heart :heart:"]
             await message.channel.send(utils.random_element(thanks))
+
+        # ------------------------------------------- REACT TO MENTION
+        if bot.user in message.mentions:
+            await message.add_reaction(EMOJI['heart'])
 
         # ------------------------------------------- FILTER BLACKLISTED COMMANDS
         if message.guild is not None and message.guild.id in command_blacklist:

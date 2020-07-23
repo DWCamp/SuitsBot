@@ -4,7 +4,7 @@ from discord.ext.commands import Cog
 from discord import Embed
 from urllib.parse import quote
 from constants import *
-from credentials import tokens
+from config.credentials import tokens
 import parse
 import utils
 from stringcache import StringCache

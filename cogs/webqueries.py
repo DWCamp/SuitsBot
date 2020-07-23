@@ -6,8 +6,8 @@ from discord import Embed
 from constants import *
 import parse
 import utils
-import credentials
-from local_config import *
+from config import credentials
+from config.local_config import *
 
 
 class WebQueries(Cog):

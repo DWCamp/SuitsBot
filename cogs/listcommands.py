@@ -5,7 +5,7 @@ from discord.ext.commands import Cog
 from constants import *
 import utils
 import parse
-from local_config import AUTHORIZED_IDS
+from config.local_config import AUTHORIZED_IDS
 
 
 class ListCommands(Cog):

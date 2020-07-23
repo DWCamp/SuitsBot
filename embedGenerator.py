@@ -4,7 +4,7 @@ from typing import List, Callable, Optional, Union
 from bs4 import BeautifulSoup
 from discord import Embed, Message
 from constants import *
-from credentials import tokens
+from config.credentials import tokens
 import utils
 import redis
 
@@ -67,10 +67,10 @@ async def get_unfurls_for_trigger_message(trigger_message: Message) -> List[str]
         return []
 
 
-async def get_author_for_unfurl_message(unfurl_message: Message) -> Optional[str]:
+async def get_author_for_unfurl_message(unfurl_message: Message) -> Optional[int]:
     """Retrieve author for unfurled message"""
     unfurl_message_key = get_unfurl_message_key(unfurl_message.id)
-    return redis_db.get(unfurl_message_key)
+    return int(redis_db.get(unfurl_message_key))
 
 
 async def record_unfurl(trigger_message: Message, unfurl_message: Message) -> None:

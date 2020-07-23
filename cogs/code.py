@@ -2,7 +2,7 @@ from discord.ext import commands
 from discord.ext.commands import Cog
 from discord import Embed
 from constants import *
-import credentials
+from config import credentials
 import parse
 import utils
 
