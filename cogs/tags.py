@@ -1,14 +1,15 @@
 from discord.ext import commands
+from discord.ext.commands import Cog
 from constants import *
 import parse
 import utils
 
 
-class Tags:
+class Tags(Cog):
     """
     Call and response
 
-    Allows users to pair a key and value on a global, server, or user level. The values can then be
+    Allows users to pair a key and value on a global, guild, or user level. The values can then be
     accessed using the key phrase, allowing for long text, special characters, images, or urls to
     be fetched with short plaintext queries. Basic editing commands are present for text values
 
@@ -28,13 +29,13 @@ class Tags:
 
     def __init__(self, bot):
         self.bot = bot
-        self.tags = {"global": {}, "server": {}, "user": {}}
+        self.tags = {"global": {}, "guild": {}, "user": {}}
         try:
             self.loadtags()
         except Exception as e:
             self.bot.loading_failure["tags"] = e
 
-    @commands.command(pass_context=True, help=LONG_HELP['tag'], brief=BRIEF_HELP['tag'], aliases=ALIASES['tag'])
+    @commands.command(help=LONG_HELP['tag'], brief=BRIEF_HELP['tag'], aliases=ALIASES['tag'])
     async def tag(self, ctx):
         """
         Tag command
@@ -61,10 +62,10 @@ class Tags:
                 description = (
                             "Bot call and response. Allows the user to pair a message or attached image with a tag. " +
                             "These tags can then be used to have the bot respond with the associated content. By " +
-                            "default, these tags are server wide, but by using the user list argument (`-u`, e.g. " +
+                            "default, these tags are guild wide, but by using the user list argument (`-u`, e.g. " +
                             "`!tag -u [base] All your base are belong to us`) the user can specify personal tags. " +
-                            "This allows a user to store a different value for a key than the server value and to " +
-                            "make tags that will be available for that user across servers and in DMs.")
+                            "This allows a user to store a different value for a key than the guild value and to " +
+                            "make tags that will be available for that user across guilds and in DMs.")
                 helpdict = {
                     "-ap [<key>] <value>": "If the tag entered already exists, the " +
                                            "new text will be appended to the end after a space",
@@ -76,9 +77,9 @@ class Tags:
                     "-ls": "Lists the tags within the selected group. Overrides any " +
                            "other argument",
                     "-rm <key>": "removes a tag from the group",
-                    "-u": "Selects your specific tag group instead of the server " +
+                    "-u": "Selects your specific tag group instead of the guild " +
                           "tags for the following command"}
-                await self.bot.say(embed=utils.embedfromdict(helpdict,
+                await ctx.send(embed=utils.embedfromdict(helpdict,
                                                              title=title,
                                                              description=description,
                                                              thumbnail_url=COMMAND_THUMBNAILS["tag"]))
@@ -86,13 +87,13 @@ class Tags:
 
             # Rejects ambiguous argument pairs
             if "rm" in arguments and "edit" in arguments:
-                await self.bot.say("`-rm` and `-edit` are incompatible arguments")
+                await ctx.send("`-rm` and `-edit` are incompatible arguments")
                 return
             elif ("apnl" in arguments or "ap" in arguments) and ("edit" in arguments or "rm" in arguments):
-                await self.bot.say("`ap` or `apnl` are incompatible with the arguments `-rm` or `-edit`")
+                await ctx.send("`ap` or `apnl` are incompatible with the arguments `-rm` or `-edit`")
                 return
             elif "ap" in arguments and "apnl" in arguments:
-                await self.bot.say("`-ap` and `-apnl` is an ambiguous argument pair")
+                await ctx.send("`-ap` and `-apnl` is an ambiguous argument pair")
                 return
 
             # flag for if the user is overwriting an existing tag
@@ -104,26 +105,26 @@ class Tags:
             # String specifying tag domain
             domain = "server"
 
-            if ctx.message.server is None or "u" in arguments:
+            if ctx.guild is None or "u" in arguments:
                 domain = "user"
                 # MySQL parameter to specify owner of the tag
-                tagowner = ctx.message.author.id
+                tagowner = ctx.author.id
                 # if user does not have a user tag group
-                if ctx.message.author.id not in self.tags["user"].keys():
+                if ctx.author.id not in self.tags["user"].keys():
                     # Creates a user tag group
-                    self.tags["user"][ctx.message.author.id] = {}
+                    self.tags["user"][ctx.author.id] = {}
                 # Changes the selected tag group to the user's tags
-                selected_tags = self.tags["user"][ctx.message.author.id]
+                selected_tags = self.tags["user"][ctx.author.id]
             else:
-                # Selecting tag group (default is 'server')
-                if ctx.message.server.id not in self.tags["server"].keys():
-                    self.tags["server"][ctx.message.server.id] = {}
+                # Selecting tag group (default is 'guild')
+                if ctx.guild.id not in self.tags["server"].keys():
+                    self.tags["guild"][ctx.guild.id] = {}
                 # Gets domain tag group
-                selected_tags = self.tags["server"][ctx.message.server.id]
+                selected_tags = self.tags["server"][ctx.guild.id]
                 # MySQL parameter to specify owner of the tag
-                tagowner = ctx.message.server.id
+                tagowner = ctx.guild.id
 
-            # Adds global tags to server tag group
+            # Adds global tags to guild tag group
             for key in self.tags["global"].keys():
                 selected_tags[key] = self.tags["global"][key]
 
@@ -137,17 +138,17 @@ class Tags:
                         taglist += ", " + tagkey
                 if taglist == "":
                     if domain == "user":
-                        await self.bot.say("You do not have any saved tags")
+                        await ctx.send("You do not have any saved tags")
                     else:
-                        await self.bot.say("This server does not have any saved tags")
+                        await ctx.send("This server does not have any saved tags")
                     return
                 taglist = taglist[2:]  # pulls the extraneous comma off
-                await self.bot.say("**The tags I know are**\n" + taglist + "")
+                await ctx.send("**The tags I know are**\n" + taglist + "")
                 return
 
             # Reject empty messages (`-ls` calls have already been handled)
             if len(message) == 0:
-                await self.bot.say("I see some arguments `` " + str(arguments) +
+                await ctx.send("I see some arguments `` " + str(arguments) +
                                    " ``, but no key or value to work with :/")
                 return
 
@@ -156,10 +157,10 @@ class Tags:
                 key = message.lower()
                 if key in selected_tags.keys():
                     del selected_tags[key]
-                    await self.bot.say("Okay. I deleted it")
+                    await ctx.send("Okay. I deleted it")
                     self.update_tag_remove(key, tagowner, domain)
                 else:  # If that tag didn't exist
-                    await self.bot.say("Hmmm, that's funny. I didn't see the tag `` " + message +
+                    await ctx.send("Hmmm, that's funny. I didn't see the tag `` " + message +
                                        " `` in the saved tags list.")
                 return
 
@@ -184,19 +185,19 @@ class Tags:
                                                         "does not mean whitespace is an acceptable tag",
                                       "KEY STARTS WITH -": "The `-` character denotes the start of " +
                                                            "an argument and cannot be used in tag keys"}
-                    await self.bot.say(error_messages[tag_keyvalue[1]])
+                    await ctx.send(error_messages[tag_keyvalue[1]])
                     return
                 else:
                     tagkey = tag_keyvalue[0].lower()
                     tagvalue = tag_keyvalue[1]
                     if tagkey in selected_tags.keys():
                         if tagkey in self.tags["global"].keys():
-                            await self.bot.say(
+                            await ctx.send(
                                 "I'm sorry, but the key `` " + tagkey +
                                 " `` has already been reserved for a global tag")
                             return
                         elif edit is False:
-                            await self.bot.say("I already have a value stored for the tag `` " + tagkey +
+                            await ctx.send("I already have a value stored for the tag `` " + tagkey +
                                                " ``. Add `-edit` to overwrite existing  self.tags")
                             return
                         elif append is True:
@@ -205,35 +206,35 @@ class Tags:
                             else:
                                 selected_tags[tagkey] = selected_tags[tagkey] + " " + tagvalue
                             self.update_tag_edit(tagkey, selected_tags[tagkey], tagowner, domain)
-                            await self.bot.say("Edited!")
+                            await ctx.send("Edited!")
                             return
                         else:
                             selected_tags[tagkey] = tagvalue
                             self.update_tag_edit(tagkey, tagvalue, tagowner, domain)
-                            await self.bot.say("Edited!")
+                            await ctx.send("Edited!")
                             return
                     selected_tags[tagkey] = tagvalue
                     self.update_tag_add(tagkey, tagvalue, tagowner, domain)
-                    await self.bot.say("Saved!")
+                    await ctx.send("Saved!")
             # Getting
             else:
                 key = message.lower()
                 if key in selected_tags.keys():
-                    await self.bot.say(utils.trimtolength(selected_tags[key], 2000))
+                    await ctx.send(utils.trimtolength(selected_tags[key], 2000))
                 elif domain == "user":
-                    await self.bot.say("I don't think I have a tag `" + key +
+                    await ctx.send("I don't think I have a tag `" + key +
                                        "` stored for you. Type `!tag -u -ls` to see the  self.tags I have " +
                                        "saved for you")
                 else:
-                    await self.bot.say("I don't think I have a tag `" + key + "`. Type `!tag -ls` to see the tags " +
+                    await ctx.send("I don't think I have a tag `" + key + "`. Type `!tag -ls` to see the tags " +
                                        "I have saved for this server")
         except Exception as e:
             await utils.report(self.bot, str(e), source="Tag command", ctx=ctx)
 
     # Posts the "Yes! Yes! YES!" JoJo video because people kept typing `!yes` instead of `!tag yes`
     @commands.command(hidden=True)
-    async def yes(self):
-        await self.bot.say("https://www.youtube.com/watch?v=sq_Fm7qfRQk")
+    async def yes(self, ctx):
+        await ctx.send("https://www.youtube.com/watch?v=sq_Fm7qfRQk")
 
     def loadtags(self):
         """ Load tags from database """

@@ -2,13 +2,14 @@ from datetime import datetime, timedelta
 from random import randint
 import re
 from discord.ext import commands
+from discord.ext.commands import Cog
 from discord import Embed
 from constants import *
 import parse
 import utils
 
 
-class RSSCrawler:
+class RSSCrawler(Cog):
     """
     Commands dealing with fetching rss feeds
     """
@@ -41,7 +42,7 @@ class RSSCrawler:
         ]
 
     # Searches for an item in your favorite RSS Feeds
-    @commands.command(pass_context=True, help=LONG_HELP['rssfeed'],
+    @commands.command(help=LONG_HELP['rssfeed'],
                       brief=BRIEF_HELP['rssfeed'], aliases=ALIASES["rssfeed"])
     async def rssfeed(self, ctx):
         try:
@@ -50,7 +51,7 @@ class RSSCrawler:
                 if invoking_id in feed.aliases:
                     await self.handle_rss_feed(feed, ctx)
                     return
-            await self.bot.say("This command can be used to search for episodes of your favorite feed. It " +
+            await ctx.send("This command can be used to search for episodes of your favorite feed. It " +
                                "currently supports the following channels:\n" + FEED_TEXT_LIST)
         except Exception as e:
             await utils.report(self.bot, str(e), source="rssfeed command", ctx=ctx)
@@ -71,7 +72,7 @@ class RSSCrawler:
             # Show most recent episode
             if message == "":
                 episode = feed.items[0]
-                await self.bot.say(embed=feed.get_embed(episode))
+                await ctx.send(embed=feed.get_embed(episode))
                 return
 
             # check for subcommand and parse it out
@@ -99,7 +100,7 @@ class RSSCrawler:
                                                      "recent item title matching <regex>",
                     f"!{command_name} -refresh": "Force the bot to refresh its cache"}
                 thumbnail = feed.image if feed.image is not None else COMMAND_THUMBNAILS["rssfeed"]
-                await self.bot.say(embed=utils.embedfromdict(helpdict,
+                await ctx.send(embed=utils.embedfromdict(helpdict,
                                                              title=title,
                                                              description=description,
                                                              thumbnail_url=thumbnail))
@@ -107,52 +108,52 @@ class RSSCrawler:
 
             # Dump all the info about the feed
             if subcommand == "details":
-                await self.bot.say(feed.to_string())
+                await ctx.send(feed.to_string())
                 return
 
             # Test an embed for a given feed
             if subcommand == "embed":
-                await self.bot.say(embed=feed.get_embed(feed.items[0]))
+                await ctx.send(embed=feed.get_embed(feed.items[0]))
                 return
 
             # Test an embed for a given feed
             if subcommand == "image":
                 embed = Embed()
                 embed.set_image(url=feed.image)
-                await self.bot.say(embed=embed)
+                await ctx.send(embed=embed)
                 return
 
             # If some nerd like Kris or Pat wants to do regex search
             if subcommand == "reg":
                 episode = feed.search(parameter, regex=True)
                 if episode:
-                    await self.bot.say(embed=feed.get_embed(episode))
+                    await ctx.send(embed=feed.get_embed(episode))
                     return
-                await self.bot.say(f"I couldn't find any results for the regex string `{parameter}`")
+                await ctx.send(f"I couldn't find any results for the regex string `{parameter}`")
 
             # Force a refresh on the feed
             if subcommand == "refresh":
                 feed.refresh()
-                await self.bot.say(f"Alright, I have refreshed the feed `{feed.feed_id}`")
+                await ctx.send(f"Alright, I have refreshed the feed `{feed.feed_id}`")
                 return
 
             # Returns search results that the user can select
             if subcommand == "search":
-                await self.bot.say("This has not been implemented yet :sad:")
+                await ctx.send("This has not been implemented yet :sad:")
                 return
 
             # If there was a subcommand but it was unrecognized
             if subcommand != "":
-                await self.bot.say(f"I'm sorry, I don't understand the subcommand `{subcommand}`. " +
+                await ctx.send(f"I'm sorry, I don't understand the subcommand `{subcommand}`. " +
                                    f"Please consult `-help` for more information")
                 return
 
             # Search for the term
             episode = feed.search(parameter)
             if episode:
-                await self.bot.say(embed=feed.get_embed(episode))
+                await ctx.send(embed=feed.get_embed(episode))
                 return
-            await self.bot.say(f"I couldn't find any results in the {feed.title} feed "
+            await ctx.send(f"I couldn't find any results in the {feed.title} feed "
                                f"for the term `{parameter}` :worried:")
 
         except Exception as e:

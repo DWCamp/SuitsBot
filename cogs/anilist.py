@@ -1,5 +1,6 @@
 from discord import Embed
 from discord.ext import commands
+from discord.ext.commands import Cog
 from constants import *
 import parse
 import utils
@@ -7,7 +8,7 @@ import utils
 EMBED_COLOR = EMBED_COLORS["anime"]
 
 
-class Anilist:
+class Anilist(Cog):
     """
     Anilist.co API query engine
 
@@ -109,7 +110,7 @@ class Anilist:
         self.api_url = 'https://graphql.anilist.co'
         self.loadsynonyms()
 
-    @commands.command(pass_context=True, help=LONG_HELP['anime'], brief=BRIEF_HELP['anime'], aliases=ALIASES['anime'])
+    @commands.command(help=LONG_HELP['anime'], brief=BRIEF_HELP['anime'], aliases=ALIASES['anime'])
     async def anime(self, ctx):
         """
         anime command
@@ -125,7 +126,7 @@ class Anilist:
             (arguments, searchterm) = parse.args(ctx.message.content)
 
             if "dev" in arguments:
-                await self.bot.say(self.character_synonyms)
+                await ctx.send(self.character_synonyms)
                 return
 
             # Explain all the arguments to the user
@@ -156,7 +157,7 @@ class Anilist:
                             "-raw <search>": "Disables synonym correction for search terms",
                             "-remove <Search Value>": ("Removes a synonym from the list. Can be used with " +
                                                        "the `-char` command to remove character synonyms")}
-                await self.bot.say(embed=utils.embedfromdict(helpdict,
+                await ctx.send(embed=utils.embedfromdict(helpdict,
                                                              title=title,
                                                              description=description,
                                                              thumbnail_url=COMMAND_THUMBNAILS["anime"]))
@@ -176,11 +177,11 @@ class Anilist:
                 embed.title = title
                 embed.description = utils.trimtolength(message, 2040)
                 embed.colour = EMBED_COLORS["anime"]
-                await self.bot.say(embed=embed)
+                await ctx.send(embed=embed)
                 return
 
             if "add" in arguments and "remove" in arguments:
-                await self.bot.say("I don't know how you possibly expect me to both add and " +
+                await ctx.send("I don't know how you possibly expect me to both add and " +
                                    "remove a synonym in the same command")
 
             if "char" in arguments:
@@ -204,7 +205,7 @@ class Anilist:
                         "KEY STARTS WITH -": (
                                     "The `-` character denotes the start of an argument and cannot be used to " +
                                     "start a synonym")}
-                    await self.bot.say(errormessages[tag_kv[1]])
+                    await ctx.send(errormessages[tag_kv[1]])
                     return
                 changefrom = tag_kv[0].lower()
                 changeto = tag_kv[1]
@@ -216,10 +217,10 @@ class Anilist:
                     for element in changefromlist:
                         synonymdict[changeto].append(element.strip())
                         self.add_synonym(searchtype.upper(), changeto, element)
-                    await self.bot.say("All " + searchtype + " searches for `" + "` or `".join(changefromlist) +
+                    await ctx.send("All " + searchtype + " searches for `" + "` or `".join(changefromlist) +
                                        "` will now correct to `" + changeto + "`")
                 else:
-                    await self.bot.say("The synonym `` {} `` already corrects to `` {} ``. Pick a different " +
+                    await ctx.send("The synonym `` {} `` already corrects to `` {} ``. Pick a different " +
                                        "word/phrase or remove the existing synonym with the command " +
                                        "``!anime -remove {} ``".format(changefrom, collision, changefrom))
                 return
@@ -232,16 +233,16 @@ class Anilist:
                     if len(synonymdict[correction]) == 0:
                         del synonymdict[correction]
                     self.remove_synonym(searchtype.upper(), searchterm)
-                    await self.bot.say("Alright, `" + searchterm + "` will no longer correct to `" + correction +
+                    await ctx.send("Alright, `" + searchterm + "` will no longer correct to `" + correction +
                                        "` for " + searchtype + " searches")
                 else:
-                    await self.bot.say(("The synonym you searched for does not exist. Check your use " +
+                    await ctx.send(("The synonym you searched for does not exist. Check your use " +
                                         "(or lack thereof) of the `-char` command, or use the `-ls` command to check " +
                                         "that everything is spelled correctly"))
                 return
 
             if searchterm == "":
-                await self.bot.say("I don't see a search term to look up. Type `!anime -help` for a user guide")
+                await ctx.send("I don't see a search term to look up. Type `!anime -help` for a user guide")
                 return
 
             embedgenerator = None
@@ -254,7 +255,7 @@ class Anilist:
                 [json, status] = await utils.get_json_with_post(self.api_url,
                                                                 json={'query': self.char_query, 'variables': char_var})
                 if "json" in arguments:
-                    await self.bot.say(utils.trimtolength(json, 2000))
+                    await ctx.send(utils.trimtolength(json, 2000))
                 if status == 200:
                     embedgenerator = Character(json['data']['Character'])
             else:
@@ -267,7 +268,7 @@ class Anilist:
                                                                 json={'query': self.anime_query,
                                                                       'variables': anime_var})
                 if "json" in arguments:
-                    await self.bot.say(utils.trimtolength(json, 2000))
+                    await ctx.send(utils.trimtolength(json, 2000))
                 if status == 200:
                     embedgenerator = Anime(json['data']['Media'])
 
@@ -277,32 +278,32 @@ class Anilist:
                                      "500 Server Error on search term " + searchterm,
                                      description=str(json),
                                      ctx=ctx)
-                    await self.bot.say(
+                    await ctx.send(
                         "`500 Server Error`. The AniList servers had a brief hiccup. Try again in a little bit")
                 elif status == 404:
                     await utils.flag(self.bot,
                                      "Failed to find result for search term " + searchterm,
                                      description=str(json),
                                      ctx=ctx)
-                    await self.bot.say("I found no results for `" + searchterm + "`")
+                    await ctx.send("I found no results for `" + searchterm + "`")
                 elif status == 400:
                     await utils.report(self.bot,
                                        str(json),
                                        source="Error in `!anime` search for term " + searchterm,
                                        ctx=ctx)
-                    await self.bot.say("The bot made an error. My bad. A bug report has been automatically submitted")
+                    await ctx.send("The bot made an error. My bad. A bug report has been automatically submitted")
                 else:
                     await utils.report(self.bot,
                                        str(json),
                                        source="Unknown Error Type",
                                        ctx=ctx)
-                    await self.bot.say("Something went wrong and I don't know why")
+                    await ctx.send("Something went wrong and I don't know why")
                 return
 
             if "info" in arguments:
-                await self.bot.say(embed=embedgenerator.info_embed())
+                await ctx.send(embed=embedgenerator.info_embed())
             else:
-                await self.bot.say(embed=embedgenerator.embed())
+                await ctx.send(embed=embedgenerator.embed())
         except Exception as e:
             await utils.report(self.bot, str(e), source="!anime command", ctx=ctx)
 

@@ -18,10 +18,10 @@ HEADERS = {'User-Agent': f"suitsBot Discord Bot v{BOT_VERSION}- https://github.c
            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
            'Accept-Language': 'en-us'}
 
-# Per-Server Command Prefixes
+# Guild specific command prefixes
 CUSTOM_PREFIXES = {
-    "314159265358979323": "%",
-    "846264338327950288": "?"
+    314159265358979323: "%",
+    846264338327950288: "?"
 }
 
 LOCAL_COGS = [
@@ -31,8 +31,8 @@ LOCAL_COGS = [
 
 # =========== IDS
 
-# Server IDs
-DEV_SERVER_ID = '123456789012345678' # The server that personal development takes place on
+# Guild IDs
+DEV_GUILD_ID = '123456789012345678' # The server that personal development takes place on
 
 # Channel IDs
 ALERT_CHANNEL_ID = '000000000000000000'  # The channel for alerts

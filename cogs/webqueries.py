@@ -1,6 +1,7 @@
 import aiohttp
 from urllib.parse import quote
 from discord.ext import commands
+from discord.ext.commands import Cog
 from discord import Embed
 from constants import *
 import parse
@@ -9,13 +10,13 @@ import credentials
 from local_config import *
 
 
-class WebQueries:
+class WebQueries(Cog):
 
     def __init__(self, bot):
         self.bot = bot
 
     # Searches urban dictionary for a term
-    @commands.command(pass_context=True, help=LONG_HELP['ud'], brief=BRIEF_HELP['ud'], aliases=ALIASES['ud'])
+    @commands.command(help=LONG_HELP['ud'], brief=BRIEF_HELP['ud'], aliases=ALIASES['ud'])
     async def ud(self, ctx):
         # Removes the brackets around words, which UD puts around words in definitions
         # and examples that have their own definitions
@@ -32,14 +33,14 @@ class WebQueries:
 
             # Reject empty messages
             if message == "":
-                await self.bot.say("You must pass in a term to get a definition")
+                await ctx.send("You must pass in a term to get a definition")
                 return
 
             # Query the API and post its response
             url = "http://api.urbandictionary.com/v0/define?term=" + quote(message)
             (ud_json, response) = await utils.get_json_with_get(url)
             if response is not 200:
-                await self.bot.say("There was an error processing your request. I apologize for the inconvenience.")
+                await ctx.send("There was an error processing your request. I apologize for the inconvenience.")
                 return
             if len(ud_json["list"]) > 0:
                 ud_embed = Embed()
@@ -62,14 +63,14 @@ class WebQueries:
                     counter += 1
                 ud_embed.colour = EMBED_COLORS['ud']  # Make the embed white
 
-                await self.bot.say(embed=ud_embed)
+                await ctx.send(embed=ud_embed)
             else:
-                await self.bot.say("I can't find any UrbanDictionary results for `" + message + "`")
+                await ctx.send("I can't find any UrbanDictionary results for `" + message + "`")
         except Exception as e:
             await utils.report(self.bot, str(e), source="ud command", ctx=ctx)
 
     # Returns a description of an item from Wikipedia
-    @commands.command(pass_context=True, help=LONG_HELP['wiki'], brief=BRIEF_HELP['wiki'], aliases=ALIASES['wiki'])
+    @commands.command(help=LONG_HELP['wiki'], brief=BRIEF_HELP['wiki'], aliases=ALIASES['wiki'])
     async def wiki(self, ctx):
         # ---------------------------------------------------- HELPER METHODS
 
@@ -131,7 +132,7 @@ class WebQueries:
                 helpdict = {
                     "-help": "Displays this user guide. Gives instructions on how to use the command and its features",
                     "-full <title>": "Displays the full extract of the article, up to the embed character limit"}
-                await self.bot.say(embed=utils.embedfromdict(helpdict,
+                await ctx.send(embed=utils.embedfromdict(helpdict,
                                                              title=title,
                                                              description=description,
                                                              thumbnail_url=COMMAND_THUMBNAILS["wiki"]))
@@ -139,11 +140,11 @@ class WebQueries:
 
             # Performs article search
             if search_term == "":
-                await self.bot.say("I need a term to search")
+                await ctx.send("I need a term to search")
                 return
             article_title = await search_for_term(search_term)
             if article_title is None:
-                await self.bot.say("I found no articles matching the term '" + search_term + "'")
+                await ctx.send("I found no articles matching the term '" + search_term + "'")
                 return
 
             # Shows the text of the article searched for
@@ -165,11 +166,11 @@ class WebQueries:
                                  value="http://en.wikipedia.org/wiki/" + quote(title),
                                  inline=False)
             wiki_embed.colour = EMBED_COLORS['wiki']  # Make the embed white
-            await self.bot.say(embed=wiki_embed)
+            await ctx.send(embed=wiki_embed)
         except Exception as e:
             await utils.report(self.bot, str(e), source="Wiki command", ctx=ctx)
 
-    @commands.command(pass_context=True, help=LONG_HELP['wolf'], brief=BRIEF_HELP['wolf'], aliases=ALIASES['wolf'])
+    @commands.command(help=LONG_HELP['wolf'], brief=BRIEF_HELP['wolf'], aliases=ALIASES['wolf'])
     async def wolf(self, ctx):
         """ Query the Simple Wolfram|Alpha API """
         try:
@@ -178,7 +179,7 @@ class WebQueries:
 
             # Reject empty messages
             if message == "":
-                await self.bot.say("You must pass in a question to get a response")
+                await ctx.send("You must pass in a question to get a response")
                 return
 
             # Query the API and post its response
@@ -186,15 +187,15 @@ class WebQueries:
                 async with session.get("http://api.wolframalpha.com/v1/result?appid=" +
                                        credentials.tokens["WOLFRAMALPHA_APPID"] + "&i=" + quote(message)) as resp:
                     if resp.status is 501:
-                        await self.bot.say("WolframAlpha could not understand the question '{}' because {}"
+                        await ctx.send("WolframAlpha could not understand the question '{}' because {}"
                                            .format(message, resp.reason))
                         return
                     data = await resp.content.read()
-                    await self.bot.say(data.decode("utf-8"))
+                    await ctx.send(data.decode("utf-8"))
         except Exception as e:
             await utils.report(self.bot, str(e), source="wolf command", ctx=ctx)
 
-    @commands.command(pass_context=True, help=LONG_HELP['youtube'], brief=BRIEF_HELP['youtube'],
+    @commands.command(help=LONG_HELP['youtube'], brief=BRIEF_HELP['youtube'],
                       aliases=ALIASES['youtube'])
     async def youtube(self, ctx):
         """ Search Youtube for a video """
@@ -220,7 +221,7 @@ class WebQueries:
                                    "Failed to find video with search '" + query + "'",
                                    source="youtube command",
                                    ctx=ctx)
-                await self.bot.say("There was a problem retrieving that video")
+                await ctx.send("There was a problem retrieving that video")
                 return
 
             # YOUTUBE -------------------------------- ARGUMENTS
@@ -235,12 +236,12 @@ class WebQueries:
                 search_embed.colour = EMBED_COLORS['youtube']
                 search_embed.title = "Search results"
                 search_embed.description = description
-                search_message = await self.bot.say(embed=search_embed)
+                search_message = await ctx.send(embed=search_embed)
                 for emoji in emoji_list:
                     await self.bot.add_reaction(search_message, emoji)
                 response = await self.bot.wait_for_reaction(emoji_list,
                                                             timeout=30,
-                                                            user=ctx.message.author,
+                                                            user=ctx.author,
                                                             message=search_message)
 
                 # Reject response if it takes too long
@@ -253,12 +254,12 @@ class WebQueries:
                     index = emoji_list.index(response[0].emoji)
                     video_id = json['items'][index]['id']['videoId']
                     title = json['items'][index]['snippet']['title']
-                    await self.bot.say("**" + title + "**\nhttps://www.youtube.com/watch?v=" + video_id)
+                    await ctx.send("**" + title + "**\nhttps://www.youtube.com/watch?v=" + video_id)
             # Otherwise just provide the top result
             else:
                 video_id = json['items'][0]['id']['videoId']
                 title = json['items'][0]['snippet']['title']
-                await self.bot.say("**" + title + "**\nhttps://www.youtube.com/watch?v=" + video_id)
+                await ctx.send("**" + title + "**\nhttps://www.youtube.com/watch?v=" + video_id)
         except Exception as e:
             await utils.report(self.bot, str(e), source="youtube command", ctx=ctx)
 
