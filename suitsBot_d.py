@@ -99,7 +99,7 @@ async def on_message_delete(message):
     try:
         for unfurl_message_id in await embedGenerator.get_unfurls_for_trigger_message(message):
             try:
-                unfurl_message = await message.channel.get_message(unfurl_message_id)
+                unfurl_message = await message.channel.fetch_message(int(unfurl_message_id))
                 await unfurl_message.delete()
             except NotFound:
                 pass

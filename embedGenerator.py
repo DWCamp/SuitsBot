@@ -11,7 +11,7 @@ import redis
 redis_db = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)
 
 
-async def recently_unfurled(key: str) -> bool:
+async def recently_unfurled(key: Union[str, int]) -> bool:
     """Check if key exists, if not set it."""
     key_to_check = f"{REDIS_PREFIX}{key}"
     if redis_db.exists(key_to_check):
@@ -144,10 +144,9 @@ async def discord_message(ids: str) -> Optional[Embed]:
     :param ids: The tuple of ids pulled from the discord link
     :return: An embed with details about the item
     """
-    (_, _, channel_id, message_id) = ids
+    (_, _, _, message_id) = ids
     bot = utils.get_bot()
-    channel = bot.get_channel(channel_id)
-    message = await bot.get_message(channel, message_id)
+    message = await bot.fetch_message(message_id)
     if message is None:
         return None
 
