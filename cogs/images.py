@@ -113,7 +113,7 @@ class Images(Cog):
             }
 
             # Parse command
-            content = parse.stripcommand(ctx.message.content)
+            content = parse.strip_command(ctx.message.content)
 
             # Query defaults to a picture of a snake
             if content == "":

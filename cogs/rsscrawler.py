@@ -64,7 +64,7 @@ class RSSCrawler(Cog):
         :param ctx: The ctx object of the inciting message
         """
         try:
-            message = parse.stripcommand(ctx.message.content)
+            message = parse.strip_command(ctx.message.content)
 
             # Update feed
             feed.refresh_if_stale()

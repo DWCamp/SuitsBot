@@ -3,7 +3,7 @@
 # ----------- For core functionality
 import discord
 from discord.ext import commands
-from discord import Embed, Emoji
+from discord import Embed
 from discord.errors import NotFound
 
 # ----------- Custom imports
@@ -138,9 +138,11 @@ async def on_reaction_add(reaction, user):
         # Check delete emojis to see if we should delete a bot created message
         if reaction.emoji == DELETE_EMOJI:
             unfurl_message = reaction.message
-            unfurl_message_author_id = await embedGenerator.get_author_for_unfurl_message(unfurl_message)
             channel = unfurl_message.channel
 
+            # Get the id of the user the embed was a response to
+            unfurl_message_author_id = await embedGenerator.get_author_for_unfurl_message(unfurl_message)
+            # Reject if message does not exist
             if not unfurl_message_author_id:
                 return
 
@@ -195,37 +197,20 @@ async def on_ready():
         #     report = 'Failed to load extension {}\n{}'.format(type(error).__name__, error)
         #     await utils.report(bot, 'FAILED TO LOAD {}\n{}'.format(key.upper(), report))
 
+        # Check if added objects failed to initialize
+        if isinstance(bot.regex, Exception):
+            await utils.report(bot, str(bot.regex), source="Failed to load regex")
+        if isinstance(bot.scheduler, Exception):
+            await utils.report(bot, str(bot.scheduler), source="Failed to load scheduler")
+
         # Update restart embed
         ready_embed.remove_field(status_field)
-        ready_embed.add_field(name="Status", value="Loading web services...", inline=False)
+        ready_embed.add_field(name="Status", value="Setting presence...", inline=False)
         await ready_message.edit(embed=ready_embed)
-
-        print('Compiling Regex...')
-
-        # Update restart embed
-        ready_embed.remove_field(status_field)
-        ready_embed.add_field(name="Status", value="Compiling Regex...", inline=False)
-        await ready_message.edit(embed=ready_embed)
-
-        bot.regex = parse.Regex(bot)
-
-        print('Scheduling tasks...')
-
-        try:
-            # Update restart embed
-            ready_embed.remove_field(status_field)
-            ready_embed.add_field(name="Status", value="Scheduling tasks...", inline=False)
-            await ready_message.edit(embed=ready_embed)
-
-            bot.scheduler = Scheduler(bot)
-            bot.scheduler.add_daily_task(post_apod)
-
-        except Exception as e:
-            await utils.report(bot, str(e), source="Failed to start scheduler")
 
         print('Finalizing setup...')
 
-        # Load/initialize web content
+        # Set presence
         try:
             await bot.change_presence(activity=discord.Game(currently_playing))
         except discord.InvalidArgument as e:
@@ -245,14 +230,11 @@ async def on_message(message):
     # ---------------------------- HELPER METHODS
     try:
         # ------------------------------------------- FILTER OTHER BOTS
-        if message.author == bot.user:
-            return
-
         if message.author.bot:
             return
 
         # ------------------------------------------- RESTART BOT
-        # NOTE: NEVER ADD ANYTHING BEFORE THIS. IN THE EVENT THAT THE ADDED CODE IS BUGGED,
+        # NOTE: NEVER ADD ANYTHING BEFORE THIS. IF THAT ADDED CODE IS BUGGED,
         # THE BOT WILL NOT BE ABLE TO RESTART
         if message.content == "!r":
             if message.author.id in AUTHORIZED_IDS:
@@ -318,20 +300,20 @@ async def on_message(message):
         matches = bot.regex.find_subreddits(content)
         for match in matches:
             sub = match[0].strip()  # Get the full match from the regex tuple
-            subname = sub[sub.find("r/") + 2:]  # strip off "/r/"
-            if subname not in sublist:  # Check for duplicates
-                if await embedGenerator.recently_unfurled(f"{message.channel.id}-subreddits-{subname}"):
+            sub_name = sub[sub.find("r/") + 2:]  # strip off "/r/"
+            if sub_name not in sublist:  # Check for duplicates
+                if await embedGenerator.recently_unfurled(f"{message.channel.id}-subreddits-{sub_name}"):
                     continue
-                sublist.append(subname)
-                subembed = None
+                sublist.append(sub_name)
+                sub_embed = None
                 try:
-                    subembed = await embedGenerator.subreddit(subname)
-                    if subembed is not None:
-                        unfurl_message = await message.channel.send(embed=subembed)
+                    sub_embed = await embedGenerator.subreddit(sub_name, message)
+                    if sub_embed is not None:
+                        unfurl_message = await message.channel.send(embed=sub_embed)
                         await embedGenerator.record_unfurl(message, unfurl_message)
                         await unfurl_message.add_reaction(DELETE_EMOJI)
                 except Exception as e:
-                    details = {} if subembed is None else subembed.to_dict()
+                    details = {} if sub_embed is None else sub_embed.to_dict()
                     await utils.report(bot, str(e) + "\n" + str(details), source='subreddit detection')
         try:
             generator_fodder = [(bot.regex.find_posts, embedGenerator.reddit_post),                 # Reddit posts
@@ -358,7 +340,7 @@ async def on_message(message):
 
         await bot.process_commands(message)
     except Exception as e:
-        await utils.report(bot, str(e), source="on_message")
+        await utils.report(bot, f"{e}\nServer: {message.guild}\nMessage: {message.content}", source="on_message")
 
 
 # ------------------------ GENERAL COMMANDS ---------------------------------
@@ -604,10 +586,10 @@ def add_user(user_id, username):
 
 def load():
     """ Load everything """
-    loadcache()
+    load_cache()
 
 
-def loadcache():
+def load_cache():
     """ Load Cache values from database """
     global currently_playing, scribble_bank
     try:
@@ -656,8 +638,24 @@ if __name__ == "__main__":
             exc = '{}: {}'.format(type(err).__name__, err)
             print('Failed to load extension {}\n{}'.format(extension, exc))
 
-print("------------")
-print("Logging in...")
+# Add regex parser
+print("Building regex...")
+try:
+    bot.regex = parse.Regex(bot)
+except Exception as e:
+    print("--- Failed to build regex ---")
+    bot.regex = e
+
+# Add task scheduler
+print('Scheduling tasks...')
+try:
+    bot.scheduler = Scheduler(bot)
+    bot.scheduler.add_daily_task(post_apod)
+except Exception as e:
+    print("--- Failed to start scheduler! ---")
+    bot.scheduler = e
 
 # Start the bot
+print("------------")
+print("Logging in...")
 bot.run(tokens["BOT_TOKEN"])

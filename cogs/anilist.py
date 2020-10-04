@@ -312,8 +312,6 @@ class Anilist(Cog):
         query = "SELECT * FROM Synonyms"
         cursor = self.bot.dbconn.execute(query)
         for (synonym_type, change_to, change_from) in cursor:
-            change_from = change_from.decode("utf-8")
-            change_to = change_to.decode("utf-8")
             if synonym_type == "ANIME":
                 if change_to not in self.anime_synonyms.keys():
                     self.anime_synonyms[change_to] = list()

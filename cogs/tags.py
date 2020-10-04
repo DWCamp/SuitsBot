@@ -197,8 +197,8 @@ class Tags(Cog):
                                 " `` has already been reserved for a global tag")
                             return
                         elif edit is False:
-                            await ctx.send("I already have a value stored for the tag `` " + tagkey +
-                                               " ``. Add `-edit` to overwrite existing  self.tags")
+                            await ctx.send(f"I already have a value stored for the tag `{tagkey}`. "
+                                           f"Add `-edit` to overwrite existing tags")
                             return
                         elif append is True:
                             if newline is True:
@@ -222,12 +222,11 @@ class Tags(Cog):
                 if key in selected_tags.keys():
                     await ctx.send(utils.trimtolength(selected_tags[key], 2000))
                 elif domain == "user":
-                    await ctx.send("I don't think I have a tag `" + key +
-                                       "` stored for you. Type `!tag -u -ls` to see the  self.tags I have " +
-                                       "saved for you")
+                    await ctx.send(f"I don't think your account has a tag `{key}`. "
+                                   "Type `!tag -u -ls` to see the tags I have saved for you")
                 else:
-                    await ctx.send("I don't think I have a tag `" + key + "`. Type `!tag -ls` to see the tags " +
-                                       "I have saved for this server")
+                    await ctx.send(f"I don't think I have a tag `{key}` for this guild. "
+                                   f"Type `!tag -ls` to see a list of this guild's tags")
         except Exception as e:
             await utils.report(self.bot, str(e), source="Tag command", ctx=ctx)
 
@@ -246,10 +245,11 @@ class Tags(Cog):
         self.tags = {"global": {}, "server": {}, "user": {}}
         query = "SELECT * FROM Tags"
         cursor = self.bot.dbconn.execute(query)
+        count = 0
         for (owner_id, key_string, value_string, domain) in cursor:
             owner_id = int(owner_id)    # ID has to be cast to int now because v1.0
-            key_string = key_string.decode("utf-8")
-            value_string = value_string.decode("utf-8")
+            # key_string = key_string.decode("utf-8")
+            # value_string = value_string.decode("utf-8")
             if domain == "global":
                 self.tags["global"][key_string] = value_string
             else:

@@ -27,7 +27,7 @@ class WebQueries(Cog):
         """ Query the UrbanDictionary API """
         try:
             # removes the invocation portion of the message
-            message = parse.stripcommand(ctx.message.content)
+            message = parse.strip_command(ctx.message.content)
 
             max_definitions = 4
 
@@ -175,7 +175,7 @@ class WebQueries(Cog):
         """ Query the Simple Wolfram|Alpha API """
         try:
             # removes the "!wolf" portion of the message
-            message = parse.stripcommand(ctx.message.content)
+            message = parse.strip_command(ctx.message.content)
 
             # Reject empty messages
             if message == "":
