@@ -1,5 +1,7 @@
 from discord.ext import commands
 from discord.ext.commands import Cog
+from discord import FFmpegPCMAudio
+from config.local_config import SOUNDS_DIR
 from constants import *
 import parse
 import utils
@@ -21,24 +23,26 @@ class VoiceCommands(Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.quote_folder = "/home/dwcamp/PythonScripts/Sounds/"
+        self.bot.voice = None
 
     @commands.command(help=LONG_HELP['join'], brief=BRIEF_HELP['join'], aliases=ALIASES['join'])
     async def join(self, ctx):
         """ Makes SuitsBot join the voice channel """
 
-        # Gets the voice channel the author is in
-        author_voice_channel = ctx.author.voice_channel
-        # Ignores the command if the author is not in voice
-        if author_voice_channel is None:
-            await ctx.send("You are not in a voice channel right now")
-            return
-        voice = await self.join_audio_channel(author_voice_channel)
-        await ctx.send("Joining voice channel...")
-        player = voice.create_ffmpeg_player(self.quote_folder + 'hello_there_obi.mp3')  # Creates an ffmpeg player
-        self.bot.player = player
-        # Plays joining voice clip
-        player.start()
+        try:
+            # Gets the voice channel the author is in. If the author is not in voice, author_voice_channel is `None`
+            author_voice_channel = ctx.author.voice.channel if ctx.author.voice is not None else None
+            # Ignores the command if the author is not in voice
+            if author_voice_channel is None:
+                await ctx.send("You are not in a voice channel right now")
+                return
+            await ctx.send("Joining voice channel...")
+            voice = await author_voice_channel.connect()
+            self.bot.voice = voice
+            # Plays joining voice clip
+            self.bot.voice.play(FFmpegPCMAudio(SOUNDS_DIR + 'hello_there_obi.mp3'))
+        except Exception as e:
+            await utils.report(self.bot, str(e), source="Voice command", ctx=ctx)
 
     @commands.command(help=LONG_HELP['say'], brief=BRIEF_HELP['say'], aliases=ALIASES['say'])
     async def say(self, ctx):
@@ -141,9 +145,9 @@ class VoiceCommands(Cog):
                     "-ls": "Lists the tags for all the available audio clips",
                     "-stop": "Stops the current voice clip"}
                 await ctx.send(embed=utils.embedfromdict(helpdict,
-                                                             title=title,
-                                                             description=description,
-                                                             thumbnail_url=COMMAND_THUMBNAILS["say"]))
+                                                         title=title,
+                                                         description=description,
+                                                         thumbnail_url=COMMAND_THUMBNAILS["say"]))
                 return
             if "ls" in arguments:
                 message = "The audio clips I know are: \n"
@@ -152,10 +156,10 @@ class VoiceCommands(Cog):
                 await ctx.send(message[:-2])
                 return
             if "stop" in arguments:
-                if not self.bot.player.is_playing():
+                if not self.bot.voice.is_playing():
                     await ctx.send("I'm not saying anything...")
                 else:
-                    self.bot.player.stop()
+                    self.bot.voice.stop()
                     await ctx.send("Shutting up.")
                 return
 
@@ -163,7 +167,7 @@ class VoiceCommands(Cog):
 
             if key == "":
                 await ctx.send("You need to type the name of an audio clip for me to say. Type `!say -ls` for " +
-                                   "a list of my audio clips or type `!say -help` for a full list of my arguments")
+                               "a list of my audio clips or type `!say -help` for a full list of my arguments")
                 return
 
             if key not in quotes.keys():
@@ -172,38 +176,29 @@ class VoiceCommands(Cog):
 
             # ------------------------------ AUDIO INITIALIZATION
 
-            # Gets the voice channel the author is in
-            author_voice_channel = ctx.author.voice_channel
-            if author_voice_channel is None:  # Ignores the command if the author is not in voice
+            # Gets the voice channel the author is in. If the author is not in voice, author_voice_channel is `None`
+            author_voice_channel = ctx.author.voice.channel if ctx.author.voice is not None else None
+            # Ignores the command if the author is not in voice
+            if author_voice_channel is None:
                 await ctx.send("You are not in a voice channel right now")
                 return
+            if self.bot.voice is None or self.bot.voice.channel is not author_voice_channel:
+                voice = await author_voice_channel.connect()
+                self.bot.voice = voice
 
-            # If the bot is connected to voice,
-            if self.bot.is_voice_connected(ctx.guild):
-                voice_channel = self.bot.voice_client_in(ctx.guild).channel
-                # Does nothing if the bot is already in the author's voice channel
-                if voice_channel != author_voice_channel:
-                    # Stops any active voice clip
-                    self.bot.player.stop()
-                    voice = self.bot.voice_client_in(ctx.guild)
-                    # Moves the bot to the new channel
-                    await voice.move_to(author_voice_channel)
-            else:
-                await self.bot.join_voice_channel(author_voice_channel)
+            # TODO: Auto-joining and switching within guilds when bot not in author's channel
 
             # ------------------------------ PLAYING AUDIO
 
             # Ignores command if bot is already playing a voice clip
-            if self.bot.player is not None and self.bot.player.is_playing():
+            if self.bot.voice is not None and self.bot.voice.is_playing():
                 await ctx.send("Currently processing other voice command")
                 return
 
+            # Play audio clip
+            self.bot.voice.play(FFmpegPCMAudio(SOUNDS_DIR + quotes[key][1]))
             await ctx.send(quotes[key][0])  # Responds with the text of the voice clip
-            voice = self.bot.voice_client_in(ctx.guild)  # Gets the active voice client
-            player = voice.create_ffmpeg_player(
-                self.quote_folder + quotes[key][1])  # Gets the voice clip and creates a ffmpeg player
-            self.bot.player = player  # Assigns the player to the bot
-            player.start()  # Plays the voice clip
+
         except Exception as e:
             await utils.report(self.bot, str(e), source="Say command", ctx=ctx)
 
@@ -217,20 +212,23 @@ class VoiceCommands(Cog):
         ctx : discord.context
             The message context object
         """
+        try:
+            if self.bot.voice:
+                await self.bot.voice.disconnect()
+                self.bot.voice = None
+                await ctx.send('I have disconnected from voice channels in this server.')
+            else:  # If the bot is not connected to voice, do nothing
+                await ctx.send('I am not connected to any voice channel on this server.')
+        except Exception as e:
+            await utils.report(self.bot, str(e), source="leave command", ctx=ctx)
 
-        if self.bot.is_voice_connected(ctx.guild):
-            await self.bot.voice_client_in(ctx.guild).disconnect()  # Disconnect from voice
-            await ctx.send('I have disconnected from voice channels in this server.')
-        else:  # If the bot is not connected to voice, do nothing
-            await ctx.send('I am not connected to any voice channel on this server.')
-
-    async def join_audio_channel(self, targetchannel):
+    async def join_audio_channel(self, target_channel):
         """
         Makes SuitsBot join a target channel
 
         Parameters
         ------------
-        targetchannel : discord.Channel
+        target_channel : discord.Channel
             The voice channel the bot will try to connect to
 
         Returns
@@ -243,22 +241,22 @@ class VoiceCommands(Cog):
         it will stop any audio it was playing first
         """
 
-        targetserver = targetchannel.server
+        target_server = target_channel.server
         # If the bot is connected to voice,
-        if self.bot.is_voice_connected(targetserver):
-            currchannel = self.bot.voice_client_in(targetserver).channel
+        if self.bot.is_voice_connected(target_server):
+            currchannel = self.bot.voice_client_in(target_server).channel
             # Does nothing if the bot is already in the author's voice channel
-            if currchannel != targetchannel:
+            if currchannel != target_channel:
                 # Stops any active voice clip
                 self.bot.player.stop()
-                voice_client = self.bot.voice_client_in(targetserver)
+                voice_client = self.bot.voice_client_in(target_server)
                 # Moves the bot to the new channel
-                await voice_client.move_to(targetchannel)
+                await voice_client.move_to(target_channel)
             else:
-                voice_client = self.bot.voice_client_in(targetserver)
+                voice_client = self.bot.voice_client_in(target_server)
         # If the bot is not connected to voice, join the author's channel
         else:
-            voice_client = await self.bot.join_voice_channel(targetchannel)
+            voice_client = await self.bot.join_voice_channel(target_channel)
         return voice_client
 
 

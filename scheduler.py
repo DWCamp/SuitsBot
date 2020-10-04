@@ -180,7 +180,7 @@ class Scheduler:
                     self._loop.create_task(self._run_hourly(now))
 
                     # Run daily, weekly, monthly, and yearly tasks that are delayed until 9 am
-                    if now.hour == 9:
+                    if now.hour == 14:  # Bot runs in UTC, so make a +5 hour adjustment for EST
                         self._loop.create_task(self._run_daily(now))
                         if now.weekday() == 0:
                             self._loop.create_task(self._run_weekly(now))

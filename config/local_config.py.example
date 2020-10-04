@@ -1,4 +1,4 @@
-BOT_VERSION = "5.0.0"
+BOT_VERSION = "5.1.0"
 DEFAULT_COMMAND_PREFIX = "!"
 
 # Bot description
@@ -21,6 +21,9 @@ LOCAL_COGS = [
     "private.vacation",
     "cogs.ksp",
 ]
+
+# Folder with sound files
+SOUNDS_DIR = "C:\\Users\\Kevin\\DiscordBot\\Sounds\\"
 
 # =========== IDS
 
