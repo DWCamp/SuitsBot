@@ -7,16 +7,17 @@ class Regex:
         subdomains = "(?:(?:www|old|np|m|en|dd|us|de)\.)?"
         self.bot = bot
         self.amazon = re.compile('https://www\.amazon\.com/(?:(?:\w+-)+\w+/)?[dg]p/(?:product/)?(?:\w{10})')
+        self.discord = re.compile('discord(app)?.com/channels/(\d{18})/(\d{18})/(\d{18})')
         self.newegg = re.compile('https://www\.newegg\.com/Product/Product\.aspx\?Item=(?:\w{15})', re.IGNORECASE)
-        self.comment = re.compile('https:\/\/' + subdomains + 'reddit\.com\/r\/\w+\/comments\/\w{6}\/[\w%]+\/\w{7}\/?')
-        self.post = re.compile('https?://' + subdomains + 'reddit.com/r/\w{1,20}/comments/\w{5,6}/\w+/?\B')
-        self.subreddit = re.compile('((^|\s)\/?r\/\w+(\s|$))')
+        self.reddit_comment = re.compile('https://' + subdomains + 'reddit\.com/r/\w+/comments/\w{6}/[\w%]+/\w{7}/?')
+        self.reddit_post = re.compile('https?://' + subdomains + 'reddit.com/r/\w{1,20}/comments/\w{5,6}/\w+/?\B')
+        self.subreddit = re.compile('((^|\s)/?r/\w+(\s|$))')
         self.twitter_handle = re.compile('(\s|^)(@{1})(\w{1,15})($|\s)')
         self.twitter_id = re.compile('\\b(https://twitter\\.com/\\w{1,15}/status/)(\\d{19})\\b')
-        self.url = re.compile("https?:\/\/" +  # Protocol
+        self.url = re.compile("https?://" +  # Protocol
                               "(([\w\$\-+!*'\(\),])+\.){1,}" +  # Domain
                               "([\w\$\-+!*'\(\),])+" +  # Top level domain
-                              "(\/[\w\$\-+#!*'\(\),]+)*(\/)?" +  # directory
+                              "(/[\w\$\-+#!*'\(\),]+)*(\/)?" +  # directory
                               "(\.[a-zA-Z]+)?" +  # File type
                               "(\?(([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)&)*" +  # URL parameters (1/2)
                               "([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)?)?")  # URL parameters (2/2)
@@ -36,13 +37,23 @@ class Regex:
         """
         return self.url.fullmatch(string) is not None
 
+    """
+    ======================================================================================
+    Wow I can't believe I ever wrote something this godawful. This needs to get fixed asap
+    ====================================================================================== 
+    """
+
+    # Discord
+    def find_discord_message(self, message):
+        return re.findall(self.discord, message)
+
     # Reddit
 
     def find_comments(self, message):
-        return re.findall(self.comment, message)
+        return re.findall(self.reddit_comment, message)
 
     def find_posts(self, message):
-        return re.findall(self.post, message)
+        return re.findall(self.reddit_post, message)
 
     def find_subreddits(self, message):
         return re.findall(self.subreddit, message)
@@ -79,7 +90,7 @@ def args(message):
     [0] - A list of the arguments
     [1] - The message without the arguments
      """
-    message = stripcommand(message)
+    message = strip_command(message)
     arguments = []
     i = 0
     while i < len(message) and message[i] == "-":  # Looks for arguments
@@ -122,7 +133,7 @@ def func_param(string):
     [0] - The function called
     [1] - The parameter text
     """
-    message = stripcommand(string)
+    message = strip_command(string)
     if message == "":
         return ["", ""]
     whitespace = utils.first_whitespace(message)
@@ -167,30 +178,29 @@ def key_value(message, attachments=None):
     if attachments is None:
         attachments = []
 
-    end = message.find("]")
-    if end == 1:  # no tag key
+    """ Validate key syntax """
+    key_end = message.find("]")
+    if key_end == 1:  # no tag key
         return [None, "EMPTY KEY"]
-    if end == -1:  # unclosed tag key
+    if key_end == -1:  # unclosed tag key
         return [None, "UNCLOSED KEY"]
-    tagkey = message[1:end]
-    if len(message) < (end + 3):
-        if len(attachments) == 0:
-            return [None, "NO VALUE"]
-        tagvalue = ""
-        for attachment in attachments:
-            tagvalue += "\n" + attachment['url']
-        return [tagkey.lower(), tagvalue]
-    end_offset = 2
-    if message[end + 1] != " ":  # Starts the tagvalue immediately after the closing bracket if there isn't a space
-        end_offset = 1
-    tagvalue = message[(end + end_offset):]  # Sets the value of the tag
-    if tagkey.isspace():
+
+    """ Find tag key and reject invalid keys """
+    tag_key = message[1:key_end]
+    if tag_key.isspace():
         return [None, "WHITESPACE KEY"]
-    elif tagkey[0] == "-":
+    elif tag_key[0] == "-":  # Keys starting with '-' would cause issues with parsing command flags (e.g. `!tag -ls`)
         return [None, "KEY STARTS WITH -"]
+
+    """ Find the tag's value, including attachment urls """
+    tag_value = message[key_end + 1:].strip()  # Set the value as all text following the close bracket
     for attachment in attachments:
-        tagvalue += "\n" + attachment['url']
-    return [tagkey, tagvalue]
+        tag_value += "\n" + attachment.url
+
+    """ Reject empty tags """
+    if tag_value == "":
+        return [None, "NO VALUE"]
+    return [tag_key.lower(), tag_value]
 
 
 def number_in_brackets(string):
@@ -258,7 +268,7 @@ def stringandoptnum(string):
         return [string, None]
 
 
-def stripcommand(content):
+def strip_command(content):
     """ Removes the command invocation from the front of a message """
     endtag = utils.first_whitespace(content)
     if endtag is -1:

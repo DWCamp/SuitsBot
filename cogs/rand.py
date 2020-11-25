@@ -1,11 +1,12 @@
 import random
 from discord.ext import commands
+from discord.ext.commands import Cog
 from constants import *
 import utils
 import parse
 
 
-class Random:
+class Random(Cog):
 
     """
     Performs serveral functions employing a random number generator such as dice rolling and coin flipping
@@ -15,7 +16,7 @@ class Random:
         self.bot = bot
 
     # Randomizer
-    @commands.command(pass_context=True, help=LONG_HELP['rand'], brief=BRIEF_HELP['rand'], aliases=ALIASES['rand'])
+    @commands.command(help=LONG_HELP['rand'], brief=BRIEF_HELP['rand'], aliases=ALIASES['rand'])
     async def rand(self, ctx):
         try:
             # Extracts the function and parameter from the message
@@ -39,7 +40,7 @@ class Random:
                                                             "Multiple dice types can be rolled with a comma separated "
                                                             "list"
                             }
-                await self.bot.say(embed=utils.embedfromdict(helpdict,
+                await ctx.send(embed=utils.embedfromdict(helpdict,
                                                              title=title,
                                                              description=description,
                                                              thumbnail_url=COMMAND_THUMBNAILS["rand"]))
@@ -47,23 +48,23 @@ class Random:
 
             # !rand coin
             if func == "coin":
-                await self.bot.say(utils.random_element(["Heads!", "Tails!"]))
+                await ctx.send(utils.random_element(["Heads!", "Tails!"]))
                 return
 
             # !rand item <item>, <item>, <item>
             if func == "item":
                 if len(parameter) == 0:
-                    await self.bot.say("I need a comma delineated list (e.g. '!random item A, B, C, D, E' etc.) "
+                    await ctx.send("I need a comma delineated list (e.g. '!random item A, B, C, D, E' etc.) "
                                        "to pick from")
                     return
                 itemlist = list(filter(None, parameter.split(",")))
                 if len(itemlist) == 0:
-                    await self.bot.say("There aren't any items here for me to choose from!")
+                    await ctx.send("There aren't any items here for me to choose from!")
                     return
                 elif len(itemlist) == 1:
-                    await self.bot.say("There's only one item. That's an easy choice: " + itemlist[0])
+                    await ctx.send("There's only one item. That's an easy choice: " + itemlist[0])
                     return
-                await self.bot.say("I choose... " + utils.random_element(itemlist).strip())
+                await ctx.send("I choose... " + utils.random_element(itemlist).strip())
                 return
 
             # rand num
@@ -71,26 +72,26 @@ class Random:
             # rand num <num> <num>
             if func == "num" or func == "number":
                 if len(parameter) == 0:
-                    await self.bot.say(str(random.random()))
+                    await ctx.send(str(random.random()))
                     return
                 numbers = parameter.split(" ")
                 if len(numbers) == 1:
                     try:
                         bound = int(numbers[0])
                     except ValueError:
-                        await self.bot.say("I can't seem to parse '" + numbers[0] + "'")
+                        await ctx.send("I can't seem to parse '" + numbers[0] + "'")
                         return
-                    await self.bot.say(str(random.randint(0, bound)))
+                    await ctx.send(str(random.randint(0, bound)))
                 else:
                     try:
                         lowerbound = int(numbers[0])
                     except ValueError:
-                        await self.bot.say("I can't seem to parse '" + numbers[0] + "'")
+                        await ctx.send("I can't seem to parse '" + numbers[0] + "'")
                         return
                     try:
                         upperbound = int(numbers[1])
                     except ValueError:
-                        await self.bot.say("I can't seem to parse '" + numbers[1] + "'")
+                        await ctx.send("I can't seem to parse '" + numbers[1] + "'")
                         return
                     if upperbound < lowerbound:
                         temp = upperbound
@@ -99,7 +100,7 @@ class Random:
                     message = str(random.randint(lowerbound, upperbound))
                     if len(numbers) > 2:
                         message += "\n\nFYI, this function takes a maximum of two only arguments"
-                    await self.bot.say(message)
+                    await ctx.send(message)
                 return
 
             # !rand roll <num>d<sides>, <num>d<sides>
@@ -112,7 +113,7 @@ class Random:
                     dloc = die.find("d")
                     # if there is no "d"
                     if dloc == -1:
-                        await self.bot.say("I don't see a 'd' in the argument '" + die + "'.")
+                        await ctx.send("I don't see a 'd' in the argument '" + die + "'.")
                         return
 
                     # if there is no number in front of the "d", it is assumed to be one
@@ -121,7 +122,7 @@ class Random:
                         sides = die[1:]
                     # if there is no number after the "d", the bot rejects it
                     elif (dloc + 1) == len(die):
-                        await self.bot.say("I don't see a number after 'd' in the argument '" + die +
+                        await ctx.send("I don't see a number after 'd' in the argument '" + die +
                                            "'. I need to know a number of sides")
                         return
                     else:
@@ -131,16 +132,16 @@ class Random:
                     try:
                         sides = int(sides)
                     except ValueError:
-                        await self.bot.say("I'm sorry, but '" + sides + "' isn't a parsable integer...")
+                        await ctx.send("I'm sorry, but '" + sides + "' isn't a parsable integer...")
                         return
                     try:
                         count = int(count)
                     except ValueError:
-                        await self.bot.say("I'm sorry, but '" + count + "' isn't a parsable integer...")
+                        await ctx.send("I'm sorry, but '" + count + "' isn't a parsable integer...")
                         return
 
                     if count > 100000:
-                        await self.bot.say(str(count) + " dice is a *lot*. I think rolling that many would hurt "
+                        await ctx.send(str(count) + " dice is a *lot*. I think rolling that many would hurt "
                                            "my head :confounded:\nPlease don't make me do it.")
                         return
                     dicesum = 0
@@ -149,12 +150,12 @@ class Random:
                     total += dicesum
                     message += str(count) + " d" + str(sides) + ": I rolled " + str(dicesum) + "\n"
                 if len(dice) > 1:
-                    await self.bot.say(message + "Total: " + str(total))
+                    await ctx.send(message + "Total: " + str(total))
                 else:
-                    await self.bot.say(message)
+                    await ctx.send(message)
                 return
 
-            await self.bot.say(
+            await ctx.send(
                 "I don't recognize the function `" + func + "`. Type `!rand help` for information on this command")
 
         except Exception as e:

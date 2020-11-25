@@ -3,7 +3,7 @@ List of constants necessary for the bot's operation
 """
 
 # A single place to define the bot's version number
-BOT_VERSION = "4.5.0"
+BOT_VERSION = "5.1.0"
 
 # ====== Stuff?
 
@@ -12,18 +12,26 @@ AFFIRMATIVE_RESPONSES = ['yes', 'yup', 'y', 'yee', 'yep', 'okay', 'ok', 'go ahea
                          'affirmative', 'the affirmative', 'in the affirmative',
                          'roger', 'ja', 'si', 'go', 'do it']
 
+EMOJI = {
+    "heart": "❤️",
+    "heavy_check_mark": "✔️",
+    "v": "✌️",
+    "white_check_mark": "✅",
+    "x": "❌",
+}
+
 # ====== Feed stuff
 
 # Every podcast feed alias
 FEED_ALIAS_LIST = {
-    "Accidental Tech Podcast": ["atp", "ATP", "accidental"],
+    "Accidental Tech Podcast": ["atp", "accidental"],
     "KSP History": ["ksp", "ksphistory", "history"],
-    "Main Engine Cutoff": ["meco", "MECO", "Meco", "MainEngineCutOff", "podcast"],
-    "My Brother My Brother and Me": ["mbmbmam", "MBMBAM"],
-    "Off-Nominal": ["on", "offnominal", "OffNominal", "Off-nominal", "Off-Nominal", "ON"],
-    "The Adventure Zone": ["taz", "TAZ", "TheAdventureZone", "theAdventureZone", "theadventurezone"],
-    "We Martians": ["wm", "WM", "wemartians", "WeMartians", "We-martians", "Wemartians"],
-    "xkcd": ["xkcd", "XKCD"],
+    "Main Engine Cutoff": ["meco", "MainEngineCutOff", "podcast"],
+    "My Brother My Brother and Me": ["mbmbmam"],
+    "Off-Nominal": ["on", "offnominal"],
+    "The Adventure Zone": ["taz", "theadventurezone"],
+    "We Martians": ["wm", "wemartians", "We-martians"],
+    "xkcd": ["xkcd"],
 }
 
 # A bullet list of feeds in the form "- <title> (`!<first alias>`)"
@@ -33,28 +41,28 @@ FEED_TEXT_LIST = "\n".join([f"- {feed_id} (`!{FEED_ALIAS_LIST[feed_id][0]}`)" fo
 
 # Command aliases
 ALIASES = {
-    "aes": ["AES"],
-    "anime": ["ani", "Anime", "animu", "aniem", "anilist", "AniList"],
-    "bestgirl": ["bestGirls", "bestGirl", "bestgirls", "bestGrils", "bestgril", "bestgrils", "bestGril", "bg", "BG"],
-    "code": ["Code", "program", "exe", "swift", "python", "java", "cpp", "brainfuck", "golang", "ide", "IDE", "cobol",
+    "aes": ["aesthetic"],
+    "anime": ["ani", "animu", "aniem", "anilist"],
+    "bestgirl": ["bestgirls", "bestgril", "bestgrils", "bg"],
+    "code": ["program", "exe", "swift", "python", "java", "cpp", "brainfuck", "golang", "ide", "cobol",
              "pascal", "fortran", "vbn", "scala", "bash", "php", "perl", "cpp14", "c", "csharp", "lua", "rust"],
-    "gritty": ["grity", "grittmeister", "grittster", "god", "orange", "philly", "philadelphia", "eattherich", "Gritty"],
+    "gritty": ["grity", "grittmeister", "grittster", "god", "orange", "philly", "philadelphia", "eattherich"],
     "hello": ["hi", "hey"],
     "join": ["jion", "joni"],
-    "leave": ["shut up", "fuckOff", "gtfo", "GTFO"],
+    "leave": ["shut up", "fuckOff", "GTFO"],
     "ls": ["list", "lsit", "lists"],
     "meow": ["cat", "moew", "mewo", "nyaa", "nyan"],
-    "nasa": ["NASA", "APOTD", "APOD", "apod", "apotd"],
-    "picture": ["snek", "Snek", "sneks", "Sneks", "snake", "snakes", "pic", "photo", "unsplash", "Unsplash"],
+    "nasa": ["apod", "apotd"],
+    "picture": ["snek", "sneks", "snake", "snakes", "pic", "photo", "unsplash"],
     "rand": ["random", "ran", "randmo"],
     "rssfeed": [k for feed in FEED_ALIAS_LIST.values() for k in feed],
     "say": ["voice", "speak"],
-    "tag": ["tags", "Tag", "Tags"],
-    "ud": ["urbanDictionary", "urbandict", "urbanDict", "UD", "uD", "Ud"],
-    "wiki": ["wikipedia", "Wikipedia", "Wiki", "WIKI"],
-    "wolf": ["wolfram", "wA", "Wolfram", "WolframAlpha", "wolframAlpha", "woflram", "wofl"],
+    "tag": ["tags"],
+    "ud": ["urbanDictionary", "urbandict"],
+    "wiki": ["wikipedia"],
+    "wolf": ["wolfram", "wA", "woflram", "wofl"],
     "woof": ["dog", "doggo", "wof", "woofer", "wouef"],
-    "youtube": ["yt", "YT", "YouTube", "youTube", "Youtube", "ytube", "yuotube", "youube", "youbue"]}
+    "youtube": ["yt", "ytube", "yuotube", "youube", "youbue"]}
 
 
 # Command brief help text
@@ -98,7 +106,7 @@ COMMAND_THUMBNAILS = {
     "wiki": "https://www.wikipedia.org/portal/wikipedia.org/assets/img/Wikipedia-logo-v2@2x.png"}
 
 # Emoji so users can let us know if an embed needs to be deleted
-DELETE_EMOJI = "❌"
+DELETE_EMOJI = EMOJI['x']
 DELETE_EMOJI_COUNT_TO_DELETE = 5
 
 # Embed color hexcodes
@@ -107,6 +115,7 @@ EMBED_COLORS = {"default": 0x4E2368,
                 "anime": 0x1A9AFC,
                 "bestgirl": 0x76BB01,
                 "code": 0x00EE36,
+                "discord": 0x7289DA,
                 "error": 0xAA0000,
                 "flag": 0xFCEF15,
                 "gritty": 0xF74902,

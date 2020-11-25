@@ -1,15 +1,16 @@
 import random
 from discord.ext import commands
+from discord.ext.commands import Cog
 from discord import Embed
 from urllib.parse import quote
 from constants import *
-from credentials import tokens
+from config.credentials import tokens
 import parse
 import utils
 from stringcache import StringCache
 
 
-class Images:
+class Images(Cog):
 
     """
     Several image querying commands that can show you some pictures to brighten your day
@@ -63,43 +64,43 @@ class Images:
                             "https://i.redd.it/pve7gkrgmet11.jpg",
                             "https://i.imgur.com/2BrTP5q.jpg"]
 
-    @commands.command(pass_context=True, help=LONG_HELP['gritty'], brief=BRIEF_HELP['gritty'], aliases=ALIASES['gritty'])
+    @commands.command(help=LONG_HELP['gritty'], brief=BRIEF_HELP['gritty'], aliases=ALIASES['gritty'])
     async def gritty(self, ctx):
         try:
             url = self.get_gritty_url()
             embed = Embed().set_image(url=url)
             embed.colour = EMBED_COLORS["gritty"]
-            await self.bot.say(embed=embed)
+            await ctx.send(embed=embed)
         except Exception as e:
             await utils.report(self.bot, str(e), source="Gritty command", ctx=ctx)
 
-    @commands.command(pass_context=True, help=LONG_HELP['meow'], brief=BRIEF_HELP['meow'], aliases=ALIASES['meow'])
+    @commands.command(help=LONG_HELP['meow'], brief=BRIEF_HELP['meow'], aliases=ALIASES['meow'])
     async def meow(self, ctx):
         try:
             meow_url = self.meow_cache.next()
             if meow_url:
                 embed = Embed().set_image(url=meow_url)
                 embed.colour = EMBED_COLORS["meow"]
-                await self.bot.say(embed=embed)
+                await ctx.send(embed=embed)
             else:
-                await self.bot.say("I'm sorry, I don't have a cat photo at the moment. Please try again in a minute")
+                await ctx.send("I'm sorry, I don't have a cat photo at the moment. Please try again in a minute")
         except Exception as e:
             await utils.report(self.bot, str(e), source="Meow command", ctx=ctx)
 
     # Present the astronomy picture of the day
-    @commands.command(pass_context=True, help=LONG_HELP['nasa'], brief=BRIEF_HELP['nasa'], aliases=ALIASES['nasa'])
+    @commands.command(help=LONG_HELP['nasa'], brief=BRIEF_HELP['nasa'], aliases=ALIASES['nasa'])
     async def nasa(self, ctx):
         try:
             apod_post = await get_apod_embed()
             if isinstance(apod_post, str):
-                await self.bot.say(apod_post)
+                await ctx.send(apod_post)
             else:
-                await self.bot.say(embed=apod_post)
+                await ctx.send(embed=apod_post)
         except Exception as e:
             await utils.report(self.bot, str(e), source="NASA APOD command", ctx=ctx)
 
     # Returns a random image of a snek
-    @commands.command(pass_context=True, help=LONG_HELP['picture'], brief=BRIEF_HELP['picture'],
+    @commands.command(help=LONG_HELP['picture'], brief=BRIEF_HELP['picture'],
                       aliases=ALIASES['picture'])
     async def picture(self, ctx):
         try:
@@ -112,7 +113,7 @@ class Images:
             }
 
             # Parse command
-            content = parse.stripcommand(ctx.message.content)
+            content = parse.strip_command(ctx.message.content)
 
             # Query defaults to a picture of a snake
             if content == "":
@@ -129,12 +130,12 @@ class Images:
             pic_embed.colour = EMBED_COLORS['picture']
             pic_embed.set_footer(icon_url=unsplash_icon,
                                  text="https://unsplash.com/?utm_source=SuitsBot&utm_medium=referral")
-            await self.bot.say(embed=pic_embed)
+            await ctx.send(embed=pic_embed)
         except Exception as e:
             await utils.report(self.bot, str(e), source="picture command", ctx=ctx)
 
     # Interfaces with the WolframAlpha API
-    @commands.command(pass_context=True, help=LONG_HELP['woof'], brief=BRIEF_HELP['woof'], aliases=ALIASES['woof'])
+    @commands.command(help=LONG_HELP['woof'], brief=BRIEF_HELP['woof'], aliases=ALIASES['woof'])
     async def woof(self, ctx):
         try:
             # Get the image URL
@@ -142,14 +143,14 @@ class Images:
 
             # If there is an error
             if 'status' not in json[0].keys() or json[0]['status'] != "success":
-                await self.bot.say("I have encountered an error. Please contact the bot creator")
+                await ctx.send("I have encountered an error. Please contact the bot creator")
                 await utils.flag(self.bot, "Error with random dog api", description=json, ctx=ctx)
                 return
 
             # Embed the image and send it
             woof_embed = Embed().set_image(url=json[0]['message'])
             woof_embed.colour = EMBED_COLORS['woof']
-            await self.bot.say(embed=woof_embed)
+            await ctx.send(embed=woof_embed)
         except Exception as e:
             await utils.report(self.bot, str(e), source="woof command", ctx=ctx)
 

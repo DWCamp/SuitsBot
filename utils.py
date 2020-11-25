@@ -4,8 +4,14 @@ from datetime import datetime
 import random
 import traceback
 from discord import Embed
-from local_config import *
+from discord.abc import PrivateChannel
+from config.local_config import *
 from constants import EMBED_COLORS
+
+
+# ------------------------------------------------------------------------ THE BOT
+
+bot = None
 
 
 # ------------------------------------------------------------------------ Utilities
@@ -13,6 +19,11 @@ from constants import EMBED_COLORS
 def currtime():
     """ Returns a human readable printout of the current time """
     return datetime.now().strftime("%a %b %d, %I:%M:%S %p")
+
+
+def get_bot():
+    """ Sometimes you just need the bot """
+    return bot
 
 
 def random_element(array):
@@ -367,9 +378,9 @@ async def flag(bot, alert, description=None, ctx=None, message=None):
         if message is None:
             if ctx is None:
                 if description is None:
-                    await bot.send_message(bot.ALERT_CHANNEL, "----\n**Alert:\n" + alert + "**")
+                    await bot.ALERT_CHANNEL.send("----\n**Alert:\n" + alert + "**")
                 else:
-                    await bot.send_message(bot.ALERT_CHANNEL, "Alert:\n" + alert + "\n---\n" + description)
+                    await bot.ALERT_CHANNEL.send("Alert:\n" + alert + "\n---\n" + description)
                 return
             message = ctx.message
 
@@ -378,10 +389,10 @@ async def flag(bot, alert, description=None, ctx=None, message=None):
         flag_embed.colour = EMBED_COLORS["flag"]
         flag_embed.add_field(name="Author", value=message.author.name, inline=False)
         flag_embed.add_field(name="Time", value=currtime(), inline=False)
-        if message.channel.is_private:
+        if isinstance(message.channel, PrivateChannel):
             flag_embed.add_field(name="Channel", value="Private", inline=False)
         else:
-            flag_embed.add_field(name="Channel", value=message.server.name + " / " + message.channel.name,
+            flag_embed.add_field(name="Channel", value=message.guild.name + " / " + message.channel.name,
                                  inline=False)
 
         # Try to avoid issues where users joining servers causes an error because of blank messages
@@ -390,7 +401,7 @@ async def flag(bot, alert, description=None, ctx=None, message=None):
 
         if description is not None:
             flag_embed.description = trimtolength(description, 2048)
-        await bot.send_message(bot.ALERT_CHANNEL, embed=flag_embed)
+        await bot.ALERT_CHANNEL.send(embed=flag_embed)
     except Exception as e:
         await report(bot,
                      str(e) + "\n\nAlert:\n" + alert + "\nDescription:\n" + trimtolength(description, 2000),
@@ -425,18 +436,18 @@ async def report(bot, alert, source=None, ctx=None):
         error_embed.add_field(name="Alert", value=alert, inline=False)
         if source is not None:
             error_embed.add_field(name="Source", value=source, inline=False)
-        await bot.send_message(bot.ERROR_CHANNEL, embed=error_embed)
+        await bot.ERROR_CHANNEL.send(embed=error_embed)
         return
     error_embed.title = "ERROR REPORT"
     error_embed.colour = EMBED_COLORS["error"]
     error_embed.add_field(name="Alert", value=alert, inline=False)
-    error_embed.add_field(name="Author", value=ctx.message.author.name, inline=False)
+    error_embed.add_field(name="Author", value=ctx.author.name, inline=False)
     error_embed.add_field(name="Time", value=currtime(), inline=False)
-    if ctx.message.channel.is_private:
+    if isinstance(ctx.channel, PrivateChannel):
         error_embed.add_field(name="Channel", value="Private", inline=False)
     else:
         error_embed.add_field(name="Channel",
-                              value=ctx.message.server.name + " / " + ctx.message.channel.name,
+                              value=ctx.guild.name + " / " + ctx.channel.name,
                               inline=False)
     if source is not None:
         error_embed.add_field(name="Source", value=source, inline=False)
@@ -447,7 +458,7 @@ async def report(bot, alert, source=None, ctx=None):
     error_message = "```" + trimtolength(error_message, 2042) + "```"
     error_embed.description = error_message
 
-    await bot.send_message(bot.ERROR_CHANNEL, embed=error_embed)
+    await bot.ERROR_CHANNEL.send(embed=error_embed)
 
 
 # ------------------------------------------------------------------------ HTML Processing

@@ -105,7 +105,7 @@ ENV/
 .idea/
 
 # Sensitive Config Files
-local_config.py
-credentials.py
+config/local_config.py
+config/credentials.py
 private/*
 !private/__init__.py

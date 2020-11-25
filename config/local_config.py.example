@@ -1,0 +1,44 @@
+BOT_VERSION = "5.1.0"
+DEFAULT_COMMAND_PREFIX = "!"
+
+# Bot description
+BOT_DESCRIPTION = f"""MyBot v{BOT_VERSION}
+This is an example description of a Discord Bot
+"""
+
+# Headers for web requests
+HEADERS = {'User-Agent': f"My Discord Bot v{BOT_VERSION}",
+           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+           'Accept-Language': 'en-us'}
+
+# Guild specific command prefixes
+CUSTOM_PREFIXES = {
+    314159265358979323: "%",
+    846264338327950288: "?"
+}
+
+LOCAL_COGS = [
+    "private.vacation",
+    "cogs.ksp",
+]
+
+# Folder with sound files
+SOUNDS_DIR = "C:\\Users\\Kevin\\DiscordBot\\Sounds\\"
+
+# =========== IDS
+
+# Guild IDs
+DEV_GUILD_ID = 123456789012345678 # The server that personal development takes place on
+
+# Channel IDs
+ALERT_CHANNEL_ID = 000000000000000000  # The channel for alerts
+APOD_CHANNEL_IDS = []  # Channel IDs to post the APOD to daily
+DEV_CHANNEL_ID = 111111111111111111  # Channel for restart messages and other general dev messages
+ERROR_CHANNEL_ID = 222222222222222222  # The channel for error messages
+HERESY_CHANNEL_ID = 333333333333333333  # The channel for OwO
+
+# User IDs
+BOT_USER_ID = 098765432109876543  # The bot's user id
+AUTHORIZED_IDS = [
+    12345678998765432  # Users authorized to perform the `!dev` command
+]

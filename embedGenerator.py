@@ -4,14 +4,14 @@ from typing import List, Callable, Optional, Union
 from bs4 import BeautifulSoup
 from discord import Embed, Message
 from constants import *
-from credentials import tokens
+from config.credentials import tokens
 import utils
 import redis
 
 redis_db = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)
 
 
-async def recently_unfurled(key: str) -> bool:
+async def recently_unfurled(key: Union[str, int]) -> bool:
     """Check if key exists, if not set it."""
     key_to_check = f"{REDIS_PREFIX}{key}"
     if redis_db.exists(key_to_check):
@@ -22,23 +22,24 @@ async def recently_unfurled(key: str) -> bool:
 
 
 async def embeds_from_regex(matchlist: List[str],
-                            embed_method: Callable[[str], Union[List[Embed], Embed, None]],
+                            embed_method: Callable[[str, Message], Union[List[Embed], Embed, None]],
                             message: Message) -> List[Embed]:
     """
     Returns a list of embeds generated from a list of strings and
     a method used to convert those strings into embeds
     :param matchlist: The list of strings to convert
     :param embed_method: A method which takes a string (normally a url or id)
-    and converts it into an embed or list of embeds
+    and Message, then converts it into an embed or list of embeds
     :param message: The message triggering this embed response
     :return: A list of embeds
     """
     embed_list = list()
-    for match in matchlist:
-        link = match.strip()
+    for link in matchlist:
+        if isinstance(link, str):
+            link = link.strip()
         if await recently_unfurled(f"{message.channel.id}-{embed_method.__name__}-{link}"):
             continue
-        embed = await embed_method(link)
+        embed = await embed_method(link, message)
         if embed is not None:
             if isinstance(embed, list):
                 for item in embed:
@@ -66,10 +67,11 @@ async def get_unfurls_for_trigger_message(trigger_message: Message) -> List[str]
         return []
 
 
-async def get_author_for_unfurl_message(unfurl_message: Message) -> Optional[str]:
+async def get_author_for_unfurl_message(unfurl_message: Message) -> Optional[int]:
     """Retrieve author for unfurled message"""
     unfurl_message_key = get_unfurl_message_key(unfurl_message.id)
-    return redis_db.get(unfurl_message_key)
+    author_id = redis_db.get(unfurl_message_key)
+    return int(author_id) if author_id else None
 
 
 async def record_unfurl(trigger_message: Message, unfurl_message: Message) -> None:
@@ -86,11 +88,12 @@ async def record_unfurl(trigger_message: Message, unfurl_message: Message) -> No
     redis_db.set(unfurl_message_key, trigger_message.author.id, UNFURLED_CLEANUP_TRACKING_IN_SECONDS)
 
 
-async def amazon(url: str) -> Optional[Embed]:
+async def amazon(url: str, _: Message) -> Optional[Embed]:
     """
     Generates an embed describing an item listing at an Amazon URL
 
     :param url: The url of the item listing
+    :param _: Unused Message object
     :return: An embed with details about the item
     """
     text = await utils.get_website_text(url)
@@ -137,11 +140,47 @@ async def amazon(url: str) -> Optional[Embed]:
     return embed
 
 
-async def newegg(url: str) -> Optional[Embed]:
+async def discord_message(ids: str, message: Message) -> Optional[Embed]:
+    """
+    Generates an embed containing the text and information from a linked Discord Message
+    :param ids: The tuple of ids pulled from the discord link
+    :param message: The Message object containing the link
+    :return: An embed with details about the item
+    """
+    (_, _, _, message_id) = ids
+    bot = utils.get_bot()
+    linked_message = await message.channel.fetch_message(message_id)
+    if linked_message is None:
+        return None
+
+    """ Make the Embed """
+    embed = Embed()
+    embed.url = f"http://discord.com/channels/{ids[1]}/{ids[2]}/{ids[3]}"
+    embed.colour = EMBED_COLORS['discord']
+    embed.title = linked_message.author.name if linked_message.author.nick is None else linked_message.author.nick
+    embed.description = utils.trimtolength(linked_message.content, 2048)
+
+    if linked_message.author.avatar_url:
+        embed.set_thumbnail(url=linked_message.author.avatar_url)
+
+    """ Add timestamp to footer """
+    if linked_message.edited_at:
+        timestamp = linked_message.edited_at
+        verb = "Edited"
+    else:
+        timestamp = linked_message.created_at
+        verb = "Sent"
+    embed.set_footer(text=f"{verb} at {timestamp.strftime('%H:%M  %Y-%m-%d')}",
+                     icon_url="https://cdn3.iconfinder.com/data/icons/logos-and-brands-adobe/512/91_Discord-512.png")
+    return embed
+
+
+async def newegg(url: str, _: Message) -> Optional[Embed]:
     """
     Generates an embed describing an item listing at a Newegg URL
 
     :param url: The url of the item listing
+    :param _: Unused Message object
     :return: An embed with details about the item
     """
     text = await utils.get_website_text(url)
@@ -174,7 +213,7 @@ async def newegg(url: str) -> Optional[Embed]:
     return embed
 
 
-async def subreddit(subname: str, allow_nsfw: bool = True) -> Optional[Embed]:
+async def subreddit(subname: str, _: Message, allow_nsfw: bool = True) -> Optional[Embed]:
     """
     Gets an embed containing information about a subreddit
 
@@ -182,6 +221,8 @@ async def subreddit(subname: str, allow_nsfw: bool = True) -> Optional[Embed]:
     -------------
     subname : str
         The name of the subreddit
+    _ : Message
+        The message which contains the subreddit name
     allow_nsfw : True
         Whether to return NSFW results. Defaults to True
 
@@ -238,13 +279,15 @@ async def subreddit(subname: str, allow_nsfw: bool = True) -> Optional[Embed]:
     return subembed
 
 
-async def reddit_post(post_url: str) -> Optional[Embed]:
+async def reddit_post(post_url: str, _: Message) -> Optional[Embed]:
     """
 
     Parameters
     -------------
     post_url : str
         The url of the linked post
+    _ : Message
+        Unused Message object
 
     Returns
     -------------
@@ -316,13 +359,15 @@ async def reddit_post(post_url: str) -> Optional[Embed]:
     return post_embed
 
 
-async def reddit_comment(comment_url: str) -> Optional[Embed]:
+async def reddit_comment(comment_url: str, _: Message) -> Optional[Embed]:
     """
 
     Parameters
     -------------
     comment_url : str
         The url of the permalink comment
+    _ : Message
+        Unused Message object
 
     Returns
     -------------
@@ -374,13 +419,15 @@ async def reddit_comment(comment_url: str) -> Optional[Embed]:
     return comment_embed
 
 
-async def twitter_handle(handle: str) -> Optional[Embed]:
+async def twitter_handle(handle: str, _: Message) -> Optional[Embed]:
     """
 
     Parameters
     -------------
     handle : str
         The twitter handle, with no @-sign or whitespace
+    _ : Message
+        Unused Message object
 
     Returns
     -------------
@@ -415,7 +462,7 @@ async def twitter_handle(handle: str) -> Optional[Embed]:
     return twitter_embed
 
 
-async def twitter_images(image_id):
+async def twitter_images(image_id, _: Message):
     """
     Provided the id of a tweet, returns a list of embeds,
     each containing an image from that tweet, excluding the first
@@ -424,6 +471,8 @@ async def twitter_images(image_id):
     -------------
     image_id : str/int
         The id of the tweet media is being grabbed from
+    _ : Message
+        Unused Message object
 
     Returns
     -------------
@@ -459,7 +508,7 @@ async def twitter_images(image_id):
     return embed_list[1:] if count else None  # Drop the last since we only care about showing the hidden images
 
 
-async def twitter_response(tweet_id: Union[str, int]) -> Optional[List[Embed]]:
+async def twitter_response(tweet_id: Union[str, int], _: Message) -> Optional[List[Embed]]:
     """
     Provided the id for a tweet, returns an embed with the
     information of the status that tweet was responding to
@@ -468,6 +517,8 @@ async def twitter_response(tweet_id: Union[str, int]) -> Optional[List[Embed]]:
     -------------
     tweet_id : str/int
         The id of the tweet
+    _ : Message
+        Unused Message object
 
     Returns
     -------------

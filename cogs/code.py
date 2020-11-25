@@ -1,12 +1,13 @@
 from discord.ext import commands
+from discord.ext.commands import Cog
 from discord import Embed
 from constants import *
-import credentials
+from config import credentials
 import parse
 import utils
 
 
-class Code:
+class Code(Cog):
     """
     Arbitrary code execution
 
@@ -103,7 +104,7 @@ class Code:
         self.JDOODLE_SECRET = credentials.tokens["JDOODLE_SECRET"]
 
     # Arbitrary code execution
-    @commands.command(pass_context=True, help=LONG_HELP['code'], brief=BRIEF_HELP['code'], aliases=ALIASES['code'])
+    @commands.command(help=LONG_HELP['code'], brief=BRIEF_HELP['code'], aliases=ALIASES['code'])
     async def code(self, ctx):
         """
         code command
@@ -136,7 +137,7 @@ class Code:
                             "-full": "Shows the full list of supported languages",
                             "-lang": "Shows the common languages supported by this command",
                             }
-                await self.bot.say(embed=utils.embedfromdict(helpdict,
+                await ctx.send(embed=utils.embedfromdict(helpdict,
                                                              title=title,
                                                              description=description,
                                                              thumbnail_url=COMMAND_THUMBNAILS["code"]))
@@ -152,7 +153,7 @@ class Code:
                     for langname in self.esolangs.keys():
                         name = self.esolangs[langname][0]  # Name
                         message += "\n**" + name + "** : " + langname
-                await self.bot.say(utils.trimtolength(message, 2000))
+                await ctx.send(utils.trimtolength(message, 2000))
                 return
 
             if "dev" in arguments:
@@ -164,20 +165,20 @@ class Code:
                     return
                 if "used" not in json.keys():
                     await utils.report(self.bot, json, "Failed to get credit count for JDOODLE account", ctx=ctx)
-                    await self.bot.say("Forces external to your request have caused this command to fail.")
+                    await ctx.send("Forces external to your request have caused this command to fail.")
                     return
-                await self.bot.say(json['used'])
+                await ctx.send(json['used'])
                 return
 
             if "```" in message:
                 trimmedmessage = message[message.find("```") + 3:]
                 if "```" not in trimmedmessage:
-                    await self.bot.say("You didn't close your triple backticks")
+                    await ctx.send("You didn't close your triple backticks")
                     return
                 trimmedmessage = trimmedmessage[:trimmedmessage.find("```")]
                 splitmessage = trimmedmessage.split("\n", maxsplit=1)
                 if len(trimmedmessage) == 0:
-                    await self.bot.say("You need to put code inside the backticks")
+                    await ctx.send("You need to put code inside the backticks")
                     return
                 if trimmedmessage[0] not in [" ", "\n"] and len(splitmessage) > 1:
                     [language, script] = splitmessage
@@ -198,14 +199,14 @@ class Code:
                                                json,
                                                "Bot has reached its JDOODLE execution limit",
                                                ctx=ctx)
-                            await self.bot.say("The bot has reached its code execution limit for the day.")
+                            await ctx.send("The bot has reached its code execution limit for the day.")
                             return
                         output_embed = Embed()
                         if "error" in json.keys():
                             output_embed.description = json['error']
                             output_embed.title = "ERROR"
                             output_embed.colour = EMBED_COLORS["error"]
-                            await self.bot.say(embed=output_embed)
+                            await ctx.send(embed=output_embed)
                             return
                         output_embed.title = "Output"
                         output_embed.colour = EMBED_COLORS["code"]
@@ -216,17 +217,17 @@ class Code:
                             output_embed.description = "``` " + utils.trimtolength(json['output'], 2040) + "```"
                         else:
                             output_embed.description = "``` " + json['output'] + "```"
-                        await self.bot.say(embed=output_embed)
+                        await ctx.send(embed=output_embed)
                     else:
-                        await self.bot.say("I don't know the language '" + language + "'. Type `!code -full` " +
+                        await ctx.send("I don't know the language '" + language + "'. Type `!code -full` " +
                                            "to see the list of languages I support, or type `!code -ls` to see " +
                                            "the most popular ones")
                 else:
-                    await self.bot.say("There was no language tag. Remember to include the language tag " +
+                    await ctx.send("There was no language tag. Remember to include the language tag " +
                                        "immediately after the opening backticks. Type `!code -ls` or " +
                                        "`!code -full` to find your language's tag")
             else:
-                await self.bot.say("I don't see any code")
+                await ctx.send("I don't see any code")
         except Exception as e:
             await utils.report(self.bot, str(e), source="!code command", ctx=ctx)
 
