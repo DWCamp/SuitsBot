@@ -107,19 +107,32 @@ async def on_message_delete(message):
         await utils.report(bot, str(e), source="on_message_delete")
 
 
-# @bot.event
-# async def on_voice_state_update(before, after):
-#     """ On voice state update:
-#
-#     - Leave if voice channel is now empty
-#     """
-#     try:
-#         if after.voice.voice_channel is None and bot.is_voice_connected(before.guild):
-#             if len(bot.voice_client_in(after.guild).channel.voice_members) == 1:
-#                 await bot.voice_client_in(after.guild).disconnect()
-#     except Exception as e:
-#         await utils.report(bot, str(e), source="Voice status update")
-#         return
+@bot.event
+async def on_voice_state_update(member, before, after):
+    """ On voice state update:
+
+    - Leave if voice channel is now empty
+    """
+    try:
+        # Ignore if Member wasn't leaving a channel
+        if before.channel is None or before.channel is after.channel:
+            return
+
+        # Get VoiceClient for member's guild
+        voice_client = member.guild.voice_client
+        if voice_client is None or not voice_client.is_connected():  # Ignore if bot isn't in voice
+            return
+
+        # If there is a human user left in the channel, stay
+        for member in voice_client.channel.members:
+            if not member.bot:
+                return
+        # Otherwise, leave the channel
+        voice_client.stop()
+        await voice_client.disconnect()
+    except Exception as e:
+        await utils.report(bot, str(e), source="Voice status update")
+        return
 
 
 @bot.event
@@ -334,7 +347,9 @@ async def on_message(message):
                         await utils.report(bot, str(e), source="Recording unfurl to redis DB in on_message")
                     await unfurl_message.add_reaction(DELETE_EMOJI)
         except Exception as e:
-            await utils.report(bot, str(e), source="embed generation in on_message")
+            await utils.report(bot,
+                               f"{e}\n**Server:** {message.guild}\n**Message:** ```{message.content}```",
+                               source="embed generation in on_message")
 
         # ------------------------------------------------------------
 
@@ -553,7 +568,7 @@ async def scribble(ctx):
 @bot.command(hidden=True, aliases=["reee", "reeee", "reeeee"])
 async def ree(ctx):
     await ctx.send("***REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
-                  "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE***")
+                   "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE***")
 
 
 # ------------------- UPDATE MYSQL DB -------------------------------
@@ -642,18 +657,18 @@ if __name__ == "__main__":
 print("Building regex...")
 try:
     bot.regex = parse.Regex(bot)
-except Exception as e:
+except Exception as exc:
     print("--- Failed to build regex ---")
-    bot.regex = e
+    bot.regex = exc
 
 # Add task scheduler
 print('Scheduling tasks...')
 try:
     bot.scheduler = Scheduler(bot)
     bot.scheduler.add_daily_task(post_apod)
-except Exception as e:
+except Exception as exc:
     print("--- Failed to start scheduler! ---")
-    bot.scheduler = e
+    bot.scheduler = exc
 
 # Start the bot
 print("------------")

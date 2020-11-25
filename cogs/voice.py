@@ -1,48 +1,105 @@
+from typing import Optional
+
+from discord import FFmpegPCMAudio, VoiceChannel, VoiceClient
+from discord.errors import ClientException
 from discord.ext import commands
 from discord.ext.commands import Cog
-from discord import FFmpegPCMAudio
+
 from config.local_config import SOUNDS_DIR
 from constants import *
 import parse
 import utils
 
 
+def in_voice_channel(target_channel: VoiceChannel) -> bool:
+    """
+    Returns whether SuitsBot is currently connected to a given VoiceChannel
+
+    Parameters
+    ------------
+    target_channel : discord.VoiceChannel
+        The voice channel the bot will connect to
+
+    Returns
+    ------------
+    Bool: `True` if SuitsBot is currently connected to target_channel, otherwise `False`
+    """
+    guild_client = target_channel.guild.voice_client
+    # Verify that the bot is connected to the guild's VoiceClient on the correct channel
+    if guild_client and guild_client.is_connected() and guild_client.channel is target_channel:
+        return True
+    return False
+
+
+async def join_audio_channel(target_channel: VoiceChannel) -> Optional[VoiceClient]:
+    """
+    Makes SuitsBot join a target voice channel and returns the VoiceClient
+
+    If the bot is already in a different channel
+    on that server, it will stop any audio it was playing first and then move into
+    the new channel. If it was already in that channel, nothing will happen.
+
+    Parameters
+    ------------
+    target_channel : discord.VoiceChannel
+        The voice channel the bot will connect to
+
+    Returns
+    ------------
+    Optional[VoiceClient] - The VoiceClient for that channel. If `None`, bot was unable to join
+    """
+    guild_vc = target_channel.guild.voice_client  # Check on the Voice Client for the channel's guild
+
+    # Wrap in `try-except` to catch Timeout Error. `None` will be returned implicitly on failure
+    try:
+        if guild_vc is None:  # Bot is not connected to voice
+            guild_vc = await target_channel.connect(timeout=10)
+        elif guild_vc.channel is not target_channel:  # Bot is connected to different channel
+            # Stop any playing media and move bot
+            guild_vc.stop()
+            await guild_vc.move_to(target_channel)
+
+        if guild_vc.is_connected():  # Only return guild_vc on a successful connection
+            return guild_vc
+    except (TimeoutError, AttributeError):  # TimeoutError sometimes causes AttributeError within discord.py
+        print(f"Failed to connect to {target_channel}")
+
+
 class VoiceCommands(Cog):
     """
     A series of voice chat commands for the bot
 
-    join
-      Causes the bot to join the user in voice
-
-    say
-      Says an audio clip in chat based on a tag system
-
-    leave
-      Kicks SuitsBot from its current audio channel
+    join  - Causes the bot to join the user in voice
+    say   - Says an audio clip in chat based on a tag system
+    leave - Kicks SuitsBot from its current audio channel
     """
 
     def __init__(self, bot):
         self.bot = bot
-        self.bot.voice = None
 
     @commands.command(help=LONG_HELP['join'], brief=BRIEF_HELP['join'], aliases=ALIASES['join'])
     async def join(self, ctx):
         """ Makes SuitsBot join the voice channel """
 
         try:
-            # Gets the voice channel the author is in. If the author is not in voice, author_voice_channel is `None`
+            # Gets the voice channel the author is in
             author_voice_channel = ctx.author.voice.channel if ctx.author.voice is not None else None
-            # Ignores the command if the author is not in voice
-            if author_voice_channel is None:
+            if author_voice_channel is None:  # Ignore command if author is not in voice
                 await ctx.send("You are not in a voice channel right now")
                 return
+            if in_voice_channel(author_voice_channel):  # Ignore request if bot already in voice channel
+                await ctx.send("The bot is already in voice with you")
+                return
+            # Connect to author's channel
             await ctx.send("Joining voice channel...")
-            voice = await author_voice_channel.connect()
-            self.bot.voice = voice
-            # Plays joining voice clip
-            self.bot.voice.play(FFmpegPCMAudio(SOUNDS_DIR + 'hello_there_obi.mp3'))
+            voice_client = await join_audio_channel(author_voice_channel)
+            if voice_client:
+                # Plays joining voice clip
+                voice_client.play(FFmpegPCMAudio(SOUNDS_DIR + 'hello_there_obi.mp3'))
+            else:
+                await ctx.send(f"I'm sorry {ctx.author.mention}, but I was not able to join {author_voice_channel}")
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Voice command", ctx=ctx)
+            await utils.report(self.bot, str(e), source="join command", ctx=ctx)
 
     @commands.command(help=LONG_HELP['say'], brief=BRIEF_HELP['say'], aliases=ALIASES['say'])
     async def say(self, ctx):
@@ -53,11 +110,6 @@ class VoiceCommands(Cog):
         "-help": Shows the command's help embed
         "-ls": Lists all audio clip tags
         "-stop": Stops the current audio clip
-
-        Parameters
-        ------------
-        ctx : discord.context
-            The message context object
         """
 
         # List of quote files
@@ -182,30 +234,31 @@ class VoiceCommands(Cog):
             if author_voice_channel is None:
                 await ctx.send("You are not in a voice channel right now")
                 return
-            if self.bot.voice is None or self.bot.voice.channel is not author_voice_channel:
-                voice = await author_voice_channel.connect()
-                self.bot.voice = voice
 
-            # TODO: Auto-joining and switching within guilds when bot not in author's channel
+            # Get voice client for author's channel
+            voice_client = await join_audio_channel(author_voice_channel)
+            if voice_client is None:  # If VoiceClient is None, reject command
+                await ctx.send(f"I'm sorry {ctx.author.mention}, but I was not able to join {author_voice_channel}")
+                return
 
             # ------------------------------ PLAYING AUDIO
 
             # Ignores command if bot is already playing a voice clip
-            if self.bot.voice is not None and self.bot.voice.is_playing():
+            if voice_client.is_playing():
                 await ctx.send("Currently processing other voice command")
                 return
 
             # Play audio clip
-            self.bot.voice.play(FFmpegPCMAudio(SOUNDS_DIR + quotes[key][1]))
+            voice_client.play(FFmpegPCMAudio(SOUNDS_DIR + quotes[key][1]))
             await ctx.send(quotes[key][0])  # Responds with the text of the voice clip
 
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Say command", ctx=ctx)
+            await utils.report(self.bot, str(e), source="say command", ctx=ctx)
 
     @commands.command(help=LONG_HELP['leave'], brief=BRIEF_HELP['leave'], aliases=ALIASES['leave'])
     async def leave(self, ctx):
         """
-        Makes SuitsBot leave its current voice channel on the server
+        Makes SuitsBot disconnect from the author's current voice channel
 
         Parameters
         ------------
@@ -213,51 +266,22 @@ class VoiceCommands(Cog):
             The message context object
         """
         try:
-            if self.bot.voice:
-                await self.bot.voice.disconnect()
-                self.bot.voice = None
-                await ctx.send('I have disconnected from voice channels in this server.')
+            # Gets the voice channel the author is in
+            author_voice_channel = ctx.author.voice.channel if ctx.author.voice is not None else None
+            if author_voice_channel is None:  # Ignore command if author is not in voice
+                await ctx.send("You must be connected to a voice channel to kick me from it.")
+                return
+
+            # If bot is in the author's voice channel, stops playing audio and leaves
+            if in_voice_channel(author_voice_channel):
+                vc = ctx.guild.voice_client
+                vc.stop()
+                await vc.disconnect()
+                await ctx.send('I have disconnected from voice channels in this guild.')
             else:  # If the bot is not connected to voice, do nothing
-                await ctx.send('I am not connected to any voice channel on this server.')
+                await ctx.send('I am not connected to your voice channel.')
         except Exception as e:
             await utils.report(self.bot, str(e), source="leave command", ctx=ctx)
-
-    async def join_audio_channel(self, target_channel):
-        """
-        Makes SuitsBot join a target channel
-
-        Parameters
-        ------------
-        target_channel : discord.Channel
-            The voice channel the bot will try to connect to
-
-        Returns
-        ------------
-        VoiceClient
-            The voice_client is connected to as a result of the command
-            (if no action was taken, this will be the pre-existing voice client)
-
-        The bot will attempt to connect to a channel. If the bot is already in a channel,
-        it will stop any audio it was playing first
-        """
-
-        target_server = target_channel.server
-        # If the bot is connected to voice,
-        if self.bot.is_voice_connected(target_server):
-            currchannel = self.bot.voice_client_in(target_server).channel
-            # Does nothing if the bot is already in the author's voice channel
-            if currchannel != target_channel:
-                # Stops any active voice clip
-                self.bot.player.stop()
-                voice_client = self.bot.voice_client_in(target_server)
-                # Moves the bot to the new channel
-                await voice_client.move_to(target_channel)
-            else:
-                voice_client = self.bot.voice_client_in(target_server)
-        # If the bot is not connected to voice, join the author's channel
-        else:
-            voice_client = await self.bot.join_voice_channel(target_channel)
-        return voice_client
 
 
 def setup(bot):
