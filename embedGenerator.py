@@ -187,6 +187,14 @@ async def discord_message(ids: str, _: Message) -> Optional[Embed]:
     if linked_message.author.avatar_url:
         embed.set_thumbnail(url=linked_message.author.avatar_url)
 
+    # Collapse Reactions to a single list
+    if linked_message.reactions:
+        react_dict = dict()
+        for reaction in linked_message.reactions:
+            react_dict[reaction.emoji] = 1 if reaction.emoji not in react_dict else react_dict[reaction.emoji] + 1
+        react_str = " ‍ ‍ ".join([f"{emoji} **{count}**" for emoji, count in react_dict.items()])
+        embed.add_field(name="Reactions", value=utils.trim_to_len(react_str, 1024))
+
     """ Add timestamp to footer """
     if linked_message.edited_at:
         timestamp = linked_message.edited_at
