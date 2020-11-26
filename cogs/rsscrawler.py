@@ -100,10 +100,10 @@ class RSSCrawler(Cog):
                                                      "recent item title matching <regex>",
                     f"!{command_name} -refresh": "Force the bot to refresh its cache"}
                 thumbnail = feed.image if feed.image is not None else COMMAND_THUMBNAILS["rssfeed"]
-                await ctx.send(embed=utils.embedfromdict(helpdict,
-                                                             title=title,
-                                                             description=description,
-                                                             thumbnail_url=thumbnail))
+                await ctx.send(embed=utils.embed_from_dict(helpdict,
+                                                           title=title,
+                                                           description=description,
+                                                           thumbnail_url=thumbnail))
                 return
 
             # Dump all the info about the feed
@@ -276,7 +276,7 @@ Fetch time: {self.fetch_time}
         embed.url = item["link"]
         if "description" in item:
             description = item["subtitle"] if "subtitle" in item else item["summary"]
-            embed.description = utils.trimtolength(description, 2048)
+            embed.description = utils.trim_to_len(description, 2048)
         embed.set_author(name=self.title, url=self.link)
         if self.image:
             embed.set_thumbnail(url=self.image)
@@ -289,7 +289,7 @@ Fetch time: {self.fetch_time}
             if enclosure["type"].startswith("image"):
                 embed.set_image(url=enclosure["href"])
 
-        embed.set_footer(text=utils.trimtolength(f"{self.title} - {self.subtitle}", 256))
+        embed.set_footer(text=utils.trim_to_len(f"{self.title} - {self.subtitle}", 256))
         return embed
 
 
@@ -312,7 +312,7 @@ class WebComic(RSSFeed):
         # Move description to footer
         embed.description = ""
         description = item["subtitle"] if "subtitle" in item else item["summary"]
-        embed.set_footer(text=utils.trimtolength(description, 2048))
+        embed.set_footer(text=utils.trim_to_len(description, 2048))
 
         return embed
 

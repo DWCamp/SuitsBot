@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from typing import List, Callable, Optional, Union
 from bs4 import BeautifulSoup
-from discord import Embed, Message
+from discord import Embed, Message, Member
 from constants import *
 from config.credentials import tokens
 import utils
@@ -115,7 +115,7 @@ async def amazon(url: str, _: Message) -> Optional[Embed]:
     if descdiv is not None:
         ptag = descdiv.p
         if ptag is not None:
-            embed.description = utils.trimtolength(ptag.text, 2048)
+            embed.description = utils.trim_to_len(ptag.text, 2048)
 
     # ==== Fields
 
@@ -140,25 +140,49 @@ async def amazon(url: str, _: Message) -> Optional[Embed]:
     return embed
 
 
-async def discord_message(ids: str, message: Message) -> Optional[Embed]:
+async def discord_message(ids: str, _: Message) -> Optional[Embed]:
     """
     Generates an embed containing the text and information from a linked Discord Message
     :param ids: The tuple of ids pulled from the discord link
-    :param message: The Message object containing the link
+    :param _: Unused message object
     :return: An embed with details about the item
     """
-    (_, _, _, message_id) = ids
+    (_, _, channel_id, message_id) = ids
+
+    # Cast id values to int
+    channel_id = int(channel_id)
+    message_id = int(message_id)
+
+    # Find message
     bot = utils.get_bot()
-    linked_message = await message.channel.fetch_message(message_id)
+    message_channel = bot.get_channel(channel_id)
+    if message_channel is None:
+        return
+    linked_message = await message_channel.fetch_message(message_id)
     if linked_message is None:
-        return None
+        return
 
     """ Make the Embed """
     embed = Embed()
     embed.url = f"http://discord.com/channels/{ids[1]}/{ids[2]}/{ids[3]}"
     embed.colour = EMBED_COLORS['discord']
-    embed.title = linked_message.author.name if linked_message.author.nick is None else linked_message.author.nick
-    embed.description = utils.trimtolength(linked_message.content, 2048)
+
+    # Set message text
+    text = utils.trim_to_len(linked_message.content, 2048)
+    if len(text) == 0:  # If message empty, check embeds
+        if len(linked_message.embeds) == 0:
+            text = "```(Message was empty)```"
+        else:
+            embed_as_text = utils.embed_to_str(linked_message.embeds[0])
+            # The '2002' leaves space for the enclosing characters
+            text = utils.trim_to_len(f"**Message contained embed**\n```\n{embed_as_text}", 2002) + "\n```"
+    embed.description = text
+
+    # Try and use author's nickname if author is a Member object
+    if isinstance(linked_message.author, Member):
+        embed.title = linked_message.author.name if linked_message.author.nick is None else linked_message.author.nick
+    else:
+        embed.title = linked_message.author.name
 
     if linked_message.author.avatar_url:
         embed.set_thumbnail(url=linked_message.author.avatar_url)
@@ -204,7 +228,7 @@ async def newegg(url: str, _: Message) -> Optional[Embed]:
         item = bullet.string.strip()  # filters weird parsing error
         if item:
             description += "**•** " + item + "\n"
-    embed.description = utils.trimtolength(description, 2048)
+    embed.description = utils.trim_to_len(description, 2048)
 
     # ==== Fields
 
@@ -272,7 +296,7 @@ async def subreddit(subname: str, _: Message, allow_nsfw: bool = True) -> Option
     else:
         subembed.set_thumbnail(url=default_thumbnail)
 
-    subembed.description = utils.trimtolength(data["public_description"], 2048)
+    subembed.description = utils.trim_to_len(data["public_description"], 2048)
     subembed.add_field(name="Subscribers", value=format(data["subscribers"], ',d'))
     creation_time = datetime.utcfromtimestamp(data["created_utc"]).strftime('%Y-%m-%d')
     subembed.add_field(name="Subreddit Since", value=creation_time)
@@ -314,7 +338,7 @@ async def reddit_post(post_url: str, _: Message) -> Optional[Embed]:
     post_embed = Embed()
     post_embed.colour = embedcolor
     post_embed.url = post_url
-    post_embed.title = utils.trimtolength(post_data['title'], 256)
+    post_embed.title = utils.trim_to_len(post_data['title'], 256)
 
     post_embed.set_footer(text="via Reddit.com", icon_url=embed_icon)
     post_embed.add_field(name="Author", value=post_data['author'])
@@ -334,10 +358,10 @@ async def reddit_post(post_url: str, _: Message) -> Optional[Embed]:
         post_embed.set_thumbnail(url=nsfw_thumbnail)
         return post_embed
 
-    post_embed.add_field(name="Posted", value=utils.timefromunix(post_data['created_utc']))
+    post_embed.add_field(name="Posted", value=utils.time_from_unix_ts(post_data['created_utc']))
 
     text = post_data['selftext'].replace('&#x200B;', '')
-    post_embed.description = utils.trimtolength(text, 2048)
+    post_embed.description = utils.trim_to_len(text, 2048)
 
     if "preview" in post_data and len(post_data["preview"]["images"]) > 0:
         post_embed.set_thumbnail(url=post_data["preview"]["images"][0]["source"]["url"])
@@ -391,9 +415,9 @@ async def reddit_comment(comment_url: str, _: Message) -> Optional[Embed]:
     comment_embed = Embed()
     comment_embed.colour = embedcolor
     comment_embed.url = comment_url
-    comment_embed.title = utils.trimtolength(link_data['title'], 256)
+    comment_embed.title = utils.trim_to_len(link_data['title'], 256)
     comment_embed.set_footer(text="via Reddit.com", icon_url=embed_icon)
-    comment_embed.description = utils.trimtolength(comment_data['body'], 2048)
+    comment_embed.description = utils.trim_to_len(comment_data['body'], 2048)
 
     if link_data["thumbnail"] is not None and link_data["thumbnail"] != "self":
         comment_embed.set_thumbnail(url=link_data["thumbnail"])
@@ -402,7 +426,7 @@ async def reddit_comment(comment_url: str, _: Message) -> Optional[Embed]:
 
     comment_embed.add_field(name="Author", value=comment_data['author'])
     comment_embed.add_field(name="Score", value=comment_data['score'])
-    comment_embed.add_field(name="Posted", value=utils.timefromunix(comment_data['created_utc']))
+    comment_embed.add_field(name="Posted", value=utils.time_from_unix_ts(comment_data['created_utc']))
 
     # Guildings
     gildings = list()

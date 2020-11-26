@@ -196,10 +196,10 @@ class VoiceCommands(Cog):
                     "-help": "Shows this list",
                     "-ls": "Lists the tags for all the available audio clips",
                     "-stop": "Stops the current voice clip"}
-                await ctx.send(embed=utils.embedfromdict(helpdict,
-                                                         title=title,
-                                                         description=description,
-                                                         thumbnail_url=COMMAND_THUMBNAILS["say"]))
+                await ctx.send(embed=utils.embed_from_dict(helpdict,
+                                                           title=title,
+                                                           description=description,
+                                                           thumbnail_url=COMMAND_THUMBNAILS["say"]))
                 return
             if "ls" in arguments:
                 message = "The audio clips I know are: \n"

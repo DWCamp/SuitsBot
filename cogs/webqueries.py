@@ -52,13 +52,13 @@ class WebQueries(Cog):
                     definition = ud_json["list"][counter]
                     if counter == 0:
                         first_result = definition["word"]
-                        ud_embed.title = utils.trimtolength(first_result, 256).capitalize()
+                        ud_embed.title = utils.trim_to_len(first_result, 256).capitalize()
                     if definition["word"] == first_result:
                         def_text = definition["definition"].replace("*", "\\*")
                         example_text = "**Example: " + definition["example"].replace("*", "\\*") + "**"
                         ud_embed.add_field(name=str(counter + 1),
-                                           value=utils.trimtolength(strip_brackets(def_text + "\n\n" + example_text),
-                                                                    1024),
+                                           value=utils.trim_to_len(strip_brackets(def_text + "\n\n" + example_text),
+                                                                   1024),
                                            inline=False)
                     counter += 1
                 ud_embed.colour = EMBED_COLORS['ud']  # Make the embed white
@@ -103,7 +103,7 @@ class WebQueries(Cog):
             # If the returned result isn't usable
             if "extract" not in response.keys():
                 await utils.report(self.bot,
-                                   utils.trimtolength(response, 2000),
+                                   utils.trim_to_len(response, 2000),
                                    source="Wiki command found no useful article", ctx=ctx)
                 return None
             response_title = response['title']
@@ -132,10 +132,10 @@ class WebQueries(Cog):
                 helpdict = {
                     "-help": "Displays this user guide. Gives instructions on how to use the command and its features",
                     "-full <title>": "Displays the full extract of the article, up to the embed character limit"}
-                await ctx.send(embed=utils.embedfromdict(helpdict,
-                                                             title=title,
-                                                             description=description,
-                                                             thumbnail_url=COMMAND_THUMBNAILS["wiki"]))
+                await ctx.send(embed=utils.embed_from_dict(helpdict,
+                                                           title=title,
+                                                           description=description,
+                                                           thumbnail_url=COMMAND_THUMBNAILS["wiki"]))
                 return
 
             # Performs article search
@@ -155,9 +155,9 @@ class WebQueries(Cog):
                                   icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/"
                                            "Wikipedia-logo-v2.svg/800px-Wikipedia-logo-v2.svg.png")
             if "full" in arguments or "f" in arguments:
-                description = utils.trimtolength(extract, 2048)
+                description = utils.trim_to_len(extract, 2048)
             else:
-                description = utils.trimtolength(extract[:extract.find("\n")], 2048)
+                description = utils.trim_to_len(extract[:extract.find("\n")], 2048)
             wiki_embed.description = description
             wiki_embed.add_field(name="Summary",
                                  value=summary,

@@ -40,10 +40,10 @@ class Random(Cog):
                                                             "Multiple dice types can be rolled with a comma separated "
                                                             "list"
                             }
-                await ctx.send(embed=utils.embedfromdict(helpdict,
-                                                             title=title,
-                                                             description=description,
-                                                             thumbnail_url=COMMAND_THUMBNAILS["rand"]))
+                await ctx.send(embed=utils.embed_from_dict(helpdict,
+                                                           title=title,
+                                                           description=description,
+                                                           thumbnail_url=COMMAND_THUMBNAILS["rand"]))
                 return
 
             # !rand coin

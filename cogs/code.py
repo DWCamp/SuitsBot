@@ -137,10 +137,10 @@ class Code(Cog):
                             "-full": "Shows the full list of supported languages",
                             "-lang": "Shows the common languages supported by this command",
                             }
-                await ctx.send(embed=utils.embedfromdict(helpdict,
-                                                             title=title,
-                                                             description=description,
-                                                             thumbnail_url=COMMAND_THUMBNAILS["code"]))
+                await ctx.send(embed=utils.embed_from_dict(helpdict,
+                                                           title=title,
+                                                           description=description,
+                                                           thumbnail_url=COMMAND_THUMBNAILS["code"]))
                 return
 
             if "ls" in arguments or "full" in arguments:
@@ -153,7 +153,7 @@ class Code(Cog):
                     for langname in self.esolangs.keys():
                         name = self.esolangs[langname][0]  # Name
                         message += "\n**" + name + "** : " + langname
-                await ctx.send(utils.trimtolength(message, 2000))
+                await ctx.send(utils.trim_to_len(message, 2000))
                 return
 
             if "dev" in arguments:
@@ -214,7 +214,7 @@ class Code(Cog):
                         output_embed.add_field(name="CPU Time", value=str(json['cpuTime']) + " seconds")
                         output_embed.add_field(name="Memory Usage", value=json['memory'])
                         if len(json['output']) > 2046:
-                            output_embed.description = "``` " + utils.trimtolength(json['output'], 2040) + "```"
+                            output_embed.description = "``` " + utils.trim_to_len(json['output'], 2040) + "```"
                         else:
                             output_embed.description = "``` " + json['output'] + "```"
                         await ctx.send(embed=output_embed)

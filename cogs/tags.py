@@ -79,10 +79,10 @@ class Tags(Cog):
                     "-rm <key>": "removes a tag from the group",
                     "-u": "Selects your specific tag group instead of the guild " +
                           "tags for the following command"}
-                await ctx.send(embed=utils.embedfromdict(helpdict,
-                                                             title=title,
-                                                             description=description,
-                                                             thumbnail_url=COMMAND_THUMBNAILS["tag"]))
+                await ctx.send(embed=utils.embed_from_dict(helpdict,
+                                                           title=title,
+                                                           description=description,
+                                                           thumbnail_url=COMMAND_THUMBNAILS["tag"]))
                 return
 
             # Rejects ambiguous argument pairs
@@ -220,7 +220,7 @@ class Tags(Cog):
             else:
                 key = message.lower()
                 if key in selected_tags.keys():
-                    await ctx.send(utils.trimtolength(selected_tags[key], 2000))
+                    await ctx.send(utils.trim_to_len(selected_tags[key], 2000))
                 elif domain == "user":
                     await ctx.send(f"I don't think your account has a tag `{key}`. "
                                    "Type `!tag -u -ls` to see the tags I have saved for you")

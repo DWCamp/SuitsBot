@@ -16,7 +16,7 @@ from config.local_config import *
 import utils
 import parse
 from cogs import images
-from utils import embedfromdict
+from utils import embed_from_dict
 
 # ------------------------ BOT VARIABLES ---------------------------------
 
@@ -430,7 +430,7 @@ async def dev(ctx):
                 "serverid": "Posts the ID of the current channel",
                 "test": "A catch-all command for inserting code into the bot to test",
             }
-            await ctx.send("`!dev` User Guide", embed=embedfromdict(helpdict, title=title, description=description))
+            await ctx.send("`!dev` User Guide", embed=embed_from_dict(helpdict, title=title, description=description))
 
         elif func == "channelid":
             await ctx.send("Channel ID: " + ctx.channel.id)

@@ -64,10 +64,10 @@ class ListCommands(Cog):
                     "!bestgirl title <title>": "Sets the title of the list. Replying without a title resets the " +
                                                "value to the default (i.e. '<Your name>'s list')",
                     "!bestgirl help": "This command. Lists documentation"}
-        embed = utils.embedfromdict(helpdict,
-                                    title=title,
-                                    description=description,
-                                    thumbnail_url=COMMAND_THUMBNAILS["bestgirl"])
+        embed = utils.embed_from_dict(helpdict,
+                                      title=title,
+                                      description=description,
+                                      thumbnail_url=COMMAND_THUMBNAILS["bestgirl"])
         try:
             await self.list_engine.parse(ctx, helpembed=embed, command="bestgirl", list_id="BestGirl")
         except Exception as e:
@@ -107,10 +107,10 @@ class ListCommands(Cog):
                     "swap <indexA> <indexB>": "Swaps the positions of the elements at indexA and indexB",
                     "thumbnail <url>": "Sets a thumbnail for the list. URL must point directly to an image file",
                     "title <title>": "Assigns the title to the list with that index"}
-        helpembed = utils.embedfromdict(helpdict,
-                                        title=title,
-                                        description=description,
-                                        thumbnail_url=COMMAND_THUMBNAILS["ls"])
+        helpembed = utils.embed_from_dict(helpdict,
+                                          title=title,
+                                          description=description,
+                                          thumbnail_url=COMMAND_THUMBNAILS["ls"])
         try:
             await self.list_engine.parse(ctx, helpembed=helpembed, command="list")
         except Exception as e:
@@ -302,9 +302,9 @@ class UserList:
             embed = Embed()
             if cont:
                 if self.title == "":
-                    embed.title = utils.trimtolength(self.id, 248) + " (cont.)"
+                    embed.title = utils.trim_to_len(self.id, 248) + " (cont.)"
                 else:
-                    embed.title = utils.trimtolength(self.title, 248) + " (cont.)"
+                    embed.title = utils.trim_to_len(self.title, 248) + " (cont.)"
             else:
                 if self.title == "":
                     embed.title = self.id
@@ -452,11 +452,11 @@ class ListEngine:
                                        "image file",
                     "title <title>": "Assigns the title to the list with that index"}
         embedcolor = EMBED_COLORS["list"]
-        helpembed = utils.embedfromdict(helpdict,
-                                        title=title,
-                                        description=description,
-                                        thumbnail_url=COMMAND_THUMBNAILS["ls"],
-                                        color=embedcolor)
+        helpembed = utils.embed_from_dict(helpdict,
+                                          title=title,
+                                          description=description,
+                                          thumbnail_url=COMMAND_THUMBNAILS["ls"],
+                                          color=embedcolor)
         self._defaultembed = helpembed
 
     def add_user(self, user_id):

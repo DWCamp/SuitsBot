@@ -157,10 +157,10 @@ class Anilist(Cog):
                             "-raw <search>": "Disables synonym correction for search terms",
                             "-remove <Search Value>": ("Removes a synonym from the list. Can be used with " +
                                                        "the `-char` command to remove character synonyms")}
-                await ctx.send(embed=utils.embedfromdict(helpdict,
-                                                             title=title,
-                                                             description=description,
-                                                             thumbnail_url=COMMAND_THUMBNAILS["anime"]))
+                await ctx.send(embed=utils.embed_from_dict(helpdict,
+                                                           title=title,
+                                                           description=description,
+                                                           thumbnail_url=COMMAND_THUMBNAILS["anime"]))
                 return
 
             if "ls" in arguments:
@@ -175,7 +175,7 @@ class Anilist(Cog):
                     message += "**" + changeto + "** <- " + ", ".join(searchdict[changeto]) + "\n"
                 embed = Embed()
                 embed.title = title
-                embed.description = utils.trimtolength(message, 2040)
+                embed.description = utils.trim_to_len(message, 2040)
                 embed.colour = EMBED_COLORS["anime"]
                 await ctx.send(embed=embed)
                 return
@@ -255,7 +255,7 @@ class Anilist(Cog):
                 [json, status] = await utils.get_json_with_post(self.api_url,
                                                                 json={'query': self.char_query, 'variables': char_var})
                 if "json" in arguments:
-                    await ctx.send(utils.trimtolength(json, 2000))
+                    await ctx.send(utils.trim_to_len(json, 2000))
                 if status == 200:
                     embedgenerator = Character(json['data']['Character'])
             else:
@@ -268,7 +268,7 @@ class Anilist(Cog):
                                                                 json={'query': self.anime_query,
                                                                       'variables': anime_var})
                 if "json" in arguments:
-                    await ctx.send(utils.trimtolength(json, 2000))
+                    await ctx.send(utils.trim_to_len(json, 2000))
                 if status == 200:
                     embedgenerator = Anime(json['data']['Media'])
 
@@ -453,7 +453,7 @@ class Anime:
         if self.image is not None:
             anime_embed.set_thumbnail(url=self.image)
         anime_embed.title = self.title
-        anime_embed.description = utils.trimtolength(self.description, 2047)
+        anime_embed.description = utils.trim_to_len(self.description, 2047)
         if self.genres is not None:
             anime_embed.add_field(name="Genre", value=self.genres)
         if self.score is None:
@@ -534,7 +534,7 @@ class Character:
         self.image = character['image']['large']
         self.native = character['name']['native']
         self.alternative = character['name']['alternative']
-        self.description = utils.trimtolength(character['description'].replace("~!", "").replace("!~", ""), 2047)
+        self.description = utils.trim_to_len(character['description'].replace("~!", "").replace("!~", ""), 2047)
         self.media = list()
         for media in character['media']['nodes']:
             if media['title']['english'] is None:
@@ -555,7 +555,7 @@ class Character:
         if len(self.alternative) > 0 and self.alternative[0] != "":
             character_embed.add_field(name="Alternative Names", value=", ".join(self.alternative))
         if len(self.media) > 0:
-            character_embed.add_field(name="Appeared in", value=utils.trimtolength(", ".join(self.media), 2000))
+            character_embed.add_field(name="Appeared in", value=utils.trim_to_len(", ".join(self.media), 2000))
         character_embed.url = self.url
         character_embed.colour = EMBED_COLOR
         character_embed.set_footer(text="Data retrieved using the https://anilist.co API",

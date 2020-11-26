@@ -31,7 +31,7 @@ def random_element(array):
     return array[random.randint(0, len(array) - 1)]
 
 
-def trimtolength(content, length):
+def trim_to_len(content, length):
     """ Converts a value to a string of limited length, truncated by ellipses
 
     Parameters
@@ -54,7 +54,7 @@ def trimtolength(content, length):
     return content
 
 
-def timefromunix(timestamp):
+def time_from_unix_ts(timestamp):
     """
     Converts a unix timestamp to a human readable printout
 
@@ -87,6 +87,49 @@ def first_whitespace(haystack):
     return -1
 
 
+def embed_to_str(embed) -> str:
+    """
+    Creates a string which represents the contents of an embed in the following format:
+
+    <title>
+    ----
+    <description>
+    ----
+    <field>: <field value>
+    ...
+    ----
+    <footer>
+    URL: <url>
+
+
+    :param embed: The embed to parse
+    :return: A string description of the embed
+    """
+    text_embed = ""
+
+    # Title
+    text_embed += f"{embed.title}"
+    # Description
+    if embed.description is not Embed.Empty:
+        description = embed.description
+        # Escape triple backtick by breaking them up with ZWJ
+        description = description.replace("```", "`‍`‍`")
+        text_embed += f"\n----\n{description}"
+    # Fields
+    if embed.fields:
+        text_embed += "\n----"
+    for field in embed.fields:
+        text_embed += f"\n{field.name}: {field.value}"
+    # Footer
+    if embed.footer.text is not Embed.Empty:
+        text_embed += f"\n----\n{embed.footer.text}"
+    # URL
+    if embed.url is not Embed.Empty:
+        "\nURL: {embed.url}"
+
+    return text_embed
+
+
 # ------------------------------------------------------------------------ Web functions
 
 def checkurl(regex, url):
@@ -107,7 +150,7 @@ def checkurl(regex, url):
     return regex.fullmatch(url) is not None
 
 
-def embedfromdict(dictionary, title=None, description=None, thumbnail_url=None, color=EMBED_COLORS["default"]):
+def embed_from_dict(dictionary, title=None, description=None, thumbnail_url=None, color=EMBED_COLORS["default"]):
     """
     Creates an embeded object from a dictionary
 
@@ -400,11 +443,11 @@ async def flag(bot, alert, description=None, ctx=None, message=None):
             flag_embed.add_field(name="Message", value=message.content, inline=False)
 
         if description is not None:
-            flag_embed.description = trimtolength(description, 2048)
+            flag_embed.description = trim_to_len(description, 2048)
         await bot.ALERT_CHANNEL.send(embed=flag_embed)
     except Exception as e:
         await report(bot,
-                     str(e) + "\n\nAlert:\n" + alert + "\nDescription:\n" + trimtolength(description, 2000),
+                     str(e) + "\n\nAlert:\n" + alert + "\nDescription:\n" + trim_to_len(description, 2000),
                      source="Error when producing flag", ctx=ctx)
 
 
@@ -455,7 +498,7 @@ async def report(bot, alert, source=None, ctx=None):
 
     # Error message (exception + stacktrace)
     error_message = traceback.format_exc(limit=5)
-    error_message = "```" + trimtolength(error_message, 2042) + "```"
+    error_message = "```" + trim_to_len(error_message, 2042) + "```"
     error_embed.description = error_message
 
     await bot.ERROR_CHANNEL.send(embed=error_embed)
