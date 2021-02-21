@@ -62,7 +62,8 @@ class Images(Cog):
                             "https://i.redd.it/xdpr7uctd2a31.jpg",
                             "https://i.redd.it/oq88wl9x33921.jpg",
                             "https://i.redd.it/pve7gkrgmet11.jpg",
-                            "https://i.imgur.com/2BrTP5q.jpg"]
+                            "https://i.imgur.com/2BrTP5q.jpg",
+                            "https://tenor.com/view/gritty-flyers-gritty-colbert-mascot-gif-14310822",]
 
     @commands.command(help=LONG_HELP['gritty'], brief=BRIEF_HELP['gritty'], aliases=ALIASES['gritty'])
     async def gritty(self, ctx):
