@@ -49,8 +49,14 @@ class StringCache:
     def __len__(self):
         return len(self._queue)
 
-    def next(self) -> str:
-        """ Returns the next value in the cache. Returns 'None' if cache is empty """
+    def peek(self):
+        """ Returns the next value in the cache without removing """
+        if len(self._queue) == 0:
+            return None
+        return self._queue[0]
+
+    def pop(self) -> str:
+        """ Removes the next value in the cache and returns it. Returns 'None' if cache is empty """
         if len(self._queue) == 0:  # Return None if cache is empty
             url = None
         elif len(self._queue) == 1:  # If only one item left in cache, return it but do not remove it

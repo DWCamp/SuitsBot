@@ -78,7 +78,7 @@ class Images(Cog):
     @commands.command(help=LONG_HELP['meow'], brief=BRIEF_HELP['meow'], aliases=ALIASES['meow'])
     async def meow(self, ctx):
         try:
-            meow_url = self.meow_cache.next()
+            meow_url = self.meow_cache.pop()
             if meow_url:
                 embed = Embed().set_image(url=meow_url)
                 embed.colour = EMBED_COLORS["meow"]
