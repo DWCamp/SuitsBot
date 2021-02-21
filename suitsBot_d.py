@@ -198,6 +198,7 @@ async def on_ready():
         ready_embed = Embed()
         ready_embed.title = "Bot Restart"
         ready_embed.add_field(name="Current Time", value=utils.currtime())
+        ready_embed.add_field(name="discord.py version", value=str(discord.__version__), inline=False)
         ready_embed.add_field(name="Status", value="Loading Data...", inline=False)
         ready_embed.colour = EMBED_COLORS["default"]
         ready_message = await bot.DEV_CHANNEL.send(embed=ready_embed)
