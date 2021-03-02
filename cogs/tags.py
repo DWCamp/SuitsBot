@@ -248,8 +248,13 @@ class Tags(Cog):
         count = 0
         for (owner_id, key_string, value_string, domain) in cursor:
             owner_id = int(owner_id)    # ID has to be cast to int now because v1.0
-            # key_string = key_string.decode("utf-8")
-            # value_string = value_string.decode("utf-8")
+
+            # I cannot figure out what makes tags sometimes load as str or utf-8 bytes
+            if not isinstance(key_string, str):
+                key_string = key_string.decode("utf-8")
+            if not isinstance(value_string, str):
+                value_string = value_string.decode("utf-8")
+
             if domain == "global":
                 self.tags["global"][key_string] = value_string
             else:
