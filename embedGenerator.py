@@ -167,15 +167,33 @@ async def discord_message(ids: str, _: Message) -> Optional[Embed]:
     embed.url = f"http://discord.com/channels/{ids[1]}/{ids[2]}/{ids[3]}"
     embed.colour = EMBED_COLORS['discord']
 
+    # Count embeds/attachments
+    if len(linked_message.embeds) > 0:
+        embed.add_field(name="Embeds", value=f"{len(linked_message.embeds)}", inline=True)
+    if len(linked_message.attachments) > 0:
+        embed.add_field(name="Attachments", value=f"{len(linked_message.attachments)}", inline=True)
+
+    # Set image from attachments or embeds
+    for attach in linked_message.attachments:
+        if attach.height:  # Non-null height attribute indicates attachment is an image
+            embed.set_image(url=attach.url)
+            break
+    else:
+        # If the attachments didn't work, try embeds
+        for message_embed in linked_message.embeds:
+            if message_embed.type == "image":
+                embed.set_image(url=message_embed.url)
+                break
+
     # Set message text
     text = utils.trim_to_len(linked_message.content, 2048)
     if len(text) == 0:  # If message empty, check embeds
-        if len(linked_message.embeds) == 0:
-            text = "```(Message was empty)```"
-        else:
+        if len(linked_message.embeds) > 0:
             embed_as_text = utils.embed_to_str(linked_message.embeds[0])
-            # The '2002' leaves space for the enclosing characters
-            text = utils.trim_to_len(f"**Message contained embed**\n```\n{embed_as_text}", 2002) + "\n```"
+            text = utils.trim_to_len(f"**Message contained embed**\n```\n{embed_as_text}\n```", 2048)
+        elif embed.image.url is Embed.Empty:  # Description does not need to be modified if an image is attached
+            text = "```(Message was empty)```"
+
     embed.description = text
 
     # Try and use author's nickname if author is a Member object
@@ -192,7 +210,7 @@ async def discord_message(ids: str, _: Message) -> Optional[Embed]:
         react_str = " ‍ ‍ ".join([f"{reaction.emoji} **{reaction.count}**" for reaction in linked_message.reactions])
         embed.add_field(name="Reactions", value=utils.trim_to_len(react_str, 1024))
 
-    """ Add timestamp to footer """
+    # Add timestamp to footer
     if linked_message.edited_at:
         timestamp = linked_message.edited_at
         verb = "Edited"
