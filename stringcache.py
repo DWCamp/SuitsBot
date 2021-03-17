@@ -41,6 +41,9 @@ class StringCache:
         self._loop = bot.loop
         self._redis_db = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)
         self._queue = []
+        # Indicates that the last string has been returned and should be deleted when the cache refills
+        self._stale = False
+
         # Load saved queue
         cached_list = self._redis_db.get(StringCache.DB_KEY_PREFIX + self.cache_id)
         if cached_list:
@@ -48,6 +51,17 @@ class StringCache:
 
     def __len__(self):
         return len(self._queue)
+
+    def clear(self, refill=False):
+        """
+        Empties the cache.
+
+        :param refill (bool) If "True", a refill will be triggered once the cache is empty
+        """
+        self._queue = []
+        self._save()
+        if refill:
+            self.fill()
 
     def peek(self):
         """ Returns the next value in the cache without removing """
@@ -58,17 +72,18 @@ class StringCache:
     def pop(self) -> str:
         """ Removes the next value in the cache and returns it. Returns 'None' if cache is empty """
         if len(self._queue) == 0:  # Return None if cache is empty
-            url = None
+            value = None
         elif len(self._queue) == 1:  # If only one item left in cache, return it but do not remove it
-            url = self._queue[0]
+            value = self._queue[0]
+            self._stale = True  # Signal that the element in the queue should be purged upon refill
         else:  # Pop the next item off the queue and update the database
-            url = self._queue.pop(0)
+            value = self._queue.pop(0)
             self._save()
 
         # Fill cache if queue is running low
         if len(self) < self.fill_threshold:
             self.fill()
-        return url
+        return value
 
     def fill(self):
         """ A function which creates an async task to fill up the cache """
@@ -105,8 +120,16 @@ class StringCache:
             gather_count = 0
             while len(self._queue) < self.fill_size and gather_count < self.gather_limit:
                 gather_count += 1
-                values = await self.gather()
-                self._queue.extend(values)
+                try:
+                    values = await self.gather()
+                    if self._stale and len(values) > 0:  # Remove stale entry when new values added
+                        self._queue = []
+                        self._stale = False  # Queue is no longer stale
+                    self._queue.extend(values)
+                except Exception as exc:
+                    await utils.flag(self.bot,
+                                     alert=f"Failed fill attempt {gather_count} for StringCache `{self.cache_id}`",
+                                     description=str(exc))
 
             # Send an error if failed to fill queue after reaching maximum attempts
             if len(self._queue) < self.fill_size:
@@ -123,4 +146,4 @@ class StringCache:
             self._save()
         except Exception as e:
             self._locked = True  # Don't lock up the queue
-            await utils.report(self.bot, f"Exception on `_fill()` for ResourceCache `{self.cache_id}` \n" + str(e))
+            await utils.report(self.bot, f"Exception on `_fill()` for StringCache `{self.cache_id}` \n" + str(e))
