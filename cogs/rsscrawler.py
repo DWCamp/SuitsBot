@@ -52,7 +52,7 @@ class RSSCrawler(Cog):
                     await self.handle_rss_feed(feed, ctx)
                     return
             await ctx.send("This command can be used to search for episodes of your favorite feed. It " +
-                               "currently supports the following channels:\n" + FEED_TEXT_LIST)
+                           "currently supports the following channels:\n" + FEED_TEXT_LIST)
         except Exception as e:
             await utils.report(self.bot, str(e), source="rssfeed command", ctx=ctx)
 
@@ -145,7 +145,7 @@ class RSSCrawler(Cog):
             # If there was a subcommand but it was unrecognized
             if subcommand != "":
                 await ctx.send(f"I'm sorry, I don't understand the subcommand `{subcommand}`. " +
-                                   f"Please consult `-help` for more information")
+                               f"Please consult `-help` for more information")
                 return
 
             # Search for the term
@@ -154,7 +154,7 @@ class RSSCrawler(Cog):
                 await ctx.send(embed=feed.get_embed(episode))
                 return
             await ctx.send(f"I couldn't find any results in the {feed.title} feed "
-                               f"for the term `{parameter}` :worried:")
+                           f"for the term `{parameter}` :worried:")
 
         except Exception as e:
             await utils.report(self.bot, str(e), source=f"handle_rss_feed() for '{feed.feed_id}'", ctx=ctx)
@@ -238,14 +238,15 @@ Fetch time: {self.fetch_time}
     def refresh(self):
         """
         Updates the cached data
-        :return:
         """
         self.raw_rss = utils.get_rss_feed(self.feed_url)
+        print(self.raw_rss)
         self.fetch_time = datetime.today()
         self.channel = self.raw_rss["channel"]
         self.items = self.raw_rss["items"]
 
         self.feed = self.raw_rss["feed"]
+        print(self.feed)
         self.subtitle = self.feed.subtitle
         self.link = self.feed["link"]
         if self.feed.image:
