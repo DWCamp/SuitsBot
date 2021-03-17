@@ -34,7 +34,7 @@ class RSSCrawler(Cog):
             RSSFeed("The Adventure Zone",
                     "https://feeds.simplecast.com/cYQVc__c"),
             RSSFeed("We Martians",
-                    "https://www.wemartians.com/feed/podcast/",
+                    "https://www.wemartians.com/feed/podcast",
                     color=0xC4511F),
             WebComic("xkcd",
                      "https://dwcamp.net/feeds/xkcd.xml",
