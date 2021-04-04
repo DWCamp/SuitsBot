@@ -26,6 +26,8 @@ scribble_bank = list()
 # -------------------- COMMAND WHITELIST -------------------------------
 
 command_blacklist = {360523650912223253: ["aes",
+                                          "wm",
+                                          "meco",
                                           "scribble",
                                           "join",
                                           "leave",
