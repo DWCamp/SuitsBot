@@ -93,7 +93,7 @@ async def amazon(url: str, _: Message) -> Optional[Embed]:
     Generates an embed describing an item listing at an Amazon URL
 
     :param url: The url of the item listing
-    :param _: Unused Message object
+    :param _: Unused Message object (included for embedGenerator compatibility)
     :return: An embed with details about the item
     """
     text = await utils.get_website_text(url)
@@ -144,7 +144,7 @@ async def discord_message(ids: str, _: Message) -> Optional[Embed]:
     """
     Generates an embed containing the text and information from a linked Discord Message
     :param ids: The tuple of ids pulled from the discord link
-    :param _: Unused message object
+    :param _: Unused message object (included for embedGenerator compatibility)
     :return: An embed with details about the item
     """
     (_, _, channel_id, message_id) = ids
@@ -227,7 +227,7 @@ async def newegg(url: str, _: Message) -> Optional[Embed]:
     Generates an embed describing an item listing at a Newegg URL
 
     :param url: The url of the item listing
-    :param _: Unused Message object
+    :param _: Unused Message object (included for embedGenerator compatibility)
     :return: An embed with details about the item
     """
     text = await utils.get_website_text(url)
@@ -334,7 +334,7 @@ async def reddit_post(post_url: str, _: Message) -> Optional[Embed]:
     post_url : str
         The url of the linked post
     _ : Message
-        Unused Message object
+        Unused Message object (included for embedGenerator compatibility)
 
     Returns
     -------------
@@ -414,7 +414,7 @@ async def reddit_comment(comment_url: str, _: Message) -> Optional[Embed]:
     comment_url : str
         The url of the permalink comment
     _ : Message
-        Unused Message object
+        Unused Message object (included for embedGenerator compatibility)
 
     Returns
     -------------
@@ -474,7 +474,7 @@ async def twitter_handle(handle: str, _: Message) -> Optional[Embed]:
     handle : str
         The twitter handle, with no @-sign or whitespace
     _ : Message
-        Unused Message object
+        Unused Message object (included for embedGenerator compatibility)
 
     Returns
     -------------
@@ -519,7 +519,7 @@ async def twitter_images(image_id, _: Message):
     image_id : str/int
         The id of the tweet media is being grabbed from
     _ : Message
-        Unused Message object
+        Unused Message object (included for embedGenerator compatibility)
 
     Returns
     -------------
@@ -531,8 +531,8 @@ async def twitter_images(image_id, _: Message):
                   "tweet_mode": "extended",
                   "include_entities": "true"}
     headers = {"Authorization": "Bearer " + tokens["TWITTER_BEARER"]}
-    [json, response] = await utils.get_json_with_get(twitter_api_url, headers=headers, params=parameters)
-    if response is not 200 or "extended_entities" not in json.keys():
+    [payload, response] = await utils.get_json_with_get(twitter_api_url, headers=headers, params=parameters)
+    if response is not 200 or "extended_entities" not in payload.keys():
         return None
 
     embed_list = list()
@@ -543,7 +543,7 @@ async def twitter_images(image_id, _: Message):
     count = 0
 
     # generate embed list
-    for entity in json['extended_entities']['media']:
+    for entity in payload['extended_entities']['media']:
         count += 1
         image_embed = Embed().set_image(url=entity["media_url_https"])
         image_embed.colour = embed_color
@@ -565,7 +565,7 @@ async def twitter_response(tweet_id: Union[str, int], _: Message) -> Optional[Li
     tweet_id : str/int
         The id of the tweet
     _ : Message
-        Unused Message object
+        Unused Message object (included for embedGenerator compatibility)
 
     Returns
     -------------
@@ -579,15 +579,15 @@ async def twitter_response(tweet_id: Union[str, int], _: Message) -> Optional[Li
                   "tweet_mode": "extended",
                   "include_entities": "true"}
     headers = {"Authorization": "Bearer " + tokens["TWITTER_BEARER"]}
-    [json, response] = await utils.get_json_with_get(twitter_api_url, headers=headers, params=parameters)
-    if response is not 200 or (json['in_reply_to_status_id_str'] is None and not json['is_quote_status']):
+    [payload, response] = await utils.get_json_with_get(twitter_api_url, headers=headers, params=parameters)
+    if response is not 200 or (payload['in_reply_to_status_id_str'] is None and not payload['is_quote_status']):
         return None
 
     # Fetch info on the tweet it was in response to
-    if json['is_quote_status']:
-        original_id = json['quoted_status_id']
+    if payload['is_quote_status']:
+        original_id = payload['quoted_status_id']
     else:
-        original_id = json["in_reply_to_status_id_str"]
+        original_id = payload["in_reply_to_status_id_str"]
     parameters["id"] = str(original_id)
     [original_json, response] = await utils.get_json_with_get(twitter_api_url, headers=headers, params=parameters)
     if response is not 200:
@@ -614,7 +614,12 @@ async def twitter_response(tweet_id: Union[str, int], _: Message) -> Optional[Li
     original_embed.add_field(name="Likes", value=str(original_json["favorite_count"]))
 
     # Image
-    # (Not implemented)
+    if 'extended_entities' in original_json:
+        # Restrict entities to only photos
+        photos = [entity for entity in original_json['extended_entities']['media'] if entity["type"] == "photo"]
+        print(photos)
+        if photos:  # If there are photos in the media list, embed the first image
+            original_embed = original_embed.set_image(url=photos[0]["media_url_https"])
 
     # Footer
     original_embed.set_footer(icon_url="https://abs.twimg.com/icons/apple-touch-icon-192x192.png", text="Twitter")
