@@ -6,7 +6,6 @@ class Regex:
     def __init__(self, bot):
         subdomains = "(?:(?:www|old|np|m|en|dd|us|de)\.)?"
         self.bot = bot
-        self.amazon = re.compile('https://www\.amazon\.com/(?:(?:\w+-)+\w+/)?[dg]p/(?:product/)?(?:\w{10})')
         self.discord = re.compile('discord(app)?.com/channels/(\d{18})/(\d{18})/(\d{18})')
         self.newegg = re.compile('https://www\.newegg\.com/Product/Product\.aspx\?Item=(?:\w{15})', re.IGNORECASE)
         self.reddit_comment = re.compile('https://' + subdomains + 'reddit\.com/r/\w+/comments/\w{6}/[\w%]+/\w{7}/?')
@@ -59,9 +58,6 @@ class Regex:
         return re.findall(self.subreddit, message)
 
     # Stores
-
-    def find_amazon(self, message):
-        return re.findall(self.amazon, message)
 
     def find_newegg(self, message):
         return re.findall(self.newegg, message)

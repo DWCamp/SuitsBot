@@ -53,7 +53,9 @@ async def join_audio_channel(target_channel: VoiceChannel) -> Optional[VoiceClie
     # Wrap in `try-except` to catch Timeout Error. `None` will be returned implicitly on failure
     try:
         if guild_vc is None:  # Bot is not connected to voice
-            guild_vc = await target_channel.connect(timeout=10)
+            target_channel.permissions_for()
+
+            guild_vc = await target_channel.connect(timeout=2)
         elif guild_vc.channel is not target_channel:  # Bot is connected to different channel
             # Stop any playing media and move bot
             guild_vc.stop()
@@ -92,10 +94,10 @@ class VoiceCommands(Cog):
                 return
             # Connect to author's channel
             await ctx.send("Joining voice channel...")
-            voice_client = await join_audio_channel(author_voice_channel)
-            if voice_client:
+            self.bot.voice = await join_audio_channel(author_voice_channel)
+            if self.bot.voice:
                 # Plays joining voice clip
-                voice_client.play(FFmpegPCMAudio(SOUNDS_DIR + 'hello_there_obi.mp3'))
+                self.bot.voice.play(FFmpegPCMAudio(SOUNDS_DIR + 'hello_there_obi.mp3'))
             else:
                 await ctx.send(f"I'm sorry {ctx.author.mention}, but I was not able to join {author_voice_channel}")
         except Exception as e:
@@ -116,8 +118,6 @@ class VoiceCommands(Cog):
         quotes = {"ah fuck": ["Ah fuck. I can't believe you've done this", "ah-fuck.mp3"],
                   "anthem": ["**SOYUZ NERUSHIMY RESPUBLIK SVOBODNYKH SPLOTILA NAVEKI VELIKAYA RUS'!**", "anthem.mp3"],
                   "austin": ["IT'S ME, AUSTIN!", "itsMeAustin.mp3"],
-                  "beat my dick": ["Good evening Twitter, it's ya boi EatDatPussy445.", "beatTheFuck.wav"],
-                  "boi": ["B O I", "boi.mp3"],
                   "bold strategy": ["It's a bold strategy cotton, let's see if it pays off for 'em",
                                     "bold-strategy-cotton.mp3"],
                   "careless whisper": ["*sexy sax solo intensifies*", "careless_whispers.mp3"],
@@ -137,6 +137,7 @@ class VoiceCommands(Cog):
                   "how": ["**I MADE MY MISTAKES**", "howCould.mp3"],
                   "i tried so hard": ["Woah there, don't cut yourself on that edge", "inTheEnd.mp3"],
                   "it was me": ["Ko! No! Dio! Da!", "itWasMeDio.mp3"],
+                  "jokerfied": ["**HAHAHAHAHAHAHAHAHAHAAAAHAHA**", "jokerfied.mp3"],
                   "laser sights": ["*Fooking laser sights*", "fookin-laser-sights.mp3"],
                   "leroy": ["LEEEEEEROOOOOOOOOOOOOY", "leroy.mp3"],
                   "love": ["AND IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...", "iWillAlwaysLoveYou.mp3"],
@@ -202,10 +203,8 @@ class VoiceCommands(Cog):
                                                            thumbnail_url=COMMAND_THUMBNAILS["say"]))
                 return
             if "ls" in arguments:
-                message = "The audio clips I know are: \n"
-                for quoteKey in quotes.keys():
-                    message += quoteKey + ", "
-                await ctx.send(message[:-2])
+                message = "The audio clips I know are: \n" + ", ".join(quotes.keys())
+                await ctx.send(utils.trim_to_len(message, 2000))
                 return
             if "stop" in arguments:
                 if not self.bot.voice.is_playing():
@@ -226,7 +225,7 @@ class VoiceCommands(Cog):
                 await ctx.send("I don't see an audio clip tagged '" + key + "'. Type `!say -ls` for a list of tags")
                 return
 
-            # ------------------------------ AUDIO INITIALIZATION
+            # ------------------------------ VALIDATING BOT AVAILABILITY
 
             # Gets the voice channel the author is in. If the author is not in voice, author_voice_channel is `None`
             author_voice_channel = ctx.author.voice.channel if ctx.author.voice is not None else None
@@ -235,21 +234,23 @@ class VoiceCommands(Cog):
                 await ctx.send("You are not in a voice channel right now")
                 return
 
-            # Get voice client for author's channel
-            voice_client = await join_audio_channel(author_voice_channel)
-            if voice_client is None:  # If VoiceClient is None, reject command
+            # Ignores command if bot is already playing a voice clip
+            if self.bot.voice and self.bot.voice.is_playing():
+                await ctx.send("Currently processing other voice command")
+                return
+
+            # ------------------------------ AUDIO INITIALIZATION
+
+            self.bot.voice = await join_audio_channel(author_voice_channel)
+
+            if self.bot.voice is None:  # If bot failed to join, show error message
                 await ctx.send(f"I'm sorry {ctx.author.mention}, but I was not able to join {author_voice_channel}")
                 return
 
             # ------------------------------ PLAYING AUDIO
 
-            # Ignores command if bot is already playing a voice clip
-            if voice_client.is_playing():
-                await ctx.send("Currently processing other voice command")
-                return
-
             # Play audio clip
-            voice_client.play(FFmpegPCMAudio(SOUNDS_DIR + quotes[key][1]))
+            self.bot.voice.play(FFmpegPCMAudio(SOUNDS_DIR + quotes[key][1]))
             await ctx.send(quotes[key][0])  # Responds with the text of the voice clip
 
         except Exception as e:

@@ -105,8 +105,7 @@ class Images(Cog):
                       aliases=ALIASES['picture'])
     async def picture(self, ctx):
         try:
-            unsplash_icon = ('https://image.winudf.com/v2/image/Y29tLmFwcHlidWlsZGVyLmFmYXFsZW8xMDIuVW5zcG' +
-                             'xhc2hfaWNvbl8xNTMxMTA2MTg5XzA5OQ/icon.png?w=170&fakeurl=1&type=.png')
+            unsplash_icon = 'https://dwcamp.net/logos/unsplash'
             headers = {
                 "User-Agent": "suitsBot Discord Bot - https://github.com/DWCamp",
                 "Authorization": "Client-ID " + tokens["UNSPLASH_CLIENT_ID"],

@@ -463,7 +463,7 @@ class Anime:
         anime_embed.url = self.url
         anime_embed.colour = EMBED_COLOR
         anime_embed.set_footer(text="Data retrieved using the https://anilist.co API",
-                               icon_url="https://anilist.co/img/icons/logo_full.png")
+                               icon_url="https://dwcamp.net/logos/anilist.jpg")
         return anime_embed
 
     def info_embed(self):

@@ -88,58 +88,6 @@ async def record_unfurl(trigger_message: Message, unfurl_message: Message) -> No
     redis_db.set(unfurl_message_key, trigger_message.author.id, UNFURLED_CLEANUP_TRACKING_IN_SECONDS)
 
 
-async def amazon(url: str, _: Message) -> Optional[Embed]:
-    """
-    Generates an embed describing an item listing at an Amazon URL
-
-    :param url: The url of the item listing
-    :param _: Unused Message object (included for embedGenerator compatibility)
-    :return: An embed with details about the item
-    """
-    text = await utils.get_website_text(url)
-    if text is None:
-        return None
-    embed = Embed()
-
-    # ==== Properties
-
-    embed.url = url
-    embed.colour = EMBED_COLORS['amazon']
-    soup = BeautifulSoup(text, 'html.parser')
-    embed.title = soup.find(id='productTitle').text.strip()
-    embed.set_thumbnail(url=soup.find(id='landingImage').get('src'))
-
-    # ==== Description
-
-    descdiv = soup.find(id='productDescription')
-    if descdiv is not None:
-        ptag = descdiv.p
-        if ptag is not None:
-            embed.description = utils.trim_to_len(ptag.text, 2048)
-
-    # ==== Fields
-
-    # Product Vendor
-    vendor = soup.find(id='bylineInfo')
-    if vendor is not None:
-        embed.add_field(name="Vendor", value=vendor.text)
-
-    # Price
-    price = soup.find(id='priceblock_ourprice')
-    if price is not None:
-        embed.add_field(name="Price", value=price.text)
-    else:
-        price = soup.find(id='priceblock_dealprice')
-        if price is not None:
-            embed.add_field(name="Price", value=price.text)
-
-    # Star rating
-    rating = soup.find(id='acrPopover')
-    if rating is not None:
-        embed.add_field(name="Rating", value=rating['title'])
-    return embed
-
-
 async def discord_message(ids: str, _: Message) -> Optional[Embed]:
     """
     Generates an embed containing the text and information from a linked Discord Message
@@ -555,7 +503,7 @@ async def twitter_images(image_id, _: Message):
     return embed_list[1:] if count else None  # Drop the last since we only care about showing the hidden images
 
 
-async def twitter_response(tweet_id: Union[str, int], _: Message) -> Optional[List[Embed]]:
+async def twitter_response(tweet_id: Union[str, int], message: Message) -> Optional[List[Embed]]:
     """
     Provided the id for a tweet, returns an embed with the
     information of the status that tweet was responding to
@@ -564,8 +512,9 @@ async def twitter_response(tweet_id: Union[str, int], _: Message) -> Optional[Li
     -------------
     tweet_id : str/int
         The id of the tweet
-    _ : Message
-        Unused Message object (included for embedGenerator compatibility)
+    message : Message
+        Message object. Used to retrieve the message history of the channel to check
+         if the original tweet had already been posted
 
     Returns
     -------------
@@ -592,6 +541,13 @@ async def twitter_response(tweet_id: Union[str, int], _: Message) -> Optional[Li
     [original_json, response] = await utils.get_json_with_get(twitter_api_url, headers=headers, params=parameters)
     if response is not 200:
         return None
+
+    # Ignore if tweet had been recently posted
+    short_url = original_json["full_text"].split(" ")[-1]
+    full_url = f"https://twitter.com/{original_json['user']['screen_name']}/status/{original_id}"
+    async for message in message.channel.history(limit=25):
+        if short_url in message.content or full_url in message.content:
+            print("original url located")
 
     # ==== Generate Embed
 

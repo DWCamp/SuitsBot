@@ -2,6 +2,7 @@ import aiohttp
 import feedparser
 from datetime import datetime
 import random
+import re
 import traceback
 from discord import Embed
 from discord.abc import PrivateChannel
@@ -52,6 +53,18 @@ def trim_to_len(content, length):
     if len(content) > length:
         return content[:length - 1] + "…"
     return content
+
+
+def internal_strip(content: str) -> str:
+    """
+    Reduces all instances of whitespace (space, new line, tab) in a string to single spaces
+    Most useful for cleaning up crazy Amazon HTML
+
+    :param content: The string to strip
+    :return: The stripped string
+    """
+
+    return " ".join(re.split(r"\s+", content))
 
 
 def time_from_unix_ts(timestamp):
@@ -472,6 +485,10 @@ async def report(bot, alert, source=None, ctx=None):
     ctx : Optional - context object
         The context object of the message which triggered the flag
     """
+    # Value validation
+    if not alert:
+        alert = "❗"
+
     error_embed = Embed()
     if ctx is None:
         error_embed.title = "Alert"

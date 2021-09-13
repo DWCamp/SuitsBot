@@ -193,7 +193,7 @@ async def on_ready():
     for channel_id in APOD_CHANNEL_IDS:
         bot.APOD_CHANNELS.append(bot.get_channel(channel_id))
     bot.HERESY_CHANNEL = bot.get_channel(HERESY_CHANNEL_ID)
-    bot.player = None
+    bot.voice = None  # Voice client
 
     try:
         # Post restart embed
@@ -337,7 +337,6 @@ async def on_message(message):
                                 # (bot.regex.find_twitter_handle, embedGenerator.twitter_handle),   # Twitter handles
                                 # (bot.regex.find_twitter_id, embedGenerator.twitter_images),       # Images from tweets
                                 (bot.regex.find_twitter_id, embedGenerator.twitter_response),       # Response to tweets
-                                (bot.regex.find_amazon, embedGenerator.amazon),                     # Amazon links
                                 (bot.regex.find_newegg, embedGenerator.newegg),                     # Newegg links
                                 (bot.regex.find_discord_message, embedGenerator.discord_message)    # Discord msg link
                                 ]

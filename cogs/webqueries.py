@@ -45,7 +45,7 @@ class WebQueries(Cog):
             if len(ud_json["list"]) > 0:
                 ud_embed = Embed()
                 ud_embed.set_footer(text="UrbanDictionary",
-                                    icon_url="https://firebounty.com/image/635-urban-dictionary")
+                                    icon_url="https://dwcamp.net/logos/urbanDictionary.jpg")
                 counter = 0
                 first_result = ""
                 while counter < len(ud_json["list"]) and counter <= max_definitions:
@@ -152,8 +152,7 @@ class WebQueries(Cog):
             wiki_embed = Embed()
             wiki_embed.title = title
             wiki_embed.set_footer(text="Wikipedia",
-                                  icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/"
-                                           "Wikipedia-logo-v2.svg/800px-Wikipedia-logo-v2.svg.png")
+                                  icon_url="https://dwcamp.net/logos/wikipedia.png")
             if "full" in arguments or "f" in arguments:
                 description = utils.trim_to_len(extract, 2048)
             else:
