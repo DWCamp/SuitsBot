@@ -1,7 +1,6 @@
 from typing import Optional
 
 from discord import FFmpegPCMAudio, VoiceChannel, VoiceClient
-from discord.errors import ClientException
 from discord.ext import commands
 from discord.ext.commands import Cog
 
@@ -162,6 +161,10 @@ class VoiceCommands(Cog):
                   "stop": ["It's time to stop!", "stop.mp3"],
                   "take a sip": ["Take a fuckin' sip, babes...", "takeASip.mp3"],
                   "tea": ["I've got fucking tea, ya dickhead!", "gotTea.wav"],
+                  "morning": ["Let's get this shit. Let's get this shit. Let's HUNH! Top of the mornin'. "
+                              "Top of the mornin'. Top of the mornin'. Top of the mornin'. Top of the mornin'. "
+                              "Top of the mornin'. Top of the mornin'. Top of the mornin'. Top of the mornin'. "
+                              "Top of the mornin'.", "TopOfTheMorning.mp3"],
                   "trash": ["**Endless trash**", "Endless Trash.mp3"],
                   "tuturu": ["TUTURUUUUUUUU", "tuturu.mp3"],
                   "violin": ["*sadness intensifies*", "sadViolin.mp3"],
