@@ -138,6 +138,10 @@ class VoiceCommands(Cog):
                   "laser sights": ["*Fooking laser sights*", "fookin-laser-sights.mp3"],
                   "leroy": ["LEEEEEEROOOOOOOOOOOOOY", "leroy.mp3"],
                   "love": ["AND IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...", "iWillAlwaysLoveYou.mp3"],
+                  "morning": ["Let's get this shit. Let's get this shit. Let's HUNH! Top of the mornin'. "
+                              "Top of the mornin'. Top of the mornin'. Top of the mornin'. Top of the mornin'. "
+                              "Top of the mornin'. Top of the mornin'. Top of the mornin'. Top of the mornin'. "
+                              "Top of the mornin'.", "TopOfTheMorning.mp3"],
                   "my power": ["*You underestimate my power!*", "you-underestimate-my-power.mp3"],
                   "nerf this": ["It's nerf or nothing", "nerfThis.ogg"],
                   "nani": ["NANI SORE!?", "nani-sore.mp3"],
