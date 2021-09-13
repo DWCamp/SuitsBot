@@ -53,8 +53,6 @@ async def join_audio_channel(target_channel: VoiceChannel) -> Optional[VoiceClie
     # Wrap in `try-except` to catch Timeout Error. `None` will be returned implicitly on failure
     try:
         if guild_vc is None:  # Bot is not connected to voice
-            target_channel.permissions_for()
-
             guild_vc = await target_channel.connect(timeout=2)
         elif guild_vc.channel is not target_channel:  # Bot is connected to different channel
             # Stop any playing media and move bot
