@@ -498,7 +498,7 @@ class ListEngine:
             author_name = ctx.author.nick
 
         # parse message of apostrophes
-        parsedctx = parse.apos(ctx.message.content)
+        parsedctx = parse.sanitize_apos(ctx.message.content)
 
         # separates out the function call and its parameters
         [func, parameter] = parse.func_param(parsedctx)

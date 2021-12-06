@@ -50,7 +50,7 @@ class Tags(Cog):
 
             # Makes the apostrophe types consistent
             # (See function documentation for explanation)
-            parsed_ctx = parse.apos(ctx.message.content)
+            parsed_ctx = parse.sanitize_apos(ctx.message.content)
             # Parses CLI arguments
             (arguments, message) = parse.args(parsed_ctx)
 

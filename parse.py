@@ -21,18 +21,12 @@ class Regex:
                               "(\?(([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)&)*" +  # URL parameters (1/2)
                               "([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)?)?")  # URL parameters (2/2)
 
-    def is_url(self, string):
+    def is_url(self, string: str) -> bool:
         """
         Validates that a string is a properly formatted url
 
-        Parameters
-        -------------
-        string : str
-            The string to check
-
-        Returns
-        -------------
-        Returns True if the url matches the format of a url
+        :param string: The string to check
+        :return: `True` if the url matches the format of a url
         """
         return self.url.fullmatch(string) is not None
 
@@ -77,14 +71,15 @@ class Regex:
         return []
 
 
-def args(message):
-    """ Parses arguments from a message
+def args(message: str) -> ([str], str):
+    """
+    Parses arguments (flags beginning with '-') from a message.
+    Returns a list of these arguments along with the remainder of the text
 
-    Returns
-    -------------
-    List
-    [0] - A list of the arguments
-    [1] - The message without the arguments
+    :param message: The raw text of the message
+    :return: A ([str], str) tuple, where the first element
+        is the list of arguments and the second element is
+        the remaining text of the message
      """
     message = strip_command(message)
     arguments = []
@@ -92,7 +87,7 @@ def args(message):
     while i < len(message) and message[i] == "-":  # Looks for arguments
         argument = ""
         i += 1
-        # iterates over charcters until it finds the end of the arguments
+        # iterates over characters until it finds the end of the arguments
         while i < len(message) and not message[i].isspace():
             argument = argument + message[i]
             i += 1
@@ -101,14 +96,18 @@ def args(message):
     return arguments, message[i:].strip()
 
 
-def apos(string):
-    """ Make apostrophes and quotes consistent within a string
+def sanitize_apos(string: str) -> str:
+    """
+    Make apostrophes and quotes consistent within a string
 
     Different keyboards, especially the iPhone keyboard, will use different unicode characters
     for apostrophes and quotes at the beginning, middle and end of strings. These look better
     aesthetically, but they provide a problem for text searching. This function replaces all
     the unicode apostrophes with a single type ('), all unicode quotation marks with a single
     type ("), and returns the edited string
+
+    :param string: The string to sanitize
+    :return: The sanitized string
     """
     string = string.replace("’", "'")
     string = string.replace("‘", "'")
@@ -118,16 +117,13 @@ def apos(string):
     return string
 
 
-def func_param(string):
+def func_param(string: str) -> [str]:
     """
     Strips off the command and then parses out the function
     and parameter from the content of a message
-    
-    Returns
-    ------------
-    A list
-    [0] - The function called
-    [1] - The parameter text
+
+    :param string: The string to parse
+    :return: A two-element list of (0) the function name (1) the parameter text
     """
     message = strip_command(string)
     if message == "":
@@ -199,7 +195,7 @@ def key_value(message, attachments=None):
     return [tag_key.lower(), tag_value]
 
 
-def number_in_brackets(string):
+def number_in_brackets(string: str) -> int:
     """
     Takes a string containing a number that may or may not be in brackets and returns it as an integer
 

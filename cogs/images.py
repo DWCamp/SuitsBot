@@ -69,9 +69,21 @@ class Images(Cog):
     @commands.command(help=LONG_HELP['gritty'], brief=BRIEF_HELP['gritty'], aliases=ALIASES['gritty'])
     async def gritty(self, ctx):
         try:
-            url = self.get_gritty_url()
-            embed = Embed().set_image(url=url)
+            embed = Embed()
             embed.colour = EMBED_COLORS["gritty"]
+            arg = parse.strip_command(ctx.message.content)
+            # Check if user passed a specific gritty index
+            num = None
+            if arg != "":
+                arg = arg[1:] if arg[0] == "#" else arg  # Trim off leading '#' if provided
+                try:
+                    num = int(arg)
+                except ValueError:
+                    await ctx.send(f"`{arg}` is not a number")
+                    return
+            url, num = self.get_gritty_url(num)
+            embed.set_image(url=url)
+            embed.description = f"**#{num}**"
             await ctx.send(embed=embed)
         except Exception as e:
             await utils.report(self.bot, str(e), source="Gritty command", ctx=ctx)
@@ -155,9 +167,16 @@ class Images(Cog):
         except Exception as e:
             await utils.report(self.bot, str(e), source="woof command", ctx=ctx)
 
-    def get_gritty_url(self):
-        """Gets a random Gritty url"""
-        return random.choice(self.gritty_urls)
+    def get_gritty_url(self, num=None):
+        """
+        Gets a random Gritty url
+        :param num: The index of the specific gritty URL is requested. If this number is larger than the
+                number of URLs, it will set to the maximum index. For a random url, pass `None`.
+        :return: A (str, int) tuple, where the first element is the url and the second element is its index
+        """
+        num_urls = len(self.gritty_urls)
+        num = min(num, num_urls) if num is not None else random.randint(1, num_urls)
+        return self.gritty_urls[num - 1], num
 
 
 class CatCache(StringCache):
