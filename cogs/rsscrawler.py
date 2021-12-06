@@ -199,24 +199,29 @@ class RSSFeed:
 
     def search(self, term, regex=False):
         """
-        Finds the most recent item in the feed whose title contains the search term
-        This search is for whole words only (unless using regex search)
+        Finds the item whose title exactly matches the search term (case insensitive)
+        If one can not be found, the most recent item in the feed whose title contains
+        the search term will be returned
 
         :param term: The term being searched for
         :param regex: Whether to regex escape the search term. For the true nerds
-            Defaults to False
+            Defaults to `False`
         :return: If it finds an appropriate episode, it returns it.
             If it can't find any matching episode, it returns null
         """
         if regex:
-            pattern = re.compile(term)
+            pattern = re.compile(term, re.IGNORECASE)
         else:
-            pattern = re.compile("(?<!\w)" + re.escape(term) + "(?!\w)", re.IGNORECASE)
+            pattern = re.compile(r"(?<!\w)" + re.escape(term) + r"(?!\w)", re.IGNORECASE)
 
+        found = None
         for item in self.items:
-            if re.search(pattern, item["title"]):
+            if re.fullmatch(pattern, item["title"]):  # If an exact match is found, return
                 return item
-        return
+            # In case of no exact match, find most recent partial match
+            if re.search(pattern, item["title"]) and found is None:
+                found = item
+        return found  # If no partial match found, this will return `None`
 
     def to_string(self):
         string = f"""
