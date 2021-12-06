@@ -138,6 +138,9 @@ class VoiceCommands(Cog):
                   "laser sights": ["*Fooking laser sights*", "fookin-laser-sights.mp3"],
                   "leroy": ["LEEEEEEROOOOOOOOOOOOOY", "leroy.mp3"],
                   "love": ["AND IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...", "iWillAlwaysLoveYou.mp3"],
+                  "morning": ["Let's get this shit. Let's get this shit. Let's—HUNH! Top of the mornin'. "
+                              "Top of the mornin'. Top of the mornin'. Top of the mornin'. Top of the mornin'. "
+                              "Top of the mornin'. Top of the mornin'. HO—", "TopOfTheMorning.mp3"],
                   "my power": ["*You underestimate my power!*", "you-underestimate-my-power.mp3"],
                   "nerf this": ["It's nerf or nothing", "nerfThis.ogg"],
                   "nani": ["NANI SORE!?", "nani-sore.mp3"],
@@ -161,10 +164,6 @@ class VoiceCommands(Cog):
                   "stop": ["It's time to stop!", "stop.mp3"],
                   "take a sip": ["Take a fuckin' sip, babes...", "takeASip.mp3"],
                   "tea": ["I've got fucking tea, ya dickhead!", "gotTea.wav"],
-                  "morning": ["Let's get this shit. Let's get this shit. Let's HUNH! Top of the mornin'. "
-                              "Top of the mornin'. Top of the mornin'. Top of the mornin'. Top of the mornin'. "
-                              "Top of the mornin'. Top of the mornin'. Top of the mornin'. Top of the mornin'. "
-                              "Top of the mornin'.", "TopOfTheMorning.mp3"],
                   "trash": ["**Endless trash**", "Endless Trash.mp3"],
                   "tuturu": ["TUTURUUUUUUUU", "tuturu.mp3"],
                   "violin": ["*sadness intensifies*", "sadViolin.mp3"],
