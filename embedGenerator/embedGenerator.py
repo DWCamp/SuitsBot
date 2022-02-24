@@ -98,39 +98,52 @@ class EmbedGenerator:
 
         :param msg: The discord.Message object this Generator is extracting data from
         """
-        # Ignore if message location blacklisted
-        if msg.channel.id in self.blacklist or msg.guild.id in self.blacklist:
-            return
+        try:
+            # Ignore if message location blacklisted
+            if msg.channel.id in self.blacklist or msg.guild.id in self.blacklist:
+                return
 
-        # Parse triggers from message, then unfurl
-        unfurl_messages = []
-        for trigger in await self.parse(msg):
-            if self._recently_seen(trigger):   # Ignore triggers that were already seen recently
-                continue
-            embed = self.unfurl(trigger)
-            if embed:
-                unfurl = await msg.reply(embed=embed)
-                await unfurl.add_reaction(DELETE_EMOJI)
-                unfurl_messages.append(unfurl)
-                # Record unfurled message triggering author as unfurl_message_id: author_id
-                unfurl_message_key = f"{UNFURL_PREFIX}{unfurl.id}"
-                EmbedGenerator.redis_client.set(unfurl_message_key,
-                                                msg.author.id,
-                                                UNFURLED_CLEANUP_TRACKING)
+            # Parse triggers from message, then unfurl
+            unfurl_messages = []
+            try:
+                triggers = await self.parse(msg)
+            except Exception as e:
+                await utils.report(str(e), f"parse() in `{self.__class__.__name__}`", msg)
+                return
+            for trigger in triggers:
+                if self._recently_seen(trigger):  # Ignore triggers that were already seen recently
+                    continue
+                try:
+                    embed = self.unfurl(trigger)
+                    if embed:
+                        unfurl = await msg.reply(embed=embed)
+                        await unfurl.add_reaction(DELETE_EMOJI)
+                        unfurl_messages.append(unfurl)
+                        # Record unfurled message triggering author as unfurl_message_id: author_id
+                        unfurl_message_key = f"{UNFURL_PREFIX}{unfurl.id}"
+                        EmbedGenerator.redis_client.set(unfurl_message_key,
+                                                        msg.author.id,
+                                                        UNFURLED_CLEANUP_TRACKING)
+                except Exception as e:
+                    await utils.report(str(e), f"unfurl() for EmbedGenerator {self.__class__.__name__} "
+                                               f"for trigger {trigger}", msg)
+                    return
 
-        # If no triggers were unfurled, the message's cleanup entry doesn't need to be updated
-        if len(unfurl_messages) == 0:
-            return
+            # If no triggers were unfurled, the message's cleanup entry doesn't need to be updated
+            if len(unfurl_messages) == 0:
+                return
 
-        # Record unfurled message triggering message as trigger_message_id: [unfurl_message_id, ...]
-        trig_message_key = f"{TRIGGER_PREFIX}{msg.id}"
-        # Check if message has other associated unfurls, and if so, append them to the new list
-        trig_message_value = EmbedGenerator.redis_client.get(trig_message_key)
-        if trig_message_value:
-            unfurl_messages += json.loads(trig_message_value)
-        EmbedGenerator.redis_client.set(trig_message_key,
-                                        json.dumps(unfurl_messages),
-                                        UNFURLED_CLEANUP_TRACKING)
+            # Record unfurled message triggering message as trigger_message_id: [unfurl_message_id, ...]
+            trig_message_key = f"{TRIGGER_PREFIX}{msg.id}"
+            # Check if message has other associated unfurls, and if so, append them to the new list
+            trig_message_value = EmbedGenerator.redis_client.get(trig_message_key)
+            if trig_message_value:
+                unfurl_messages += json.loads(trig_message_value)
+            EmbedGenerator.redis_client.set(trig_message_key,
+                                            json.dumps(unfurl_messages),
+                                            UNFURLED_CLEANUP_TRACKING)
+        except Exception as e:
+            await utils.report(str(e), f"run() in `{self.__class__.__name__}`", msg)
 
     async def store_data(self, key: str, data):
         """
@@ -153,6 +166,15 @@ class EmbedGenerator:
         data_key = f"{self.data_prefix}{key}"
         data = EmbedGenerator.redis_client.get(data_key)
         return data if data is None else json.loads(data)
+
+    @classmethod
+    async def process_trigger_reaction(cls, msg: Message):
+        """
+        When another user's message is deleted, this method checks if that message was a trigger
+        for any unfurls. If it was, the unfurl is deleted as well
+        :param msg: The message that was deleted
+        """
+
 
     @classmethod
     async def process_delete_reaction(cls, reaction: Reaction, user: User):
