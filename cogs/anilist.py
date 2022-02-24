@@ -274,27 +274,23 @@ class Anilist(Cog):
 
             if status != 200:
                 if status == 500:
-                    await utils.flag(self.bot,
-                                     "500 Server Error on search term " + searchterm,
+                    await utils.flag("500 Server Error on search term " + searchterm,
                                      description=str(json),
                                      ctx=ctx)
                     await ctx.send(
                         "`500 Server Error`. The AniList servers had a brief hiccup. Try again in a little bit")
                 elif status == 404:
-                    await utils.flag(self.bot,
-                                     "Failed to find result for search term " + searchterm,
+                    await utils.flag("Failed to find result for search term " + searchterm,
                                      description=str(json),
                                      ctx=ctx)
                     await ctx.send("I found no results for `" + searchterm + "`")
                 elif status == 400:
-                    await utils.report(self.bot,
-                                       str(json),
+                    await utils.report(str(json),
                                        source="Error in `!anime` search for term " + searchterm,
                                        ctx=ctx)
                     await ctx.send("The bot made an error. My bad. A bug report has been automatically submitted")
                 else:
-                    await utils.report(self.bot,
-                                       str(json),
+                    await utils.report(str(json),
                                        source="Unknown Error Type",
                                        ctx=ctx)
                     await ctx.send("Something went wrong and I don't know why")
@@ -305,7 +301,7 @@ class Anilist(Cog):
             else:
                 await ctx.send(embed=embedgenerator.embed())
         except Exception as e:
-            await utils.report(self.bot, str(e), source="!anime command", ctx=ctx)
+            await utils.report(str(e), source="!anime command", ctx=ctx)
 
     def loadsynonyms(self):
         """ Load !anime synonym table from database """

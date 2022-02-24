@@ -54,7 +54,7 @@ class RSSCrawler(Cog):
             await ctx.send("This command can be used to search for episodes of your favorite feed. It " +
                            "currently supports the following channels:\n" + FEED_TEXT_LIST)
         except Exception as e:
-            await utils.report(self.bot, str(e), source="rssfeed command", ctx=ctx)
+            await utils.report(str(e), source="rssfeed command", ctx=ctx)
 
     async def handle_rss_feed(self, feed, ctx):
         """
@@ -157,7 +157,7 @@ class RSSCrawler(Cog):
                            f"for the term `{parameter}` :worried:")
 
         except Exception as e:
-            await utils.report(self.bot, str(e), source=f"handle_rss_feed() for '{feed.feed_id}'", ctx=ctx)
+            await utils.report(str(e), source=f"handle_rss_feed() for '{feed.feed_id}'", ctx=ctx)
 
 
 class RSSFeed:

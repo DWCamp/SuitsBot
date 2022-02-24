@@ -159,7 +159,7 @@ class Random(Cog):
                 "I don't recognize the function `" + func + "`. Type `!rand help` for information on this command")
 
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Rand command", ctx=ctx)
+            await utils.report(str(e), source="Rand command", ctx=ctx)
 
 
 def setup(bot):

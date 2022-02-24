@@ -80,7 +80,7 @@ class Scheduler:
                 await task(currtime)
             print("Minutely tasks done.")
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Failed to execute minutely task")
+            await utils.report(str(e), source="Failed to execute minutely task")
 
     async def _run_hourly(self, currtime):
         try:
@@ -89,7 +89,7 @@ class Scheduler:
                 await task(currtime)
             print("Hourly tasks done.")
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Failed to execute hourly task")
+            await utils.report(str(e), source="Failed to execute hourly task")
 
     async def _run_daily(self, currtime, midnight=False):
         try:
@@ -103,7 +103,7 @@ class Scheduler:
                     await task(currtime)
             print("Daily tasks done.")
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Failed to execute daily task")
+            await utils.report(str(e), source="Failed to execute daily task")
 
     async def _run_weekly(self, currtime, midnight=False):
         try:
@@ -117,7 +117,7 @@ class Scheduler:
                     await task(currtime)
             print("Weekly tasks done.")
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Failed to execute weekly task")
+            await utils.report(str(e), source="Failed to execute weekly task")
 
     async def _run_monthly(self, currtime, midnight=False):
         try:
@@ -131,7 +131,7 @@ class Scheduler:
                     await task(currtime)
             print("Monthly tasks done.")
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Failed to execute monthly task")
+            await utils.report(str(e), source="Failed to execute monthly task")
 
     async def _run_yearly(self, currtime, midnight=False):
         try:
@@ -145,7 +145,7 @@ class Scheduler:
                     await task(currtime)
             print("Yearly tasks done.")
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Failed to execute yearly task")
+            await utils.report(str(e), source="Failed to execute yearly task")
 
     # ===============================================================  Scheduler Loop
 
@@ -192,4 +192,4 @@ class Scheduler:
                 self._loop.create_task(self._run_minutely(now))
 
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Failed to execute task loop")
+            await utils.report(str(e), source="Failed to execute task loop")

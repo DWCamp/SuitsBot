@@ -168,7 +168,7 @@ async def on_reaction_add(reaction, user):
             elif user.permissions_in(channel).manage_messages:
                 can_delete = True
 
-            elif reaction.count >= DELETE_EMOJI_COUNT_TO_DELETE:
+            elif reaction.count >= 6:
                 can_delete = True
 
             if can_delete:
@@ -573,31 +573,6 @@ async def ree(ctx):
                    "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE***")
 
 
-# ------------------- UPDATE MYSQL DB -------------------------------
-
-def add_user(user_id, username):
-    """ Adds a user to the database
-
-    Parameters
-    -------------
-    user_id : str
-        The 18 digit user id of the user
-    username : str
-        The Discord name of the user
-    """
-    bot.dbconn.ensure_sql_connection()
-    # Add user to user table
-    add_user_command = "INSERT INTO Users VALUES (%s, %s)"
-    add_user_data = (user_id, username)
-    bot.dbconn.execute(add_user_command, add_user_data)
-    bot.users[user_id] = username
-
-    # Add the user to the list engine
-    bot.list_engine.add_user(user_id)
-
-    bot.dbconn.commit()
-
-
 # --------------------- LOADING DB ----------------------------------
 
 
@@ -639,7 +614,6 @@ startup_extensions = LOCAL_COGS
 startup_extensions += ['cogs.anilist',
                        'cogs.code',
                        'cogs.images',
-                       'cogs.listcommands',
                        'cogs.rsscrawler',
                        'cogs.rand',
                        'cogs.tags',

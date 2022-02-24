@@ -161,10 +161,10 @@ class Code(Cog):
                     "clientId": self.JDOODLE_ID,
                     "clientSecret": self.JDOODLE_SECRET})
                 if resp_code != 200:
-                    await utils.report(self.bot, "Failed to check credits\n" + str(json), source="!code dev", ctx=ctx)
+                    await utils.report("Failed to check credits\n" + str(json), source="!code dev", ctx=ctx)
                     return
                 if "used" not in json.keys():
-                    await utils.report(self.bot, json, "Failed to get credit count for JDOODLE account", ctx=ctx)
+                    await utils.report(json, "Failed to get credit count for JDOODLE account", ctx=ctx)
                     await ctx.send("Forces external to your request have caused this command to fail.")
                     return
                 await ctx.send(json['used'])
@@ -195,8 +195,7 @@ class Code(Cog):
                         })
                         [json, resp_code] = response
                         if resp_code == 429:
-                            await utils.report(self.bot,
-                                               json,
+                            await utils.report(json,
                                                "Bot has reached its JDOODLE execution limit",
                                                ctx=ctx)
                             await ctx.send("The bot has reached its code execution limit for the day.")
@@ -229,7 +228,7 @@ class Code(Cog):
             else:
                 await ctx.send("I don't see any code")
         except Exception as e:
-            await utils.report(self.bot, str(e), source="!code command", ctx=ctx)
+            await utils.report(str(e), source="!code command", ctx=ctx)
 
 
 def setup(bot):

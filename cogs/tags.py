@@ -228,7 +228,7 @@ class Tags(Cog):
                     await ctx.send(f"I don't think I have a tag `{key}` for this guild. "
                                    f"Type `!tag -ls` to see a list of this guild's tags")
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Tag command", ctx=ctx)
+            await utils.report(str(e), source="Tag command", ctx=ctx)
 
     # Posts the "No! No! No! ...NO!" JoJo video because I keep thinking the command exists
     @commands.command(hidden=True)

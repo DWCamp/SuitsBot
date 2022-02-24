@@ -412,7 +412,7 @@ def load_from_cache(dbconn, key, default=None):
 
 # ------------------------------------------------------------------------ Error messages
 
-async def flag(bot, alert, description=None, ctx=None, message=None):
+async def flag(alert, description=None, ctx=None, message=None):
     """
     Send a non-urgent message to the dev
 
@@ -459,12 +459,11 @@ async def flag(bot, alert, description=None, ctx=None, message=None):
             flag_embed.description = trim_to_len(description, 2048)
         await bot.ALERT_CHANNEL.send(embed=flag_embed)
     except Exception as e:
-        await report(bot,
-                     str(e) + "\n\nAlert:\n" + alert + "\nDescription:\n" + trim_to_len(description, 2000),
+        await report(str(e) + "\n\nAlert:\n" + alert + "\nDescription:\n" + trim_to_len(description, 2000),
                      source="Error when producing flag", ctx=ctx)
 
 
-async def report(bot, alert, source=None, ctx=None):
+async def report(alert, source=None, ctx=None):
     """
     Send an error message to the dev
 
@@ -476,8 +475,6 @@ async def report(bot, alert, source=None, ctx=None):
 
     Parameters
     -------------
-    bot : discord.bot object
-        The bot object for sending the message
     alert : str
         A title for the alert
     source : Optional - str
