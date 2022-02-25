@@ -64,12 +64,13 @@ class BaseGenerator:
         raise NotImplementedError
 
     @classmethod
-    async def unfurl(cls, triggers: [str]) -> [Embed]:
+    async def unfurl(cls, triggers: [str], msg: Message) -> [Embed]:
         """
         Generates a list of embeds for a given list of triggers
         Not all trigger phrases need to produce embeds
 
         :param triggers: The list of trigger phrases
+        :param msg: A copy of the original message object
         :return: The list of relevant embeds
         """
         raise NotImplementedError
@@ -112,11 +113,13 @@ class BaseGenerator:
                 return
 
             # Deduplicate and ignore recent triggers
-            triggers = list({trig for trig in triggers if IGNORE_RECENT_TRIGGERS or cls.recently_seen(trig)})
+            triggers = list({trig for trig in triggers if not IGNORE_RECENT_TRIGGERS or await cls.recently_seen(trig)})
+
+            print(f"filtered triggers: {triggers}")
 
             # Unfurl triggers
             try:
-                embed_list = await cls.unfurl(triggers)
+                embed_list = await cls.unfurl(triggers, msg)
             except Exception as e:
                 await utils.report(str(e), f"{cls.__name__} failed to unfurl message", msg)
                 return

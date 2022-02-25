@@ -6,7 +6,6 @@ from discord.ext import commands
 from discord import Embed
 
 # ----------- Custom imports
-from config import *
 from config.credentials import tokens
 import embedGenerator
 from scheduler import Scheduler
@@ -247,7 +246,7 @@ async def on_message(message):
 
         # ------------------------------------------- RESPOND TO EMOJI
         if message.content in ["🖐", "✋", "🤚"]:
-            await message.channel.send("\*clap\* :pray:" + " **HIGH FIVE!**")
+            await message.channel.send("\\*clap\\* :pray:" + " **HIGH FIVE!**")
             return
 
         if message.content == "👈":
@@ -384,7 +383,7 @@ async def dev(ctx):
             try:
                 bot.load_extension("cogs." + parameter)
             except (AttributeError, ImportError) as e:
-                await utils.report(                                   "```py\n{}: {}\n```".format(type(e).__name__, str(e)),
+                await utils.report("```py\n{}: {}\n```".format(type(e).__name__, str(e)),
                                    source="Loading extension (!dev)",
                                    ctx=ctx)
                 return
@@ -399,18 +398,18 @@ async def dev(ctx):
                 if new_nick == "":
                     new_nick = None
                 bot_member = ctx.guild.get_member(tokens["CLIENT_ID"])
-                await bot.change_nickname(bot_member, new_nick)
+                await bot_member.edit(nick=new_nick)
             except Exception as e:
                 await utils.report(str(e), source="!dev nick", ctx=ctx)
 
         elif func == "playing":
             try:
                 currently_playing = parameter
-                await bot.change_presence(game=discord.Game(name=currently_playing))
+                await bot.change_presence(activity=discord.Game(name=currently_playing))
                 utils.update_cache(bot.dbconn, "currPlaying", currently_playing)
                 await ctx.send("I'm now playing `" + parameter + "`")
             except discord.InvalidArgument as e:
-                await utils.report(                                   "Failed to change presence to `" + parameter + "`\n" + str(e),
+                await utils.report("Failed to change presence to `" + parameter + "`\n" + str(e),
                                    source="dev playing",
                                    ctx=ctx)
 
@@ -423,7 +422,7 @@ async def dev(ctx):
             try:
                 bot.load_extension("cogs." + parameter)
             except (AttributeError, ImportError) as e:
-                await utils.report(                                   "```py\n{}: {}\n```".format(type(e).__name__, str(e)),
+                await utils.report("```py\n{}: {}\n```".format(type(e).__name__, str(e)),
                                    source="Loading extension (!dev)",
                                    ctx=ctx)
                 return
@@ -446,7 +445,7 @@ async def dev(ctx):
 
         else:
             await ctx.send("I don't recognize the command `" + func + "`. You can type `!dev` for a list of " +
-                          "available functions")
+                           "available functions")
     except Exception as e:
         await utils.report(str(e), source="dev command", ctx=ctx)
 
@@ -455,48 +454,6 @@ async def dev(ctx):
 async def hello(ctx):
     greetings = ["Hello!", "Greetings, friend!", "How's it going?", "What's up?", "Yo.", "Hey.", "Sup.", "Howdy"]
     await ctx.send(utils.random_element(greetings))
-
-
-@bot.command(aliases=['skribbl', 'scrib', 's'])
-async def scribble(ctx):
-    global scribble_bank
-    try:
-        (arguments, message) = parse.args(ctx.message.content)
-        value = message.lower()
-
-        if "ls" in arguments or len(value) == 0:
-            await ctx.send(", ".join(scribble_bank))
-            return
-        if "rm" in arguments:
-            if value not in scribble_bank:
-                await ctx.send("I don't have the term `" + value + "` saved to my list")
-            else:
-                scribble_bank.remove(value)
-                await ctx.send("Alright, I removed `" + message + "` from my list")
-            return
-
-        if "," not in value:
-            value_list = [value]
-        else:
-            value_list = [i.strip() for i in value.split(",")]
-
-        added = list()
-        rejected = list()
-        for value in value_list:
-            if value in scribble_bank:
-                rejected.append(value)
-            else:
-                scribble_bank.append(value)
-                added.append(value)
-        utils.update_cache(bot.dbconn, "scribble", ",".join(scribble_bank))
-        if len(added) > 0:
-            await ctx.send("Alright, I recorded " + ", ".join([("`" + i + "`") for i in added]))
-        if len(rejected) == 1:
-            await ctx.send("`" + rejected[0] + "` was rejected as a duplicate")
-        elif len(rejected) > 2:
-            await ctx.send(", ".join([("`" + i + "`") for i in rejected]) + " were rejected as duplicates")
-    except Exception as e:
-        await utils.report(str(e), source="scribble")
 
 
 @bot.command(hidden=True, aliases=["reee", "reeee", "reeeee"])

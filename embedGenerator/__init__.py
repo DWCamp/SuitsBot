@@ -1,4 +1,8 @@
 from embedGenerator.baseGenerator import *
+from embedGenerator.DiscordMessageGenerator import DiscordMessageGenerator
+from embedGenerator.RedditSelfPostGenerator import RedditSelfPostGenerator
+from embedGenerator.RedditCommentGenerator import RedditCommentGenerator
+from embedGenerator.TwitterReplyGenerator import TwitterReplyGenerator
 from embedGenerator.SubredditGenerator import SubredditGenerator
 
 
