@@ -6,6 +6,7 @@ import re
 import traceback
 from discord import Embed
 from discord.abc import PrivateChannel
+from discord.ext.commands import Context
 from config.local_config import *
 from constants import EMBED_COLORS
 
@@ -412,7 +413,7 @@ def load_from_cache(dbconn, key, default=None):
 
 # ------------------------------------------------------------------------ Error messages
 
-async def flag(bot, alert, description=None, ctx=None, message=None):
+async def flag(alert, description=None, ctx=None, message=None):
     """
     Send a non-urgent message to the dev
 
@@ -459,12 +460,11 @@ async def flag(bot, alert, description=None, ctx=None, message=None):
             flag_embed.description = trim_to_len(description, 2048)
         await bot.ALERT_CHANNEL.send(embed=flag_embed)
     except Exception as e:
-        await report(bot,
-                     str(e) + "\n\nAlert:\n" + alert + "\nDescription:\n" + trim_to_len(description, 2000),
+        await report(str(e) + "\n\nAlert:\n" + alert + "\nDescription:\n" + trim_to_len(description, 2000),
                      source="Error when producing flag", ctx=ctx)
 
 
-async def report(bot, alert, source=None, ctx=None):
+async def report(alert, source=None, ctx=None):
     """
     Send an error message to the dev
 
@@ -476,14 +476,12 @@ async def report(bot, alert, source=None, ctx=None):
 
     Parameters
     -------------
-    bot : discord.bot object
-        The bot object for sending the message
     alert : str
         A title for the alert
     source : Optional - str
         The location in the codebase which raised the error
     ctx : Optional - context object
-        The context object of the message which triggered the flag
+        The context/message object which triggered the flag
     """
     # Value validation
     if not alert:
@@ -498,20 +496,27 @@ async def report(bot, alert, source=None, ctx=None):
             error_embed.add_field(name="Source", value=source, inline=False)
         await bot.ERROR_CHANNEL.send(embed=error_embed)
         return
+    msg = ctx.message if isinstance(ctx, Context) else ctx
     error_embed.title = "ERROR REPORT"
     error_embed.colour = EMBED_COLORS["error"]
     error_embed.add_field(name="Alert", value=alert, inline=False)
-    error_embed.add_field(name="Author", value=ctx.author.name, inline=False)
+    error_embed.add_field(name="Author", value=msg.author.name, inline=False)
     error_embed.add_field(name="Time", value=currtime(), inline=False)
-    if isinstance(ctx.channel, PrivateChannel):
+    if isinstance(msg.channel, PrivateChannel):
         error_embed.add_field(name="Channel", value="Private", inline=False)
     else:
         error_embed.add_field(name="Channel",
-                              value=ctx.guild.name + " / " + ctx.channel.name,
+                              value=msg.guild.name + " / " + msg.channel.name,
+                              inline=False)
+        error_embed.add_field(name="Link",
+                              value=f"https://discord.com/channels/"
+                                    f"{msg.guild.id}/"
+                                    f"{msg.channel.id}/"
+                                    f"{msg.id}",
                               inline=False)
     if source is not None:
         error_embed.add_field(name="Source", value=source, inline=False)
-    error_embed.add_field(name="Message", value=ctx.message.content, inline=False)
+    error_embed.add_field(name="Message", value=msg.content, inline=False)
 
     # Error message (exception + stacktrace)
     error_message = traceback.format_exc(limit=5)

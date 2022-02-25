@@ -98,7 +98,7 @@ class VoiceCommands(Cog):
             else:
                 await ctx.send(f"I'm sorry {ctx.author.mention}, but I was not able to join {author_voice_channel}")
         except Exception as e:
-            await utils.report(self.bot, str(e), source="join command", ctx=ctx)
+            await utils.report(str(e), source="join command", ctx=ctx)
 
     @commands.command(help=LONG_HELP['say'], brief=BRIEF_HELP['say'], aliases=ALIASES['say'])
     async def say(self, ctx):
@@ -254,7 +254,7 @@ class VoiceCommands(Cog):
             await ctx.send(quotes[key][0])  # Responds with the text of the voice clip
 
         except Exception as e:
-            await utils.report(self.bot, str(e), source="say command", ctx=ctx)
+            await utils.report(str(e), source="say command", ctx=ctx)
 
     @commands.command(help=LONG_HELP['leave'], brief=BRIEF_HELP['leave'], aliases=ALIASES['leave'])
     async def leave(self, ctx):
@@ -282,7 +282,7 @@ class VoiceCommands(Cog):
             else:  # If the bot is not connected to voice, do nothing
                 await ctx.send('I am not connected to your voice channel.')
         except Exception as e:
-            await utils.report(self.bot, str(e), source="leave command", ctx=ctx)
+            await utils.report(str(e), source="leave command", ctx=ctx)
 
 
 def setup(bot):

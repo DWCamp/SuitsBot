@@ -86,7 +86,7 @@ class Images(Cog):
             embed.description = f"**#{num}**"
             await ctx.send(embed=embed)
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Gritty command", ctx=ctx)
+            await utils.report(str(e), source="Gritty command", ctx=ctx)
 
     @commands.command(help=LONG_HELP['meow'], brief=BRIEF_HELP['meow'], aliases=ALIASES['meow'])
     async def meow(self, ctx):
@@ -99,7 +99,7 @@ class Images(Cog):
             else:
                 await ctx.send("I'm sorry, I don't have a cat photo at the moment. Please try again in a minute")
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Meow command", ctx=ctx)
+            await utils.report(str(e), source="Meow command", ctx=ctx)
 
     # Present the astronomy picture of the day
     @commands.command(help=LONG_HELP['nasa'], brief=BRIEF_HELP['nasa'], aliases=ALIASES['nasa'])
@@ -111,7 +111,7 @@ class Images(Cog):
             else:
                 await ctx.send(embed=apod_post)
         except Exception as e:
-            await utils.report(self.bot, str(e), source="NASA APOD command", ctx=ctx)
+            await utils.report(str(e), source="NASA APOD command", ctx=ctx)
 
     # Returns a random image of a snek
     @commands.command(help=LONG_HELP['picture'], brief=BRIEF_HELP['picture'],
@@ -145,7 +145,7 @@ class Images(Cog):
                                  text="https://unsplash.com/?utm_source=SuitsBot&utm_medium=referral")
             await ctx.send(embed=pic_embed)
         except Exception as e:
-            await utils.report(self.bot, str(e), source="picture command", ctx=ctx)
+            await utils.report(str(e), source="picture command", ctx=ctx)
 
     # Interfaces with the WolframAlpha API
     @commands.command(help=LONG_HELP['woof'], brief=BRIEF_HELP['woof'], aliases=ALIASES['woof'])
@@ -157,7 +157,7 @@ class Images(Cog):
             # If there is an error
             if 'status' not in json[0].keys() or json[0]['status'] != "success":
                 await ctx.send("I have encountered an error. Please contact the bot creator")
-                await utils.flag(self.bot, "Error with random dog api", description=json, ctx=ctx)
+                await utils.flag("Error with random dog api", description=json, ctx=ctx)
                 return
 
             # Embed the image and send it
@@ -165,7 +165,7 @@ class Images(Cog):
             woof_embed.colour = EMBED_COLORS['woof']
             await ctx.send(embed=woof_embed)
         except Exception as e:
-            await utils.report(self.bot, str(e), source="woof command", ctx=ctx)
+            await utils.report(str(e), source="woof command", ctx=ctx)
 
     def get_gritty_url(self, num=None):
         """

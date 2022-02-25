@@ -67,7 +67,7 @@ class WebQueries(Cog):
             else:
                 await ctx.send("I can't find any UrbanDictionary results for `" + message + "`")
         except Exception as e:
-            await utils.report(self.bot, str(e), source="ud command", ctx=ctx)
+            await utils.report(str(e), source="ud command", ctx=ctx)
 
     # Returns a description of an item from Wikipedia
     @commands.command(help=LONG_HELP['wiki'], brief=BRIEF_HELP['wiki'], aliases=ALIASES['wiki'])
@@ -102,8 +102,7 @@ class WebQueries(Cog):
             response = list(response[0]['query']['pages'].values())[0]
             # If the returned result isn't usable
             if "extract" not in response.keys():
-                await utils.report(self.bot,
-                                   utils.trim_to_len(response, 2000),
+                await utils.report(utils.trim_to_len(response, 2000),
                                    source="Wiki command found no useful article", ctx=ctx)
                 return None
             response_title = response['title']
@@ -167,7 +166,7 @@ class WebQueries(Cog):
             wiki_embed.colour = EMBED_COLORS['wiki']  # Make the embed white
             await ctx.send(embed=wiki_embed)
         except Exception as e:
-            await utils.report(self.bot, str(e), source="Wiki command", ctx=ctx)
+            await utils.report(str(e), source="Wiki command", ctx=ctx)
 
     @commands.command(help=LONG_HELP['wolf'], brief=BRIEF_HELP['wolf'], aliases=ALIASES['wolf'])
     async def wolf(self, ctx):
@@ -192,7 +191,7 @@ class WebQueries(Cog):
                     data = await resp.content.read()
                     await ctx.send(data.decode("utf-8"))
         except Exception as e:
-            await utils.report(self.bot, str(e), source="wolf command", ctx=ctx)
+            await utils.report(str(e), source="wolf command", ctx=ctx)
 
     @commands.command(help=LONG_HELP['youtube'], brief=BRIEF_HELP['youtube'],
                       aliases=ALIASES['youtube'])
@@ -216,8 +215,7 @@ class WebQueries(Cog):
             # Get the top 5 search results for a given query
             [json, resp_code] = await utils.get_json_with_get(api_url, params=params)
             if resp_code != 200:
-                await utils.report(self.bot,
-                                   "Failed to find video with search '" + query + "'",
+                await utils.report("Failed to find video with search '" + query + "'",
                                    source="youtube command",
                                    ctx=ctx)
                 await ctx.send("There was a problem retrieving that video")
@@ -260,7 +258,7 @@ class WebQueries(Cog):
                 title = json['items'][0]['snippet']['title']
                 await ctx.send("**" + title + "**\nhttps://www.youtube.com/watch?v=" + video_id)
         except Exception as e:
-            await utils.report(self.bot, str(e), source="youtube command", ctx=ctx)
+            await utils.report(str(e), source="youtube command", ctx=ctx)
 
 
 def setup(bot):

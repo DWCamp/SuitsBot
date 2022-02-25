@@ -4,7 +4,6 @@
 import discord
 from discord.ext import commands
 from discord import Embed
-from discord.errors import NotFound
 
 # ----------- Custom imports
 from config.credentials import tokens
@@ -12,7 +11,7 @@ import embedGenerator
 from scheduler import Scheduler
 from dbconnection import DBConnection
 from constants import *
-from config.local_config import *
+from config import *
 import utils
 import parse
 from cogs import images
@@ -67,7 +66,7 @@ async def post_apod(curr_time):
             for apod_channel in bot.APOD_CHANNELS:
                 await apod_channel.send(embed=apod_post)
     except Exception as e:
-        await utils.report(bot, str(e), source="Daily APOD command")
+        await utils.report(str(e), source="Daily APOD command")
 
 # --------------------------- BOT EVENTS --------------------------------
 
@@ -89,7 +88,7 @@ async def on_member_join(member: discord.member):
             embed.add_field(name="Joined on", value=member.joined_at)
             await benjaminherrin.send(embed=embed)
     except Exception as e:
-        await utils.report(bot, str(e), source="on_member_join")
+        await utils.report(str(e), source="on_member_join")
 
 
 @bot.event
@@ -99,14 +98,9 @@ async def on_message_delete(message):
     - Check if message was expanded by bot and, if so, delete embed
     """
     try:
-        for unfurl_message_id in await embedGenerator.get_unfurls_for_trigger_message(message):
-            try:
-                unfurl_message = await message.channel.fetch_message(int(unfurl_message_id))
-                await unfurl_message.delete()
-            except NotFound:
-                pass
+        await embedGenerator.process_trigger_delete(message)
     except Exception as e:
-        await utils.report(bot, str(e), source="on_message_delete")
+        await utils.report(str(e), source="on_message_delete")
 
 
 @bot.event
@@ -133,7 +127,7 @@ async def on_voice_state_update(member, before, after):
         voice_client.stop()
         await voice_client.disconnect()
     except Exception as e:
-        await utils.report(bot, str(e), source="Voice status update")
+        await utils.report(str(e), source="Voice status update")
         return
 
 
@@ -152,32 +146,9 @@ async def on_reaction_add(reaction, user):
 
         # Check delete emojis to see if we should delete a bot created message
         if reaction.emoji == DELETE_EMOJI:
-            unfurl_message = reaction.message
-            channel = unfurl_message.channel
-
-            # Get the id of the user the embed was a response to
-            unfurl_message_author_id = await embedGenerator.get_author_for_unfurl_message(unfurl_message)
-            # Reject if message does not exist
-            if not unfurl_message_author_id:
-                return
-
-            can_delete = False
-            if unfurl_message_author_id == user.id:
-                can_delete = True
-
-            elif user.permissions_in(channel).manage_messages:
-                can_delete = True
-
-            elif reaction.count >= DELETE_EMOJI_COUNT_TO_DELETE:
-                can_delete = True
-
-            if can_delete:
-                try:
-                    await unfurl_message.delete()
-                except NotFound:
-                    pass
+            await embedGenerator.process_delete_reaction(reaction, user)
     except Exception as e:
-        await utils.report(bot, str(e), source="on_reaction_add")
+        await utils.report(str(e), source="on_reaction_add")
 
 
 @bot.event
@@ -185,9 +156,13 @@ async def on_ready():
     print('------------\nLogged in as')
     print(bot.user.name)
     print(bot.user.id)
+    print(f"DEV GUILD - {DEV_GUILD_ID}")
     bot.DEV_GUILD = bot.get_guild(DEV_GUILD_ID)
+    print(f"DEV CHANNEL - {DEV_CHANNEL_ID}")
     bot.DEV_CHANNEL = bot.get_channel(DEV_CHANNEL_ID)
+    print(f"ALERT CHANNEL - {ALERT_CHANNEL_ID}")
     bot.ALERT_CHANNEL = bot.get_channel(ALERT_CHANNEL_ID)
+    print(f"ERROR CHANNEL - {ERROR_CHANNEL_ID}")
     bot.ERROR_CHANNEL = bot.get_channel(ERROR_CHANNEL_ID)
     bot.APOD_CHANNELS = []
     for channel_id in APOD_CHANNEL_IDS:
@@ -211,13 +186,13 @@ async def on_ready():
         # for key in bot.loading_failure.keys():
         #     error = bot.loading_failure[key]
         #     report = 'Failed to load extension {}\n{}'.format(type(error).__name__, error)
-        #     await utils.report(bot, 'FAILED TO LOAD {}\n{}'.format(key.upper(), report))
+        #     await utils.report('FAILED TO LOAD {}\n{}'.format(key.upper(), report))
 
         # Check if added objects failed to initialize
         if isinstance(bot.regex, Exception):
-            await utils.report(bot, str(bot.regex), source="Failed to load regex")
+            await utils.report(str(bot.regex), source="Failed to load regex")
         if isinstance(bot.scheduler, Exception):
-            await utils.report(bot, str(bot.scheduler), source="Failed to load scheduler")
+            await utils.report(str(bot.scheduler), source="Failed to load scheduler")
 
         # Update restart embed
         ready_embed.remove_field(status_field)
@@ -230,7 +205,7 @@ async def on_ready():
         try:
             await bot.change_presence(activity=discord.Game(currently_playing))
         except discord.InvalidArgument as e:
-            await utils.report(bot, str(e), source="Failed to change presence")
+            await utils.report(str(e), source="Failed to change presence")
 
         print('------------\nOnline!\n------------')
 
@@ -238,7 +213,7 @@ async def on_ready():
         ready_embed.add_field(name="Status", value="Online!", inline=False)
         await ready_message.edit(embed=ready_embed)
     except Exception as e:
-        await utils.report(bot, str(e))
+        await utils.report(str(e))
 
 
 @bot.event
@@ -271,7 +246,7 @@ async def on_message(message):
 
         # ------------------------------------------- RESPOND TO EMOJI
         if message.content in ["🖐", "✋", "🤚"]:
-            await message.channel.send("\*clap\* :pray:" + " **HIGH FIVE!**")
+            await message.channel.send("\\*clap\\* :pray:" + " **HIGH FIVE!**")
             return
 
         if message.content == "👈":
@@ -309,55 +284,14 @@ async def on_message(message):
                     return  # Ignore blacklisted command
 
         # -------------------------------------------- Embed response detection
-        content = message.content
 
-        # Subreddits
-        sublist = []
-        matches = bot.regex.find_subreddits(content)
-        for match in matches:
-            sub = match[0].strip()  # Get the full match from the regex tuple
-            sub_name = sub[sub.find("r/") + 2:]  # strip off "/r/"
-            if sub_name not in sublist:  # Check for duplicates
-                if await embedGenerator.recently_unfurled(f"{message.channel.id}-subreddits-{sub_name}"):
-                    continue
-                sublist.append(sub_name)
-                sub_embed = None
-                try:
-                    sub_embed = await embedGenerator.subreddit(sub_name, message)
-                    if sub_embed is not None:
-                        unfurl_message = await message.channel.send(embed=sub_embed)
-                        await embedGenerator.record_unfurl(message, unfurl_message)
-                        await unfurl_message.add_reaction(DELETE_EMOJI)
-                except Exception as e:
-                    details = {} if sub_embed is None else sub_embed.to_dict()
-                    await utils.report(bot, str(e) + "\n" + str(details), source='subreddit detection')
-        try:
-            generator_fodder = [(bot.regex.find_posts, embedGenerator.reddit_post),                 # Reddit posts
-                                (bot.regex.find_comments, embedGenerator.reddit_comment),           # Reddit comments
-                                # (bot.regex.find_twitter_handle, embedGenerator.twitter_handle),   # Twitter handles
-                                # (bot.regex.find_twitter_id, embedGenerator.twitter_images),       # Images from tweets
-                                (bot.regex.find_twitter_id, embedGenerator.twitter_response),       # Response to tweets
-                                (bot.regex.find_newegg, embedGenerator.newegg),                     # Newegg links
-                                (bot.regex.find_discord_message, embedGenerator.discord_message)    # Discord msg link
-                                ]
-            for (regex, generator) in generator_fodder:
-                for embed in await embedGenerator.embeds_from_regex(regex(content), generator, message):
-                    unfurl_message = await message.channel.send(embed=embed)
-                    try:
-                        await embedGenerator.record_unfurl(message, unfurl_message)
-                    except Exception as e:
-                        await utils.report(bot, str(e), source="Recording unfurl to redis DB in on_message")
-                    await unfurl_message.add_reaction(DELETE_EMOJI)
-        except Exception as e:
-            await utils.report(bot,
-                               f"{e}\n**Server:** {message.guild}\n**Message:** ```{message.content}```",
-                               source="embed generation in on_message")
+        await embedGenerator.process_message(message)
 
         # ------------------------------------------------------------
 
         await bot.process_commands(message)
     except Exception as e:
-        await utils.report(bot, f"{e}\nServer: {message.guild}\nMessage: {message.content}", source="on_message")
+        await utils.report(f"{e}\nServer: {message.guild}\nMessage: {message.content}", source="on_message")
 
 
 # ------------------------ GENERAL COMMANDS ---------------------------------
@@ -396,7 +330,7 @@ async def aes(ctx):
                 counter += 1
             await ctx.send(aesthetic_message)
     except Exception as e:
-        await utils.report(bot, str(e), source="aes command", ctx=ctx)
+        await utils.report(str(e), source="aes command", ctx=ctx)
         return
 
 
@@ -405,7 +339,7 @@ async def claire(ctx):
     try:
         await ctx.send("The `!claire` command has been retired on account of Claire no longer being a virgin.")
     except Exception as e:
-        await utils.report(bot, str(e), source="!claire command")
+        await utils.report(str(e), source="!claire command")
 
 
 @bot.group(hidden=True)
@@ -442,15 +376,14 @@ async def dev(ctx):
 
         elif func == "flag":
             await ctx.send("Triggering flag...")
-            await utils.flag(bot, "Test", description="This is a test of the flag ability", ctx=ctx)
+            await utils.flag("Test", description="This is a test of the flag ability", ctx=ctx)
 
         elif func == "load":
             """Loads an extension."""
             try:
                 bot.load_extension("cogs." + parameter)
             except (AttributeError, ImportError) as e:
-                await utils.report(bot,
-                                   "```py\n{}: {}\n```".format(type(e).__name__, str(e)),
+                await utils.report("```py\n{}: {}\n```".format(type(e).__name__, str(e)),
                                    source="Loading extension (!dev)",
                                    ctx=ctx)
                 return
@@ -465,19 +398,18 @@ async def dev(ctx):
                 if new_nick == "":
                     new_nick = None
                 bot_member = ctx.guild.get_member(tokens["CLIENT_ID"])
-                await bot.change_nickname(bot_member, new_nick)
+                await bot_member.edit(nick=new_nick)
             except Exception as e:
-                await utils.report(bot, str(e), source="!dev nick", ctx=ctx)
+                await utils.report(str(e), source="!dev nick", ctx=ctx)
 
         elif func == "playing":
             try:
                 currently_playing = parameter
-                await bot.change_presence(game=discord.Game(name=currently_playing))
+                await bot.change_presence(activity=discord.Game(name=currently_playing))
                 utils.update_cache(bot.dbconn, "currPlaying", currently_playing)
                 await ctx.send("I'm now playing `" + parameter + "`")
             except discord.InvalidArgument as e:
-                await utils.report(bot,
-                                   "Failed to change presence to `" + parameter + "`\n" + str(e),
+                await utils.report("Failed to change presence to `" + parameter + "`\n" + str(e),
                                    source="dev playing",
                                    ctx=ctx)
 
@@ -490,8 +422,7 @@ async def dev(ctx):
             try:
                 bot.load_extension("cogs." + parameter)
             except (AttributeError, ImportError) as e:
-                await utils.report(bot,
-                                   "```py\n{}: {}\n```".format(type(e).__name__, str(e)),
+                await utils.report("```py\n{}: {}\n```".format(type(e).__name__, str(e)),
                                    source="Loading extension (!dev)",
                                    ctx=ctx)
                 return
@@ -499,13 +430,13 @@ async def dev(ctx):
 
         elif func == "report":
             await ctx.send("Triggering report...")
-            await utils.report(bot, "This is a test of the report system", source="dev report command", ctx=ctx)
+            await utils.report("This is a test of the report system", source="dev report command", ctx=ctx)
 
         elif func == "test":
             try:
                 await ctx.send("hello")
             except Exception as e:
-                await utils.report(bot, str(e), source="dev test", ctx=ctx)
+                await utils.report(str(e), source="dev test", ctx=ctx)
 
         elif func == "unload":
             """ Unoads an extension """
@@ -514,9 +445,9 @@ async def dev(ctx):
 
         else:
             await ctx.send("I don't recognize the command `" + func + "`. You can type `!dev` for a list of " +
-                          "available functions")
+                           "available functions")
     except Exception as e:
-        await utils.report(bot, str(e), source="dev command", ctx=ctx)
+        await utils.report(str(e), source="dev command", ctx=ctx)
 
 
 @bot.command(help=LONG_HELP['hello'], brief=BRIEF_HELP['hello'], aliases=ALIASES['hello'])
@@ -525,77 +456,10 @@ async def hello(ctx):
     await ctx.send(utils.random_element(greetings))
 
 
-@bot.command(aliases=['skribbl', 'scrib', 's'])
-async def scribble(ctx):
-    global scribble_bank
-    try:
-        (arguments, message) = parse.args(ctx.message.content)
-        value = message.lower()
-
-        if "ls" in arguments or len(value) == 0:
-            await ctx.send(", ".join(scribble_bank))
-            return
-        if "rm" in arguments:
-            if value not in scribble_bank:
-                await ctx.send("I don't have the term `" + value + "` saved to my list")
-            else:
-                scribble_bank.remove(value)
-                await ctx.send("Alright, I removed `" + message + "` from my list")
-            return
-
-        if "," not in value:
-            value_list = [value]
-        else:
-            value_list = [i.strip() for i in value.split(",")]
-
-        added = list()
-        rejected = list()
-        for value in value_list:
-            if value in scribble_bank:
-                rejected.append(value)
-            else:
-                scribble_bank.append(value)
-                added.append(value)
-        utils.update_cache(bot.dbconn, "scribble", ",".join(scribble_bank))
-        if len(added) > 0:
-            await ctx.send("Alright, I recorded " + ", ".join([("`" + i + "`") for i in added]))
-        if len(rejected) == 1:
-            await ctx.send("`" + rejected[0] + "` was rejected as a duplicate")
-        elif len(rejected) > 2:
-            await ctx.send(", ".join([("`" + i + "`") for i in rejected]) + " were rejected as duplicates")
-    except Exception as e:
-        await utils.report(bot, str(e), source="scribble")
-
-
 @bot.command(hidden=True, aliases=["reee", "reeee", "reeeee"])
 async def ree(ctx):
     await ctx.send("***REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
                    "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE***")
-
-
-# ------------------- UPDATE MYSQL DB -------------------------------
-
-def add_user(user_id, username):
-    """ Adds a user to the database
-
-    Parameters
-    -------------
-    user_id : str
-        The 18 digit user id of the user
-    username : str
-        The Discord name of the user
-    """
-    bot.dbconn.ensure_sql_connection()
-    # Add user to user table
-    add_user_command = "INSERT INTO Users VALUES (%s, %s)"
-    add_user_data = (user_id, username)
-    bot.dbconn.execute(add_user_command, add_user_data)
-    bot.users[user_id] = username
-
-    # Add the user to the list engine
-    bot.list_engine.add_user(user_id)
-
-    bot.dbconn.commit()
 
 
 # --------------------- LOADING DB ----------------------------------
@@ -639,7 +503,6 @@ startup_extensions = LOCAL_COGS
 startup_extensions += ['cogs.anilist',
                        'cogs.code',
                        'cogs.images',
-                       'cogs.listcommands',
                        'cogs.rsscrawler',
                        'cogs.rand',
                        'cogs.tags',

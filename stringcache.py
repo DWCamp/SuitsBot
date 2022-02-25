@@ -127,15 +127,13 @@ class StringCache:
                         self._stale = False  # Queue is no longer stale
                     self._queue.extend(values)
                 except Exception as exc:
-                    await utils.flag(self.bot,
-                                     alert=f"Failed fill attempt {gather_count} for StringCache `{self.cache_id}`",
+                    await utils.flag(alert=f"Failed fill attempt {gather_count} for StringCache `{self.cache_id}`",
                                      description=str(exc))
 
             # Send an error if failed to fill queue after reaching maximum attempts
             if len(self._queue) < self.fill_size:
                 print("Exceeded gather attempts")
-                await utils.report(self.bot,
-                                   f"Failed to fill ResourceCache `{self.cache_id}`\n"
+                await utils.report(f"Failed to fill ResourceCache `{self.cache_id}`\n"
                                    f"Attempts: {gather_count}\n"
                                    f"Queue size: {len(self._queue)}\n"
                                    f"Target: {self.fill_size}\n"
@@ -146,4 +144,4 @@ class StringCache:
             self._save()
         except Exception as e:
             self._locked = True  # Don't lock up the queue
-            await utils.report(self.bot, f"Exception on `_fill()` for StringCache `{self.cache_id}` \n" + str(e))
+            await utils.report(f"Exception on `_fill()` for StringCache `{self.cache_id}` \n" + str(e))
