@@ -113,9 +113,7 @@ class BaseGenerator:
                 return
 
             # Deduplicate and ignore recent triggers
-            triggers = list({trig for trig in triggers if not IGNORE_RECENT_TRIGGERS or await cls.recently_seen(trig)})
-
-            print(f"filtered triggers: {triggers}")
+            triggers = list({trig for trig in triggers if ALLOW_RECENT_TRIGGERS or not await cls.recently_seen(trig)})
 
             # Unfurl triggers
             try:
