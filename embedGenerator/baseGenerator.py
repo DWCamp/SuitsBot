@@ -48,9 +48,6 @@ class BaseGenerator:
         Additionally, it defines static methods for managing recent triggers and unfurls
     """
 
-    RECENT_PREFIX = f"{BASE_PREFIX}{__name__}-"  # Recently seen triggers
-    DATA_PREFIX = f"{BASE_PREFIX}{__name__}DATA-"  # Any non-volatile data
-
     # Channel/Server ID Blacklist
     SERVER_BLACKLIST = []
     CHANNEL_BLACKLIST = []
@@ -97,12 +94,22 @@ class BaseGenerator:
         :param channel_id: The ID of the channel the message was seen in
         :return: `True` if the trigger is still considered recently seen, `False` otherwise
         """
-        key = f"{cls.RECENT_PREFIX}{channel_id}-{trigger}"
+        key = f"{cls._get_recent_prefix()}{channel_id}-{trigger}"
         if REDIS_CLIENT.exists(key):
             return True
         # If key is not present, set and return `False`
         REDIS_CLIENT.set(key, "", RECENTLY_UNFURLED_TIMEOUT)
         return False
+
+    @classmethod
+    def _get_recent_prefix(cls):
+        """ Gets this class' the redis key prefix for recently seen trigger entries """
+        return f"{BASE_PREFIX}{cls.__name__}-RECENT-"
+
+    @classmethod
+    def _get_data_prefix(cls):
+        """ Gets this class' the redis key prefix for generic data entries """
+        return f"{BASE_PREFIX}{cls.__name__}-DATA-"
 
     @classmethod
     def _source_blocked(cls, msg):
@@ -223,7 +230,7 @@ class BaseGenerator:
         :param key: The key to store the data under
         :param data: The data to store
         """
-        data_key = f"{cls.DATA_PREFIX}{key}"
+        data_key = f"{cls._get_data_prefix()}{key}"
         REDIS_CLIENT.set(data_key, json.dumps(data))
 
     @classmethod
@@ -234,7 +241,7 @@ class BaseGenerator:
 
         :param key: The key the data was stored under. If key could not be found, returns `None`
         """
-        data_key = f"{cls.DATA_PREFIX}{key}"
+        data_key = f"{cls._get_data_prefix()}{key}"
         data = REDIS_CLIENT.get(data_key)
         return data if data is None else json.loads(data)
 
