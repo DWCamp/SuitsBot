@@ -14,7 +14,7 @@ class DiscordMessageGenerator(BaseGenerator):
         return [group[1] for group in links]
 
     @classmethod
-    async def unfurl(cls, triggers: [str], msg: Message) -> [Embed]:
+    async def unfurl(cls, triggers: [str], msg: Message) -> list:
         discord_logo = "https://cdn3.iconfinder.com/data/icons/logos-and-brands-adobe/512/91_Discord-512.png"
 
         embed_list = []
@@ -30,10 +30,10 @@ class DiscordMessageGenerator(BaseGenerator):
             bot = utils.get_bot()
             message_channel = bot.get_channel(channel_id)
             if message_channel is None:
-                return
+                continue
             linked_message = await message_channel.fetch_message(message_id)
             if linked_message is None:
-                return
+                continue
 
             """ Make the Embed """
             embed = Embed()

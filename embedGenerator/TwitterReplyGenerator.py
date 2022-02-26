@@ -15,9 +15,9 @@ class TwitterReplyGenerator(BaseGenerator):
         return re.findall(r'\b(?:https://twitter\.com/\w{1,15}/status/)(\d{19})\b', msg.content)
 
     @classmethod
-    async def unfurl(cls, triggers: [str], msg: Message) -> [Embed]:
-        embed_list = []
+    async def unfurl(cls, triggers: [str], msg: Message) -> list:
         original_ids = []
+        embed_list = []
         for trigger in triggers:
             # Fetch info on the tweet
             twitter_api_url = "https://api.twitter.com/1.1/statuses/show.json"
@@ -88,7 +88,6 @@ class TwitterReplyGenerator(BaseGenerator):
             # Footer
             embed.set_footer(icon_url="https://abs.twimg.com/icons/apple-touch-icon-192x192.png", text="Twitter")
             embed_list.append(embed)
-        print(f"returning list with {len(embed_list)} entries")
         return embed_list
 
     @classmethod

@@ -1,56 +1,13 @@
 import re
 import utils
 
-
-class Regex:
-    def __init__(self, bot):
-        subdomains = "(?:(?:www|old|np|m|en|dd|us|de)\.)?"
-        self.bot = bot
-        self.newegg = re.compile('https://www\.newegg\.com/Product/Product\.aspx\?Item=(?:\w{15})', re.IGNORECASE)
-        self.reddit_post = re.compile('https?://' + subdomains + 'reddit.com/r/\w{1,20}/comments/\w{5,6}/\w+/?\B')
-        self.twitter_handle = re.compile('(\s|^)(@{1})(\w{1,15})($|\s)')
-        self.twitter_id = re.compile('\\b(https://twitter\\.com/\\w{1,15}/status/)(\\d{19})\\b')
-        self.url = re.compile("https?://" +  # Protocol
-                              "(([\w\$\-+!*'\(\),])+\.){1,}" +  # Domain
-                              "([\w\$\-+!*'\(\),])+" +  # Top level domain
-                              "(/[\w\$\-+#!*'\(\),]+)*(\/)?" +  # directory
-                              "(\.[a-zA-Z]+)?" +  # File type
-                              "(\?(([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)&)*" +  # URL parameters (1/2)
-                              "([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)?)?")  # URL parameters (2/2)
-
-    def is_url(self, string: str) -> bool:
-        """
-        Validates that a string is a properly formatted url
-
-        :param string: The string to check
-        :return: `True` if the url matches the format of a url
-        """
-        return self.url.fullmatch(string) is not None
-
-    """
-    ======================================================================================
-    Wow I can't believe I ever wrote something this godawful. This needs to get fixed asap
-    ====================================================================================== 
-    """
-
-    # Stores
-
-    def find_newegg(self, message):
-        return re.findall(self.newegg, message)
-
-    # Twitter
-
-    def find_twitter_handle(self, message):
-        matches = re.findall(self.twitter_handle, message)
-        if matches:
-            return [match[2] for match in matches]  # Grab only the user name
-        return []
-
-    def find_twitter_id(self, message):
-        matches = re.findall(self.twitter_id, message)
-        if matches:
-            return [match[1] for match in matches]  # Grab only the status id
-        return []
+URL_REGEX = re.compile(r"https?://" +  # Protocol
+                       r"(([\w$\-+!*'(),])+\.)+" +  # Domain
+                       r"([\w$\-+!*'(),])+" +  # Top level domain
+                       r"(/[\w$\-+#!*'(),]+)*(/)?" +  # directory
+                       r"(\.[a-zA-Z]+)?" +  # File type
+                       r"(\?(([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)&)*" +  # URL parameters (1/2)
+                       r"([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)?)?")  # URL parameters (2/2)
 
 
 def args(message: str) -> ([str], str):
@@ -78,27 +35,6 @@ def args(message: str) -> ([str], str):
     return arguments, message[i:].strip()
 
 
-def sanitize_apos(string: str) -> str:
-    """
-    Make apostrophes and quotes consistent within a string
-
-    Different keyboards, especially the iPhone keyboard, will use different unicode characters
-    for apostrophes and quotes at the beginning, middle and end of strings. These look better
-    aesthetically, but they provide a problem for text searching. This function replaces all
-    the unicode apostrophes with a single type ('), all unicode quotation marks with a single
-    type ("), and returns the edited string
-
-    :param string: The string to sanitize
-    :return: The sanitized string
-    """
-    string = string.replace("’", "'")
-    string = string.replace("‘", "'")
-    string = string.replace("”", '"')
-    string = string.replace("“", '"')
-    string = string.replace("„", '"')
-    return string
-
-
 def func_param(string: str) -> [str]:
     """
     Strips off the command and then parses out the function
@@ -119,6 +55,16 @@ def func_param(string: str) -> [str]:
         func = message.lower()
         parameter = ""
     return [func, parameter]
+
+
+def is_url(string: str) -> bool:
+    """
+    Validates that a string is a properly formatted url
+
+    :param string: The string to check
+    :return: `True` if the url matches the format of a url
+    """
+    return URL_REGEX.fullmatch(string) is not None
 
 
 def key_value(message, attachments=None):
@@ -209,6 +155,27 @@ def number_in_brackets(string: str) -> int:
             return index
         except ValueError:
             raise ValueError("Could not parse the number '" + string + "'")
+
+
+def sanitize_apos(string: str) -> str:
+    """
+    Make apostrophes and quotes consistent within a string
+
+    Different keyboards, especially the iPhone keyboard, will use different unicode characters
+    for apostrophes and quotes at the beginning, middle and end of strings. These look better
+    aesthetically, but they provide a problem for text searching. This function replaces all
+    the unicode apostrophes with a single type ('), all unicode quotation marks with a single
+    type ("), and returns the edited string
+
+    :param string: The string to sanitize
+    :return: The sanitized string
+    """
+    string = string.replace("’", "'")
+    string = string.replace("‘", "'")
+    string = string.replace("”", '"')
+    string = string.replace("“", '"')
+    string = string.replace("„", '"')
+    return string
 
 
 def stringandoptnum(string):

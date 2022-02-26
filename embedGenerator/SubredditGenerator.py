@@ -19,7 +19,7 @@ class SubredditGenerator(BaseGenerator):
         return [trig.lower() for trig in triggers]  # Subreddits are case-insensitive
 
     @classmethod
-    async def unfurl(cls, triggers: [str], msg: Message) -> [Embed]:
+    async def unfurl(cls, triggers: [str], msg: Message) -> list:
         embed_color = EMBED_COLORS["reddit"]
         nsfw_thumbnail = "https://cdn2.iconfinder.com/data/icons/freecns-cumulus/32/519791-101_Warning-512.png"
         default_thumbnail = "https://cdn.discordapp.com/attachments/341428321109671939/490654122941349888/unknown.png"
@@ -50,7 +50,7 @@ class SubredditGenerator(BaseGenerator):
             embed.set_footer(text="via Reddit.com", icon_url=embed_icon)
             embed.url = "https://www.reddit.com" + data["url"]
 
-            embed.add_field(name="Subscribers", value=data["subscribers"])
+            embed.add_field(name="Subscribers", value=f"{data['subscribers']:,}")
             embed.add_field(name="Created", value=f"<t:{int(data['created'])}:D>")
 
             # Return censored embed if community is NSFW or Quarantined

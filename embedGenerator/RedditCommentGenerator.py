@@ -13,7 +13,7 @@ class RedditCommentGenerator(BaseGenerator):
         return re.findall(r'reddit\.com/r/\w+/comments/\w{6}/[\w%]+/\w{7}/?', msg.content)
 
     @classmethod
-    async def unfurl(cls, triggers: [str], msg: Message) -> [Embed]:
+    async def unfurl(cls, triggers: [str], msg: Message) -> list:
         embed_list = []
 
         embedcolor = EMBED_COLORS["reddit"]
@@ -29,7 +29,7 @@ class RedditCommentGenerator(BaseGenerator):
                 json_url = comment_url + ".json"
             [json, response] = await utils.get_json_with_get(json_url)
             if response is not 200:
-                return None
+                return []
             link_data = json[0]['data']['children'][0]['data']
             comment_data = json[1]['data']['children'][0]['data']
 

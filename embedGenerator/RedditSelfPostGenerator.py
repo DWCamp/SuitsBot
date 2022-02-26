@@ -13,7 +13,7 @@ class RedditSelfPostGenerator(BaseGenerator):
         return re.findall(r'reddit.com/r/\w{1,20}/comments/\w{5,6}/\w+/?', msg.content)
 
     @classmethod
-    async def unfurl(cls, triggers: [str], msg: Message) -> [Embed]:
+    async def unfurl(cls, triggers: [str], msg: Message) -> list:
 
         embed_color = EMBED_COLORS["reddit"]
         nsfw_thumbnail = "https://cdn2.iconfinder.com/data/icons/freecns-cumulus/32/519791-101_Warning-512.png"

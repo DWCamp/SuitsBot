@@ -449,8 +449,12 @@ async def flag(alert, description=None, ctx=None, message=None):
         if isinstance(message.channel, PrivateChannel):
             flag_embed.add_field(name="Channel", value="Private", inline=False)
         else:
-            flag_embed.add_field(name="Channel", value=message.guild.name + " / " + message.channel.name,
+            flag_embed.add_field(name="Channel",
+                                 value=message.guild.name + " / " + message.channel.name,
                                  inline=False)
+            flag_embed.add_field(name="Link",
+                                 value=f"https://discord.com/channels/"
+                                       f"{message.guild.id}/{message.channel.id}/{message.id}")
 
         # Try to avoid issues where users joining servers causes an error because of blank messages
         if message.content is not None and message.content != "":
