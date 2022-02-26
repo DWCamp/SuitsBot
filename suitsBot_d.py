@@ -191,8 +191,6 @@ async def on_ready():
         #     await utils.report('FAILED TO LOAD {}\n{}'.format(key.upper(), report))
 
         # Check if added objects failed to initialize
-        if isinstance(bot.regex, Exception):
-            await utils.report(str(bot.regex), source="Failed to load regex")
         if isinstance(bot.scheduler, Exception):
             await utils.report(str(bot.scheduler), source="Failed to load scheduler")
 
@@ -513,14 +511,6 @@ if __name__ == "__main__":
         except discord.ClientException as err:
             exc = '{}: {}'.format(type(err).__name__, err)
             print('Failed to load extension {}\n{}'.format(extension, exc))
-
-# Add regex parser
-print("Building regex...")
-try:
-    bot.regex = parse.Regex(bot)
-except Exception as exc:
-    print("--- Failed to build regex ---")
-    bot.regex = exc
 
 # Add task scheduler
 print('Scheduling tasks...')
