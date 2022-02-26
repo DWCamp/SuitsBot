@@ -4,7 +4,7 @@ from discord.errors import NotFound
 import redis
 
 from config import *
-from constants import DELETE_EMOJI
+from constants import *
 import utils
 
 
@@ -32,6 +32,9 @@ DELETE_EMOJI_COUNT_TO_DELETE = 4
 
 # Create redis client
 REDIS_CLIENT = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)
+
+# Records the most recent report to prevent spamming #alert-messages
+PREVIOUS_REPORT = None
 
 
 class BaseGenerator:
@@ -188,6 +191,7 @@ class BaseGenerator:
                     else:
                         unfurl = await msg.reply(str(reply))
                     await unfurl.add_reaction(DELETE_EMOJI)
+                    await unfurl.add_reaction(REPORT_EMOJI)
                     unfurl_ids.append(unfurl.id)
                     # Record unfurled message triggering author as unfurl_message_id: author_id
                     unfurl_message_key = f"{UNFURL_PREFIX}{unfurl.id}"
@@ -286,4 +290,38 @@ async def process_delete_reaction(reaction: Reaction, user: User):
             except NotFound:
                 pass
     except Exception as e:
-        await utils.report(str(e), source="on_reaction_add")
+        await utils.report(str(e), source="process_delete_reaction")
+
+
+async def process_report_reaction(reaction: Reaction, user: User):
+    """
+    Handles a user reacting to a message with the 'loudspeaker' emoji. If this message is an
+    unfurl, the bot will post a dev alert about the report
+
+    :param reaction: The Reaction
+    :param user: The User leaving the reaction
+    """
+    global PREVIOUS_REPORT
+    try:
+        # Check if it's one of the bot's messages
+        msg = reaction.message
+        if msg.author.id != BOT_USER_ID:
+            return
+
+        # Ignore if there wasn't already a report reaction on it
+        # This would mean it's either an embed or multiple people manually reported it
+        if reaction.count < 2:
+            return
+
+        # Ignore if this reaction has been seen already
+        reaction_record = msg.id + user.id  # *Technically* this could collide, but it's fast and the chances are low
+        if reaction_record == PREVIOUS_REPORT:
+            return
+        else:
+            PREVIOUS_REPORT = reaction_record
+
+        # Flag reaction
+        await utils.flag("Message Reported", f"User '{user.name}' reported a message", message=msg)
+
+    except Exception as e:
+        await utils.report(str(e), source="process_report_reaction")

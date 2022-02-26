@@ -50,7 +50,7 @@ class SubredditGenerator(BaseGenerator):
             embed.set_footer(text="via Reddit.com", icon_url=embed_icon)
             embed.url = "https://www.reddit.com" + data["url"]
 
-            embed.add_field(name="Subscribers", value=data["subscribers"])
+            embed.add_field(name="Subscribers", value=f"{data['subscribers']:,}")
             embed.add_field(name="Created", value=f"<t:{int(data['created'])}:D>")
 
             # Return censored embed if community is NSFW or Quarantined

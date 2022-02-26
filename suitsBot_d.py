@@ -147,6 +147,8 @@ async def on_reaction_add(reaction, user):
         # Check delete emojis to see if we should delete a bot created message
         if reaction.emoji == DELETE_EMOJI:
             await embedGenerator.process_delete_reaction(reaction, user)
+        elif reaction.emoji == REPORT_EMOJI:
+            await embedGenerator.process_report_reaction(reaction, user)
     except Exception as e:
         await utils.report(str(e), source="on_reaction_add")
 
@@ -267,20 +269,20 @@ async def on_message(message):
         # ------------------------------------------- FILTER BLACKLISTED COMMANDS
         if message.guild is not None and message.guild.id in command_blacklist:
             if len(message.content) > 1 and message.content[0] == "!":
-                spaceloc = message.content.find(" ", 2)
-                if spaceloc > -1:
-                    command = message.content[1:spaceloc]
+                space_loc = message.content.find(" ", 2)
+                if space_loc > -1:
+                    command = message.content[1:space_loc]
                 else:
                     command = message.content[1:]
 
-                aliaslist = []
+                alias_list = []
                 for blockedCommand in command_blacklist[message.guild.id]:
-                    aliaslist.append(blockedCommand)
+                    alias_list.append(blockedCommand)
                     if blockedCommand in ALIASES:
                         for alias in ALIASES[blockedCommand]:
-                            aliaslist.append(alias)
+                            alias_list.append(alias)
 
-                if command in aliaslist:
+                if command in alias_list:
                     return  # Ignore blacklisted command
 
         # -------------------------------------------- Embed response detection
@@ -378,17 +380,6 @@ async def dev(ctx):
             await ctx.send("Triggering flag...")
             await utils.flag("Test", description="This is a test of the flag ability", ctx=ctx)
 
-        elif func == "load":
-            """Loads an extension."""
-            try:
-                bot.load_extension("cogs." + parameter)
-            except (AttributeError, ImportError) as e:
-                await utils.report("```py\n{}: {}\n```".format(type(e).__name__, str(e)),
-                                   source="Loading extension (!dev)",
-                                   ctx=ctx)
-                return
-            await ctx.send("`` {} `` loaded.".format(parameter))
-
         elif func == "nick":
             try:
                 if ctx.guild is None:
@@ -434,7 +425,12 @@ async def dev(ctx):
 
         elif func == "test":
             try:
-                await ctx.send("hello")
+                print("testing...")
+                async for message in ctx.message.channel.history(limit=5):
+                    if len(message.embeds) > 0:
+                        print(message.id)
+                        for embed in message.embeds:
+                            print(embed.to_dict())
             except Exception as e:
                 await utils.report(str(e), source="dev test", ctx=ctx)
 

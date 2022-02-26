@@ -88,7 +88,6 @@ class TwitterReplyGenerator(BaseGenerator):
             # Footer
             embed.set_footer(icon_url="https://abs.twimg.com/icons/apple-touch-icon-192x192.png", text="Twitter")
             embed_list.append(embed)
-        print(f"returning list with {len(embed_list)} entries")
         return embed_list
 
     @classmethod

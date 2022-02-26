@@ -10,13 +10,13 @@ class Regex:
         self.reddit_post = re.compile('https?://' + subdomains + 'reddit.com/r/\w{1,20}/comments/\w{5,6}/\w+/?\B')
         self.twitter_handle = re.compile('(\s|^)(@{1})(\w{1,15})($|\s)')
         self.twitter_id = re.compile('\\b(https://twitter\\.com/\\w{1,15}/status/)(\\d{19})\\b')
-        self.url = re.compile("https?://" +  # Protocol
-                              "(([\w\$\-+!*'\(\),])+\.){1,}" +  # Domain
-                              "([\w\$\-+!*'\(\),])+" +  # Top level domain
-                              "(/[\w\$\-+#!*'\(\),]+)*(\/)?" +  # directory
-                              "(\.[a-zA-Z]+)?" +  # File type
-                              "(\?(([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)&)*" +  # URL parameters (1/2)
-                              "([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)?)?")  # URL parameters (2/2)
+        self.url = re.compile(r"https?://" +  # Protocol
+                              r"(([\w\$\-+!*'\(\),])+\.){1,}" +  # Domain
+                              r"([\w\$\-+!*'\(\),])+" +  # Top level domain
+                              r"(/[\w\$\-+#!*'\(\),]+)*(\/)?" +  # directory
+                              r"(\.[a-zA-Z]+)?" +  # File type
+                              r"(\?(([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)&)*" +  # URL parameters (1/2)
+                              r"([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)?)?")  # URL parameters (2/2)
 
     def is_url(self, string: str) -> bool:
         """
