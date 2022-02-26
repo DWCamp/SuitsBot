@@ -16,8 +16,8 @@ class TwitterReplyGenerator(BaseGenerator):
 
     @classmethod
     async def unfurl(cls, triggers: [str], msg: Message) -> list:
-        embed_list = []
         original_ids = []
+        embed_list = []
         for trigger in triggers:
             # Fetch info on the tweet
             twitter_api_url = "https://api.twitter.com/1.1/statuses/show.json"

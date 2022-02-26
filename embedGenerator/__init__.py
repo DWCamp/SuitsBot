@@ -3,6 +3,7 @@ from embedGenerator.DiscordMessageGenerator import DiscordMessageGenerator
 from embedGenerator.RedditSelfPostGenerator import RedditSelfPostGenerator
 from embedGenerator.RedditCommentGenerator import RedditCommentGenerator
 from embedGenerator.TwitterReplyGenerator import TwitterReplyGenerator
+from embedGenerator.FxTwitterGenerator import FxTwitterGenerator
 from embedGenerator.SubredditGenerator import SubredditGenerator
 
 
