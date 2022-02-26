@@ -15,7 +15,7 @@ class TwitterReplyGenerator(BaseGenerator):
         return re.findall(r'\b(?:https://twitter\.com/\w{1,15}/status/)(\d{19})\b', msg.content)
 
     @classmethod
-    async def unfurl(cls, triggers: [str], msg: Message) -> [Embed]:
+    async def unfurl(cls, triggers: [str], msg: Message) -> list:
         embed_list = []
         original_ids = []
         for trigger in triggers:

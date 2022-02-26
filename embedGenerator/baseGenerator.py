@@ -48,7 +48,17 @@ class BaseGenerator:
     RECENT_PREFIX = f"{BASE_PREFIX}{__name__}-"  # Recently seen triggers
     DATA_PREFIX = f"{BASE_PREFIX}{__name__}DATA-"  # Any non-volatile data
 
-    BLACKLIST = []
+    # Channel/Server ID Blacklist
+    SERVER_BLACKLIST = []
+    CHANNEL_BLACKLIST = []
+
+    # Server/Channel ID Whitelist
+    # NOTE: If there is a server whitelist and channel blacklist (or vice versa), the channel list takes priority
+    SERVER_WHITELIST = []
+    CHANNEL_WHITELIST = []
+
+    # Whether to filter triggers that were recently seen. Can be changed by subclasses
+    GENERATOR_ALLOWS_REPEATS = False
 
     @classmethod
     async def extract(cls, msg: Message) -> [str]:
@@ -64,30 +74,70 @@ class BaseGenerator:
         raise NotImplementedError
 
     @classmethod
-    async def unfurl(cls, triggers: [str], msg: Message) -> [Embed]:
+    async def unfurl(cls, triggers: [str], msg: Message) -> list:
         """
-        Generates a list of embeds for a given list of triggers
-        Not all trigger phrases need to produce embeds
+        Generates a list of responses, either Embeds or URL strings, for a given list of triggers
+        Not all trigger phrases need to produce responses
 
         :param triggers: The list of trigger phrases
         :param msg: A copy of the original message object
-        :return: The list of relevant embeds
+        :return: The list of relevant responses
         """
         raise NotImplementedError
 
     @classmethod
-    async def recently_seen(cls, trigger: str) -> bool:
+    async def recently_seen(cls, trigger: str, channel_id: int) -> bool:
         """
-        Checks if trigger was recently seen by this Generator. If not, it is recorded
+        Checks if trigger was recently seen by this Generator in the same channel. If not, it is recorded
 
         :param trigger: The trigger to check for
+        :param channel_id: The ID of the channel the message was seen in
         :return: `True` if the trigger is still considered recently seen, `False` otherwise
         """
-        key = f"{cls.RECENT_PREFIX}{trigger}"
+        key = f"{cls.RECENT_PREFIX}{channel_id}-{trigger}"
         if REDIS_CLIENT.exists(key):
             return True
         # If key is not present, set and return `False`
         REDIS_CLIENT.set(key, "", RECENTLY_UNFURLED_TIMEOUT)
+        return False
+
+    @classmethod
+    def _source_blocked(cls, msg):
+        """
+        Checks if the source of the message is blocked, meaning either:
+            - The channel is blacklisted
+            - The channel isn't on the whitelist
+            - The server is blacklisted and the channel isn't whitelisted
+            - The server isn't on the whitelist
+
+        :param msg: The message to check
+        :return: Returns `True` if the message is from a disabled source
+        """
+        # Throw an error if there's a blacklist AND whitelist for either source
+        if cls.SERVER_BLACKLIST and cls.SERVER_WHITELIST:
+            raise ValueError(f"{cls.__name__} has both a server whitelist and blacklist, which is not allowed")
+        elif cls.CHANNEL_BLACKLIST and cls.CHANNEL_WHITELIST:
+            raise ValueError(f"{cls.__name__} has both a channel whitelist and blacklist, which is not allowed")
+
+        # If there isn't a blacklist or whitelist, message is automatically allowed
+        if not cls.SERVER_BLACKLIST and not cls.SERVER_WHITELIST and \
+                not cls.CHANNEL_BLACKLIST and not cls.CHANNEL_WHITELIST:
+            return False
+
+        # The channel is not whitelisted
+        if msg.channel.id not in cls.CHANNEL_WHITELIST:
+            return True
+        # The channel is blacklisted
+        if msg.channel.id in cls.CHANNEL_BLACKLIST:
+            return True
+        # The is server not whitelisted
+        if msg.guild.id not in cls.SERVER_WHITELIST:
+            return True
+        # The is server not blacklisted
+        if msg.guild.id in cls.SERVER_BLACKLIST:
+            return True
+
+        # If no disable condition is met, return message is allowed
         return False
 
     @classmethod
@@ -101,8 +151,8 @@ class BaseGenerator:
         :param msg: The discord.Message object this Generator is extracting data from
         """
         try:
-            # Ignore if message location blacklisted
-            if msg.channel.id in cls.BLACKLIST or msg.guild.id in cls.BLACKLIST:
+            # Ignore if message location blacklisted or not whitelisted
+            if cls._source_blocked(msg):
                 return
 
             # Parse triggers from message
@@ -112,8 +162,15 @@ class BaseGenerator:
                 await utils.report(str(e), f"{cls.__name__} failed to parse message", msg)
                 return
 
-            # Deduplicate and ignore recent triggers
-            triggers = list({trig for trig in triggers if ALLOW_RECENT_TRIGGERS or not await cls.recently_seen(trig)})
+            # Deduplicate
+            triggers = {trig for trig in triggers}
+
+            # Ignore recent triggers if enabled
+            if RECENT_EMBED_TRIGGER_FILTER_ENABLED:
+                c_id = msg.channel.id
+                triggers = [t for t in triggers if not await cls.recently_seen(t, c_id) or cls.GENERATOR_ALLOWS_REPEATS]
+            else:
+                triggers = list(triggers)
 
             # Unfurl triggers
             try:
@@ -124,9 +181,12 @@ class BaseGenerator:
 
             # Post embeds
             unfurl_ids = []
-            for embed in embed_list:
+            for reply in embed_list:
                 try:
-                    unfurl = await msg.reply(embed=embed)
+                    if isinstance(reply, Embed):
+                        unfurl = await msg.reply(embed=reply)
+                    else:
+                        unfurl = await msg.reply(str(reply))
                     await unfurl.add_reaction(DELETE_EMOJI)
                     unfurl_ids.append(unfurl.id)
                     # Record unfurled message triggering author as unfurl_message_id: author_id
