@@ -3,7 +3,7 @@ List of constants necessary for the bot's operation
 """
 
 # A single place to define the bot's version number
-BOT_VERSION = "5.2.0"
+BOT_VERSION = "5.2.1"
 
 # ====== Stuff?
 
