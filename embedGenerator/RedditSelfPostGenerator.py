@@ -51,8 +51,8 @@ class RedditSelfPostGenerator(BaseGenerator):
             embed.add_field(name="Author", value=post_data['author'])
             embed.add_field(name="Subreddit", value=post_data['subreddit_name_prefixed'])
             if not post_data['hide_score']:
-                scoreText = f"{post_data['score']} ({post_data['upvote_ratio'] * 100}%)"
-                embed.add_field(name="Score", value=scoreText)
+                score_text = f"{post_data['score']} ({post_data['upvote_ratio'] * 100}%)"
+                embed.add_field(name="Score", value=score_text)
             embed.add_field(name="Comments", value=post_data['num_comments'])
 
             # Hide other details if NSFW

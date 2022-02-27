@@ -3,7 +3,6 @@ import re
 from discord import Message
 
 from embedGenerator import BaseGenerator
-from constants import *
 from config.credentials import tokens
 import utils
 
@@ -14,7 +13,6 @@ class FxTwitterGenerator(BaseGenerator):
     async def extract(cls, msg: Message) -> [str]:
         # By extracting all twitter links without checking them, you avoid having to invoke the API on duplicates
         return re.findall(r'\b(?:https://twitter\.com/\w{1,15}/status/)(\d{19})\b', msg.content)
-
 
     @classmethod
     async def unfurl(cls, triggers: [str], msg: Message) -> list:

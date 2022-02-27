@@ -185,8 +185,8 @@ class WebQueries(Cog):
                 async with session.get("http://api.wolframalpha.com/v1/result?appid=" +
                                        credentials.tokens["WOLFRAMALPHA_APPID"] + "&i=" + quote(message)) as resp:
                     if resp.status is 501:
-                        await ctx.send("WolframAlpha could not understand the question '{}' because {}"
-                                           .format(message, resp.reason))
+                        await ctx.send(f"WolframAlpha could not understand the "
+                                       f"question '{message}' because {resp.reason}")
                         return
                     data = await resp.content.read()
                     await ctx.send(data.decode("utf-8"))

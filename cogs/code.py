@@ -219,12 +219,12 @@ class Code(Cog):
                         await ctx.send(embed=output_embed)
                     else:
                         await ctx.send("I don't know the language '" + language + "'. Type `!code -full` " +
-                                           "to see the list of languages I support, or type `!code -ls` to see " +
-                                           "the most popular ones")
+                                       "to see the list of languages I support, or type `!code -ls` to see " +
+                                       "the most popular ones")
                 else:
                     await ctx.send("There was no language tag. Remember to include the language tag " +
-                                       "immediately after the opening backticks. Type `!code -ls` or " +
-                                       "`!code -full` to find your language's tag")
+                                   "immediately after the opening backticks. Type `!code -ls` or " +
+                                   "`!code -full` to find your language's tag")
             else:
                 await ctx.send("I don't see any code")
         except Exception as e:

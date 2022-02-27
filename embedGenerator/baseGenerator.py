@@ -176,9 +176,9 @@ class BaseGenerator:
             triggers = {trig for trig in triggers}
 
             # Ignore recent triggers if enabled
-            if RECENT_EMBED_TRIGGER_FILTER_ENABLED:
+            if RECENT_EMBED_TRIGGER_FILTER_ENABLED and cls.GENERATOR_ALLOWS_REPEATS:
                 c_id = msg.channel.id
-                triggers = [t for t in triggers if not await cls.recently_seen(t, c_id) or cls.GENERATOR_ALLOWS_REPEATS]
+                triggers = [t for t in triggers if not await cls.recently_seen(t, c_id)]
             else:
                 triggers = list(triggers)
 
@@ -222,16 +222,17 @@ class BaseGenerator:
             await utils.report(str(e), f"run() in `{cls.__name__}`", msg)
 
     @classmethod
-    async def store_data(cls, key: str, data):
+    async def store_data(cls, key: str, data, expiration: int = None):
         """
         Stores data in the redis DB under a given key. Data will be dumped to JSON first
-        Unlike unfurl keys, this will not expire over time
 
         :param key: The key to store the data under
         :param data: The data to store
+        :param expiration: How many seconds the data should be stored for before expiring.
+            Defaults to `None`, which means it will never expire
         """
         data_key = f"{cls._get_data_prefix()}{key}"
-        REDIS_CLIENT.set(data_key, json.dumps(data))
+        REDIS_CLIENT.set(data_key, json.dumps(data), ex=expiration)
 
     @classmethod
     async def load_data(cls, key: str):
@@ -259,7 +260,7 @@ async def process_trigger_delete(msg: Message):
     unfurl_messages = json.loads(unfurl_messages)   # Convert to list
     for unfurl in unfurl_messages:
         try:
-            unfurl_message = await msg.channel.fetch_message(int(unfurl))
+            unfurl_message = await msg.channel.get_message(int(unfurl))
             await unfurl_message.delete()
         except NotFound:
             pass    # Unfurl was probably already deleted

@@ -4,28 +4,66 @@ from datetime import datetime
 import random
 import re
 import traceback
-from discord import Embed
-from discord.abc import PrivateChannel
+from typing import Optional, Union
+
+from discord import Client, Embed, Member, Message, User
+from discord.abc import GuildChannel, PrivateChannel
 from discord.ext.commands import Context
+
 from config.local_config import *
 from constants import EMBED_COLORS
 
 
-# ------------------------------------------------------------------------ THE BOT
+# ------------------------------------------------------------------------ Discord Specific Functions
 
-bot = None
+_bot: Client = None  # This will be defined as soon as the bot is initialized
+
+
+def _get_bot() -> Client:
+    """ Sometimes you just need the bot """
+    if _bot is None:
+        raise AttributeError("`utils.get_bot()` was called before the bot was initialized")
+    return _bot
+
+
+async def get_message(channel_id: int, message_id: int) -> Optional[Message]:
+    """
+    Fetches a specific message object from Discord using a channel and message ID
+    :param channel_id: The ID of the channel containing the message
+    :param message_id: The ID of the message being fetched
+    :return: If found, the Message object with that ID. `None` otherwise
+    """
+    message_channel = _get_bot().get_channel(channel_id)
+    if message_channel is None:
+        return None
+    return await message_channel.fetch_message(message_id)
+
+
+async def get_channel(channel_id: int) -> Optional[Union[GuildChannel, PrivateChannel]]:
+    """
+    Fetches a specific channel object from Discord using a channel ID
+
+    :param channel_id: The ID of the channel containing the message
+    :return: If found, the Channel object with that ID. `None` otherwise
+    """
+    return _get_bot().get_channel(channel_id)
+
+
+def get_screen_name(user: Union[User, Member]) -> str:
+    """
+    Gets the screen name of either a User or Member object
+    :param user: The User or Member
+    :return: The name or nickname (if applicable) of a user
+    """
+    return user.nick if isinstance(user, Member) and user.nick is not None else user.name
 
 
 # ------------------------------------------------------------------------ Utilities
 
-def currtime():
+
+def curr_time():
     """ Returns a human readable printout of the current time """
     return datetime.now().strftime("%a %b %d, %I:%M:%S %p")
-
-
-def get_bot():
-    """ Sometimes you just need the bot """
-    return bot
 
 
 def random_element(array):
@@ -419,8 +457,6 @@ async def flag(alert, description=None, ctx=None, message=None):
 
     Parameters
     -------------
-    bot : discord.bot object
-        The bot object for sending the message
     alert : str
         A title for the alert
     description : Optional - str
@@ -431,6 +467,7 @@ async def flag(alert, description=None, ctx=None, message=None):
     message : Optional - message object
         The message object which triggered the flag, used in case a context object is not available
     """
+    bot = _get_bot()
     try:
         if message is None:
             if ctx is None:
@@ -445,7 +482,7 @@ async def flag(alert, description=None, ctx=None, message=None):
         flag_embed.title = alert
         flag_embed.colour = EMBED_COLORS["flag"]
         flag_embed.add_field(name="Author", value=message.author.name, inline=False)
-        flag_embed.add_field(name="Time", value=currtime(), inline=False)
+        flag_embed.add_field(name="Time", value=curr_time(), inline=False)
         if isinstance(message.channel, PrivateChannel):
             flag_embed.add_field(name="Channel", value="Private", inline=False)
         else:
@@ -487,6 +524,8 @@ async def report(alert, source=None, ctx=None):
     ctx : Optional - context object
         The context/message object which triggered the flag
     """
+    bot = _get_bot()
+
     # Value validation
     if not alert:
         alert = "❗"
@@ -505,7 +544,7 @@ async def report(alert, source=None, ctx=None):
     error_embed.colour = EMBED_COLORS["error"]
     error_embed.add_field(name="Alert", value=alert, inline=False)
     error_embed.add_field(name="Author", value=msg.author.name, inline=False)
-    error_embed.add_field(name="Time", value=currtime(), inline=False)
+    error_embed.add_field(name="Time", value=curr_time(), inline=False)
     if isinstance(msg.channel, PrivateChannel):
         error_embed.add_field(name="Channel", value="Private", inline=False)
     else:
