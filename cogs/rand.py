@@ -55,7 +55,7 @@ class Random(Cog):
             if func == "item":
                 if len(parameter) == 0:
                     await ctx.send("I need a comma delineated list (e.g. '!random item A, B, C, D, E' etc.) "
-                                       "to pick from")
+                                   "to pick from")
                     return
                 itemlist = list(filter(None, parameter.split(",")))
                 if len(itemlist) == 0:
@@ -123,7 +123,7 @@ class Random(Cog):
                     # if there is no number after the "d", the bot rejects it
                     elif (dloc + 1) == len(die):
                         await ctx.send("I don't see a number after 'd' in the argument '" + die +
-                                           "'. I need to know a number of sides")
+                                       "'. I need to know a number of sides")
                         return
                     else:
                         count = die[0:dloc]
@@ -142,7 +142,7 @@ class Random(Cog):
 
                     if count > 100000:
                         await ctx.send(str(count) + " dice is a *lot*. I think rolling that many would hurt "
-                                           "my head :confounded:\nPlease don't make me do it.")
+                                       "my head :confounded:\nPlease don't make me do it.")
                         return
                     dicesum = 0
                     for i in range(0, count):

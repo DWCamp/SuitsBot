@@ -37,7 +37,7 @@ command_blacklist = {360523650912223253: ["aes",
 # ------------------------ DEFINE BOT ----------------------------------
 
 
-def get_prefix(client, message):
+def get_prefix(_, message):
     if message.guild is None:
         return ['!', '&', '?', '%', '#', ']', '..', '.']
     elif message.guild.id in CUSTOM_PREFIXES.keys():
@@ -47,15 +47,14 @@ def get_prefix(client, message):
 
 
 bot = commands.Bot(command_prefix=get_prefix, description=BOT_DESCRIPTION, case_insensitive=True, owner_id=OWNER_ID)
-utils.bot = bot  # Store the bot where other scripts can get it
+utils._bot = bot  # Store the bot where other scripts can get it
 
 # -------------------------- PERIODIC TASKS --------------------------------------
 
 
-async def post_apod(curr_time):
+async def post_apod(_):
     """
     Post the APOD to the channels defined in local_config.py
-    :param curr_time: A value passed to all scheduled tasks
     """
     try:
         apod_post = await images.get_apod_embed()
@@ -176,7 +175,7 @@ async def on_ready():
         # Post restart embed
         ready_embed = Embed()
         ready_embed.title = "Bot Restart"
-        ready_embed.add_field(name="Current Time", value=utils.currtime())
+        ready_embed.add_field(name="Current Time", value=utils.curr_time())
         ready_embed.add_field(name="discord.py version", value=str(discord.__version__), inline=False)
         ready_embed.add_field(name="Status", value="Loading Data...", inline=False)
         ready_embed.colour = EMBED_COLORS["default"]

@@ -1,13 +1,13 @@
 import re
 import utils
 
-URL_REGEX = re.compile(r"https?://" +  # Protocol
+URL_REGEX = re.compile(r"(https?://" +  # Protocol
                        r"(([\w$\-+!*'(),])+\.)+" +  # Domain
                        r"([\w$\-+!*'(),])+" +  # Top level domain
                        r"(/[\w$\-+#!*'(),]+)*(/)?" +  # directory
                        r"(\.[a-zA-Z]+)?" +  # File type
                        r"(\?(([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)&)*" +  # URL parameters (1/2)
-                       r"([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)?)?")  # URL parameters (2/2)
+                       r"([\w+\-_.]*=([\w+\-_.]|(%[0-9A-F]{2}))*)?)?)")  # URL parameters (2/2)
 
 
 def args(message: str) -> ([str], str):

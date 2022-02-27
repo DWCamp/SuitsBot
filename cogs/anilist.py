@@ -182,7 +182,7 @@ class Anilist(Cog):
 
             if "add" in arguments and "remove" in arguments:
                 await ctx.send("I don't know how you possibly expect me to both add and " +
-                                   "remove a synonym in the same command")
+                               "remove a synonym in the same command")
 
             if "char" in arguments:
                 synonymdict = self.character_synonyms
@@ -218,11 +218,11 @@ class Anilist(Cog):
                         synonymdict[changeto].append(element.strip())
                         self.add_synonym(searchtype.upper(), changeto, element)
                     await ctx.send("All " + searchtype + " searches for `" + "` or `".join(changefromlist) +
-                                       "` will now correct to `" + changeto + "`")
+                                   "` will now correct to `" + changeto + "`")
                 else:
                     await ctx.send("The synonym `` {} `` already corrects to `` {} ``. Pick a different " +
-                                       "word/phrase or remove the existing synonym with the command " +
-                                       "``!anime -remove {} ``".format(changefrom, collision, changefrom))
+                                   "word/phrase or remove the existing synonym with the command " +
+                                   "``!anime -remove {} ``".format(changefrom, collision, changefrom))
                 return
 
             # Remove search synonym
@@ -234,11 +234,11 @@ class Anilist(Cog):
                         del synonymdict[correction]
                     self.remove_synonym(searchtype.upper(), searchterm)
                     await ctx.send("Alright, `" + searchterm + "` will no longer correct to `" + correction +
-                                       "` for " + searchtype + " searches")
+                                   "` for " + searchtype + " searches")
                 else:
                     await ctx.send(("The synonym you searched for does not exist. Check your use " +
-                                        "(or lack thereof) of the `-char` command, or use the `-ls` command to check " +
-                                        "that everything is spelled correctly"))
+                                    "(or lack thereof) of the `-char` command, or use the `-ls` command to check " +
+                                    "that everything is spelled correctly"))
                 return
 
             if searchterm == "":

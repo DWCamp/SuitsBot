@@ -148,8 +148,7 @@ class Tags(Cog):
 
             # Reject empty messages (`-ls` calls have already been handled)
             if len(message) == 0:
-                await ctx.send("I see some arguments `` " + str(arguments) +
-                                   " ``, but no key or value to work with :/")
+                await ctx.send(f"I see some arguments `{str(arguments)}`, but no key or value to work with :/")
                 return
 
             # Deletes a saved tag
@@ -160,8 +159,7 @@ class Tags(Cog):
                     await ctx.send("Okay. I deleted it")
                     self.update_tag_remove(key, tagowner, domain)
                 else:  # If that tag didn't exist
-                    await ctx.send("Hmmm, that's funny. I didn't see the tag `` " + message +
-                                       " `` in the saved tags list.")
+                    await ctx.send(f"Hmmm, that's funny. I didn't see the tag `{message}` in the saved tags list.")
                 return
 
             # ------ Set or Get ------
@@ -245,7 +243,6 @@ class Tags(Cog):
         self.tags = {"global": {}, "server": {}, "user": {}}
         query = "SELECT * FROM Tags"
         cursor = self.bot.dbconn.execute(query)
-        count = 0
         for (owner_id, key_string, value_string, domain) in cursor:
             owner_id = int(owner_id)    # ID has to be cast to int now because v1.0
 

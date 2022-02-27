@@ -26,12 +26,8 @@ class DiscordMessageGenerator(BaseGenerator):
             channel_id = int(channel_id)
             message_id = int(message_id)
 
-            # Find message
-            bot = utils.get_bot()
-            message_channel = bot.get_channel(channel_id)
-            if message_channel is None:
-                continue
-            linked_message = await message_channel.fetch_message(message_id)
+            # Fetch message
+            linked_message = await utils.get_message(channel_id, message_id)
             if linked_message is None:
                 continue
 
@@ -66,16 +62,10 @@ class DiscordMessageGenerator(BaseGenerator):
                     text = utils.trim_to_len(f"**Message contained embed**\n```\n{embed_as_text}\n```", 2048)
                 elif embed.image.url is Embed.Empty:  # Description doesn't need to be modified if an image is attached
                     text = "```(Message was empty)```"
-
             embed.description = text
 
-            # Try and use author's nickname if author is a Member object
-            if isinstance(linked_message.author, Member):
-                embed.title = linked_message.author.name \
-                    if linked_message.author.nick is None \
-                    else linked_message.author.nick
-            else:
-                embed.title = linked_message.author.name
+            # Set the title to the author's name as it appears on that server
+            embed.title = utils.get_screen_name(linked_message.author)
 
             if linked_message.author.avatar_url:
                 embed.set_thumbnail(url=linked_message.author.avatar_url)
@@ -88,12 +78,12 @@ class DiscordMessageGenerator(BaseGenerator):
 
             # Add timestamp to footer
             if linked_message.edited_at:
-                timestamp = linked_message.edited_at
+                timestamp = linked_message.edited_at.timestamp()
                 verb = "Edited"
             else:
-                timestamp = linked_message.created_at
+                timestamp = linked_message.created_at.timestamp()
                 verb = "Sent"
-            embed.set_footer(text=f"{verb} at {timestamp.strftime('%H:%M  %Y-%m-%d')}",
+            embed.set_footer(text=f"{verb} at <t:{timestamp}>",
                              icon_url=discord_logo)
             embed_list.append(embed)
         return embed_list

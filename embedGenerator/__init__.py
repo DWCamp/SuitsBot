@@ -1,4 +1,5 @@
 from embedGenerator.baseGenerator import *
+from embedGenerator.DuplicateLinkAlertGenerator import DuplicateLinkAlertGenerator
 from embedGenerator.DiscordMessageGenerator import DiscordMessageGenerator
 from embedGenerator.RedditSelfPostGenerator import RedditSelfPostGenerator
 from embedGenerator.RedditCommentGenerator import RedditCommentGenerator

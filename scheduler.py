@@ -29,9 +29,7 @@ class Scheduler:
         self._monthly_midnight = list()
         self._yearly_midnight = list()
 
-        self.reset_last_runs()
-
-    def reset_last_runs(self):
+        # Recent last run date
         now = datetime.now()
         self._year_last_run = datetime(now.year, 1, 1)
         self._month_last_run = datetime(now.year, now.month, 1)

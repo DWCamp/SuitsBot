@@ -41,7 +41,7 @@ class StringCache:
         self._loop = bot.loop
         self._redis_db = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)
         self._queue = []
-        # Indicates that the last string has been returned and should be deleted when the cache refills
+        # Indicates that the last string has already been returned and should be deleted when the cache refills
         self._stale = False
 
         # Load saved queue
@@ -62,6 +62,27 @@ class StringCache:
         self._save()
         if refill:
             self.fill()
+
+    def fill(self):
+        """ A function which creates an async task to fill up the cache """
+        self._loop.create_task(self._fill())
+
+    async def gather(self) -> list:
+        """
+        This is the method which defines the logic by which new resources are acquired
+        A typical use would be performing a JSON request to a web API. The result should
+        be returned as a list
+        :return: A list of items to store in the queue
+        """
+        raise NotImplementedError
+
+    def is_stale(self) -> bool:
+        """
+        Checks if cache is "stale", i.e. the last element has already been served
+        and the cache hasn't yet refilled
+        :return: `True` if the cache is stale
+        """
+        return self._stale
 
     def peek(self):
         """ Returns the next value in the cache without removing """
@@ -84,19 +105,6 @@ class StringCache:
         if len(self) < self.fill_threshold:
             self.fill()
         return value
-
-    def fill(self):
-        """ A function which creates an async task to fill up the cache """
-        self._loop.create_task(self._fill())
-
-    async def gather(self) -> list:
-        """
-        This is the method which defines the logic by which new resources are acquired
-        A typical use would be performing a JSON request to a web API. The result should
-        be returned as a list
-        :return: A list of items to store in the queue
-        """
-        raise NotImplementedError
 
     def _save(self) -> None:
         """ Save the current queue to the database """
