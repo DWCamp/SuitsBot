@@ -298,7 +298,7 @@ async def process_delete_reaction(reaction: Reaction, user: User):
             except NotFound:
                 pass
     except Exception as e:
-        await utils.report(str(e), source="process_delete_reaction")
+        await utils.report(str(e), source="process_delete_reaction", ctx=reaction.message)
 
 
 async def process_report_reaction(reaction: Reaction, user: User):
