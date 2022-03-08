@@ -283,6 +283,10 @@ async def process_delete_reaction(reaction: Reaction, user: User):
     :param user: The User leaving the reaction
     """
     try:
+        # Only attempt to delete the bot's own messages
+        if reaction.message.author.id != BOT_USER_ID:
+            return
+
         # Get trigger author id
         unfurl_message_key = f"{UNFURL_PREFIX}{reaction.message.id}"
         trigger_author_id = REDIS_CLIENT.get(unfurl_message_key)

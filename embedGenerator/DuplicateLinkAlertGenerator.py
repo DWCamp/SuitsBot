@@ -38,6 +38,7 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
         await cls.store_data(link_key,
                              f"{msg.channel.id}/{msg.id}/{msg.author.id}",
                              expiration=cls.DUPLICATE_LINK_EXPIRY_SECONDS)
+        return False
 
     @classmethod
     async def extract(cls, msg: Message) -> [str]:
@@ -62,10 +63,10 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
                 print(f"Didn't find trigger {trigger} in the DB")
                 continue
 
-            channel_id, message_id, trigger_author_id = prev_sighting.split("/")
+            channel_id, message_id, prev_author_id = prev_sighting.split("/")
 
             # If it's the same user, don't say anything
-            if int(trigger_author_id) == msg.author.id:
+            if int(prev_author_id) == msg.author.id:
                 continue
 
             prev_message = await utils.get_message(int(channel_id), int(message_id))
@@ -79,20 +80,14 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
             embed.url = f"http://discord.com/channels/{guild_id}/{channel_id}/{message_id}"
             embed.colour = EMBED_COLORS["flag"]
 
-            print(repr(msg.channel))
-            print(repr(prev_message.channel))
-
-            print(f"{type(msg.author).__name__}")
-            print(f"{type(prev_message.author).__name__}")
-
             trigger_author_name = utils.get_screen_name(msg.author)
             prev_author_name = prev_message.author
             if prev_message.channel.id == msg.channel.id:
                 embed.title = f"Heads up {trigger_author_name}, " \
-                              f"I think {prev_author_name} already posted that link in this channel"
+                              f"I think {prev_author_name} recently posted that link in this channel"
             else:
                 embed.title = f"Heads up {trigger_author_name}, " \
-                              f"I think {prev_author_name} already posted that link in #{prev_message.channel.name}"
+                              f"I think {prev_author_name} recently posted that link in #{prev_message.channel.name}"
 
             embed.add_field(name="Author", value=prev_author_name)
             embed.add_field(name="Sent", value=f"<t:{int(prev_message.created_at.timestamp())}>")
