@@ -260,7 +260,7 @@ async def process_trigger_delete(msg: Message):
     unfurl_messages = json.loads(unfurl_messages)   # Convert to list
     for unfurl in unfurl_messages:
         try:
-            unfurl_message = await msg.channel.get_message(int(unfurl))
+            unfurl_message = await utils.get_message(msg.channel.id, int(unfurl))
             await unfurl_message.delete()
         except NotFound:
             pass    # Unfurl was probably already deleted
