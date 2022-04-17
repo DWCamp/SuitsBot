@@ -64,7 +64,8 @@ class Images(Cog):
                             "https://i.redd.it/pve7gkrgmet11.jpg",
                             "https://i.imgur.com/2BrTP5q.jpg",
                             "https://tenor.com/view/gritty-flyers-gritty-colbert-mascot-gif-14310822",
-                            "https://cdn.discordapp.com/attachments/703005801505357864/917408414777352282/Gritty_TradingCard.jpg"]
+                            "https://cdn.discordapp.com/attachments/703005801505357864/917408414777352282/Gritty_TradingCard.jpg",
+                            "https://media.discordapp.net/attachments/360523651650682880/965054323245596762/gritty.png"]
 
     @commands.command(help=LONG_HELP['gritty'], brief=BRIEF_HELP['gritty'], aliases=ALIASES['gritty'])
     async def gritty(self, ctx):
