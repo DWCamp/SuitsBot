@@ -1,7 +1,7 @@
 import re
 
 
-from discord import Embed, Member, Message
+from discord import Embed, Message
 
 from embedGenerator import BaseGenerator
 from constants import *
@@ -44,7 +44,6 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
     async def extract(cls, msg: Message) -> [str]:
         links = re.findall(parse.URL_REGEX, msg.content)    # Extract URLs
         links = [group[0] for group in links]   # Get just the full string
-        print(links)
         # Return only the links that were already seen on this server recently
         return [link for link in links if await cls.recently_on_server(link, msg)]
 
