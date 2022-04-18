@@ -211,17 +211,26 @@ class RSSFeed:
         """
         if regex:
             pattern = re.compile(term, re.IGNORECASE)
+            fuzzy_pattern = pattern
         else:
-            pattern = re.compile(r"(?<!\w)" + re.escape(term) + r"(?!\w)", re.IGNORECASE)
+            escaped = re.escape(term)
+            pattern = re.compile(r"(?<!\w)" + escaped + r"(?!\w)", re.IGNORECASE)
+            fuzzy_pattern = re.compile(escaped.replace(r"\ ", r".*"), re.IGNORECASE)
 
-        found = None
+        partial_match = None
+        fuzzy_match = None
         for item in self.items:
             if re.fullmatch(pattern, item["title"]):  # If an exact match is found, return
                 return item
-            # In case of no exact match, find most recent partial match
-            if re.search(pattern, item["title"]) and found is None:
-                found = item
-        return found  # If no partial match found, this will return `None`
+            # In case of no full match, find most recent episode containing the string
+            if re.search(pattern, item["title"]) and partial_match is None:
+                print(f"Found partial match `{item['title']}`")
+                partial_match = item
+            # In case of no partial match, do a "fuzzy search" where whitespace is replaced with ".*"
+            if re.search(fuzzy_pattern, item["title"]) and fuzzy_match is None:
+                print(f"Found fuzzy match `{item['title']}`")
+                fuzzy_match = item
+        return partial_match if partial_match is not None else fuzzy_match
 
     def to_string(self):
         string = f"""
@@ -244,14 +253,13 @@ Fetch time: {self.fetch_time}
         """
         Updates the cached data
         """
+        print(f"Refreshing feed '{self.feed_id}'")
         self.raw_rss = utils.get_rss_feed(self.feed_url)
-        print(self.raw_rss)
         self.fetch_time = datetime.today()
         self.channel = self.raw_rss["channel"]
         self.items = self.raw_rss["items"]
 
         self.feed = self.raw_rss["feed"]
-        print(self.feed)
         self.subtitle = self.feed.subtitle
         self.link = self.feed["link"]
         if self.feed.image:
