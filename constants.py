@@ -28,7 +28,7 @@ FEED_ALIAS_LIST = {
     "Accidental Tech Podcast": ["atp", "accidental"],
     "KSP History": ["ksp", "ksphistory", "history"],
     "Main Engine Cutoff": ["meco", "MainEngineCutOff", "podcast"],
-    "My Brother My Brother and Me": ["mbmbmam"],
+    "My Brother My Brother and Me": ["mbmbam"],
     "Off-Nominal": ["on", "offnominal"],
     "The Adventure Zone": ["taz", "theadventurezone"],
     "We Martians": ["wm", "wemartians", "We-martians"],

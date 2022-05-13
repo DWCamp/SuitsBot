@@ -1,7 +1,7 @@
 import re
 
 
-from discord import Embed, Member, Message
+from discord import Embed, Message
 
 from embedGenerator import BaseGenerator
 from constants import *
@@ -71,9 +71,9 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
 
             channel_id, message_id, prev_author_id = prev_sighting.split("/")
 
-            # # If it's the same user, don't say anything
-            # if int(prev_author_id) == msg.author.id:
-            #     continue
+            # If it's the same user, don't say anything
+            if int(prev_author_id) == msg.author.id:
+                continue
 
             prev_message = await utils.get_message(int(channel_id), int(message_id))
 
