@@ -14,6 +14,8 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
     DUPLICATE_LINK_EXPIRY_SECONDS = 60 * 60 * 24 * 2    # Two days
     GENERATOR_ALLOWS_REPEATS = True  # The whole point is to find OTHER PEOPLE'S repeats
 
+    WEBSITE_WHITELIST = tuple()  # List of websites where query parameters should not be discarded
+
     @classmethod
     def get_link_key(cls, link: str, msg: Message) -> str:
         """ Generates the key for a link seen in a given Message """
@@ -44,7 +46,11 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
     async def extract(cls, msg: Message) -> [str]:
         links = re.findall(parse.URL_REGEX, msg.content)    # Extract URLs
         links = [group[0] for group in links]   # Get just the full string
-        print(links)
+        # Strip query parameters
+        for index, link in enumerate(links):
+            # Unless whitelisted, strip any parameters off the URL
+            if not link.startswith(cls.WEBSITE_WHITELIST) and "?" in link:
+                links[index] = link[:link.find("?")]
         # Return only the links that were already seen on this server recently
         return [link for link in links if await cls.recently_on_server(link, msg)]
 
@@ -65,9 +71,9 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
 
             channel_id, message_id, prev_author_id = prev_sighting.split("/")
 
-            # If it's the same user, don't say anything
-            if int(prev_author_id) == msg.author.id:
-                continue
+            # # If it's the same user, don't say anything
+            # if int(prev_author_id) == msg.author.id:
+            #     continue
 
             prev_message = await utils.get_message(int(channel_id), int(message_id))
 
