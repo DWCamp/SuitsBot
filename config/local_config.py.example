@@ -1,5 +1,7 @@
 from constants import BOT_VERSION
 
+DEV_MODE = False
+
 APOD_CHANNEL_IDS = [
     123456789012345678  # MyCoolServer - space channel
 ]

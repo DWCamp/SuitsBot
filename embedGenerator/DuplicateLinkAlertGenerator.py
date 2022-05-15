@@ -5,6 +5,7 @@ from discord import Embed, Message
 
 from embedGenerator import BaseGenerator
 from constants import *
+from config import DEV_MODE
 import utils
 import parse
 
@@ -14,7 +15,8 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
     DUPLICATE_LINK_EXPIRY_SECONDS = 60 * 60 * 24 * 2    # Two days
     GENERATOR_ALLOWS_REPEATS = True  # The whole point is to find OTHER PEOPLE'S repeats
 
-    WEBSITE_WHITELIST = tuple()  # List of websites where query parameters should not be discarded
+    # List of websites where query parameters should not be discarded
+    WEBSITE_WHITELIST = ("https://www.youtube.com/watch",)
 
     @classmethod
     def get_link_key(cls, link: str, msg: Message) -> str:
@@ -48,6 +50,8 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
         links = [group[0] for group in links]   # Get just the full string
         # Strip query parameters
         for index, link in enumerate(links):
+            if link.startswith(cls.WEBSITE_WHITELIST):
+                print("whitelisted")
             # Unless whitelisted, strip any parameters off the URL
             if not link.startswith(cls.WEBSITE_WHITELIST) and "?" in link:
                 links[index] = link[:link.find("?")]
@@ -72,7 +76,7 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
             channel_id, message_id, prev_author_id = prev_sighting.split("/")
 
             # If it's the same user, don't say anything
-            if int(prev_author_id) == msg.author.id:
+            if int(prev_author_id) == msg.author.id and not DEV_MODE:
                 continue
 
             prev_message = await utils.get_message(int(channel_id), int(message_id))
