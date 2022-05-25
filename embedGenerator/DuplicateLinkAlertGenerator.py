@@ -52,8 +52,8 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
         for index, link in enumerate(links):
             if link.startswith(cls.WEBSITE_WHITELIST):
                 print("whitelisted")
-            # Unless whitelisted, strip any parameters off the URL
-            if not link.startswith(cls.WEBSITE_WHITELIST) and "?" in link:
+            # If not whitelisted, strip any parameters off the URL
+            elif "?" in link:
                 links[index] = link[:link.find("?")]
         # Return only the links that were already seen on this server recently
         return [link for link in links if await cls.recently_on_server(link, msg)]
