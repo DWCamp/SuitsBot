@@ -46,6 +46,19 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
 
     @classmethod
     async def extract(cls, msg: Message) -> [str]:
+        """
+        Finds URLs inside messages and checks if those links have been
+        previously shared on the server. Links will be ignored if:
+            - They were part of a bot command
+            - They were sent in DMs
+
+        :param msg: The message to extract links from
+        :return: A list of all strings which contain duplicate links
+        """
+        if msg.content and msg.content[0] in ["?!.#/"]:     # Ignore bot commands
+            return
+        if msg.guild is None:   # Ignore in DMs
+            return
         links = re.findall(parse.URL_REGEX, msg.content)    # Extract URLs
         links = [group[0] for group in links]   # Get just the full string
         # Strip query parameters
@@ -60,6 +73,15 @@ class DuplicateLinkAlertGenerator(BaseGenerator):
 
     @classmethod
     async def unfurl(cls, triggers: [str], msg: Message) -> list:
+        """
+        Converts a list of strings containing links to a list of embeds flagging them as duplicates.
+        If the offending duplicates were sent by the same author or were only seen in other servers,
+        they will be ignored.
+
+        :param triggers: The list of links detected as duplicates
+        :param msg: The message which contained the duplicate links
+        :return: (Optional) The list of embeds flagging the links as duplicate
+        """
         embed_list = []
 
         alert_icon = "http://icons.iconarchive.com/icons/paomedia/small-n-flat/96/sign-warning-icon.png"

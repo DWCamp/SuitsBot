@@ -21,6 +21,11 @@ EMOJI = {
     "x": "❌",
 }
 
+# Emoji so users can interact with embeds
+DELETE_EMOJI = EMOJI['x']
+REPORT_EMOJI = EMOJI['speaker']
+HEART_EMOJI = EMOJI['heart']
+
 # ====== Feed stuff
 
 # Every podcast feed alias
@@ -105,10 +110,6 @@ COMMAND_THUMBNAILS = {
     "tag": "https://cdn2.iconfinder.com/data/icons/marketing-strategy/512/Loud_Speaker-512.png",
     "say": "https://cdn.discordapp.com/attachments/341428321109671939/487265313071824926/sayIcon.png",
     "wiki": "https://www.wikipedia.org/portal/wikipedia.org/assets/img/Wikipedia-logo-v2@2x.png"}
-
-# Emoji so users can interact with embeds
-DELETE_EMOJI = EMOJI['x']
-REPORT_EMOJI = EMOJI['speaker']
 
 # Embed color hexcodes
 EMBED_COLORS = {"default": 0x4E2368,

@@ -122,8 +122,9 @@ class Images(Cog):
             unsplash_icon = 'https://dwcamp.net/logos/unsplash'
             headers = {
                 "User-Agent": "suitsBot Discord Bot - https://github.com/DWCamp",
-                "Authorization": "Client-ID " + tokens["UNSPLASH_CLIENT_ID"],
-                "Accept-Version": "v1"
+                "Accept-Version": "v1",
+                "Authorization": "Client-ID " + tokens['UNSPLASH_CLIENT_ID'],
+                "Host": "api.unsplash.com"
             }
 
             # Parse command
@@ -138,6 +139,7 @@ class Images(Cog):
             # Get the image URL
             json = await utils.get_json_with_get('https://api.unsplash.com/photos/random?query=' + query,
                                                  headers=headers)
+            print(json)
             author_url = json[0]['user']['links']['html'] + "?utm_source=SuitsBot&utm_medium=referral"
             pic_embed = Embed().set_image(url=json[0]['urls']['full'])
             pic_embed.description = "Photo credit: " + author_url

@@ -199,6 +199,7 @@ class BaseGenerator:
                         unfurl = await msg.reply(str(reply))
                     await unfurl.add_reaction(DELETE_EMOJI)
                     await unfurl.add_reaction(REPORT_EMOJI)
+                    await unfurl.add_reaction(HEART_EMOJI)
                     unfurl_ids.append(unfurl.id)
                     # Record unfurled message triggering author as unfurl_message_id: author_id
                     unfurl_message_key = f"{UNFURL_PREFIX}{unfurl.id}"
@@ -262,6 +263,10 @@ async def process_trigger_delete(msg: Message):
         try:
             unfurl_message = await utils.get_message(msg.channel.id, int(unfurl))
             await unfurl_message.delete()
+            await utils.flag(alert="Unfurl deleted",
+                             description=f"User `{msg.author.name}` deleted an unfurl in guild `{msg.guild.name}` "
+                                         f"on channel `#{msg.channel.name}` at `{msg.created_at}`",
+                             message=msg)
         except NotFound:
             pass    # Unfurl was probably already deleted
         except Exception as e:
@@ -337,3 +342,20 @@ async def process_report_reaction(reaction: Reaction, user: User):
 
     except Exception as e:
         await utils.report(str(e), source="process_report_reaction")
+
+
+async def process_heart_reaction(reaction: Reaction, user: User):
+    """
+    Handles a user reacting to a message with the 'heart' emoji.
+    Notifies the bot owner that SuitsBot has been given some love
+
+    :param reaction: The Reaction
+    :param user: The User leaving the reaction
+    """
+    try:
+        # Only process reactions on the bot's own messages
+        if reaction.message.author.id != BOT_USER_ID:
+            return
+        await utils.flag("A user has given SuitsBot a heart", ctx=reaction.message)
+    except Exception as e:
+        await utils.report(str(e), source="process_heart_reaction", ctx=reaction.message)
