@@ -172,6 +172,10 @@ class BaseGenerator:
                 await utils.report(str(e), f"{cls.__name__} failed to parse message", msg)
                 return
 
+            # Escape if None or empty
+            if not triggers:
+                return
+
             # Deduplicate
             triggers = {trig for trig in triggers}
 
