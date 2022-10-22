@@ -130,6 +130,9 @@ class VoiceCommands(Cog):
                   "hello darkness": ["*Hello darkness my old friend...*", "helloDarkness.mp3"],
                   "hello there": ["**GENERAL KENOBI**", "hello_there_obi.mp3"],
                   "heroes never die": ["Heroes never die!", "heroesNeverDie.ogg"],
+                  "hey": ["HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEY, "
+                          "WHAT'S UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUP, "
+                          "IT'S MEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE", "hey its me.mp3"],
                   "high noon": ["It's hiiiiiigh nooooooon...", "itsHighNoon.ogg"],
                   "how": ["**I MADE MY MISTAKES**", "howCould.mp3"],
                   "i tried so hard": ["Woah there, don't cut yourself on that edge", "inTheEnd.mp3"],
@@ -164,6 +167,7 @@ class VoiceCommands(Cog):
                   "stop": ["It's time to stop!", "stop.mp3"],
                   "take a sip": ["Take a fuckin' sip, babes...", "takeASip.mp3"],
                   "tea": ["I've got fucking tea, ya dickhead!", "gotTea.wav"],
+                  "the devil": ["But again, I am *the devil*, from *DA BIBLE*", "I am the devil.mp3"],
                   "trash": ["**Endless trash**", "Endless Trash.mp3"],
                   "tuturu": ["TUTURUUUUUUUU", "tuturu.mp3"],
                   "violin": ["*sadness intensifies*", "sadViolin.mp3"],
